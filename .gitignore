@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Django
+db.sqlite3
+staticfiles/
+media/books/covers/*
+media/books/entries/images/*
+media/books/entries/audio/*
+!media/books/covers/.gitkeep
+!media/books/entries/images/.gitkeep
+!media/books/entries/audio/.gitkeep
+
+# Env
+.env
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

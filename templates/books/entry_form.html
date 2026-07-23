@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<section class="section narrow">
+  <div class="section-head">
+    <p class="eyebrow">{{ book.title }}</p>
+    <h1>{{ page_title }}</h1>
+    <p>می‌توانی متن، ویس یا تصویر ثبت کنی؛ نوعش را دیدگاه، حس یا متن کتاب بگذار.</p>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="form-panel" id="entry-form">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="form-errors">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="{{ form.kind.id_for_label }}">نوع</label>
+        {{ form.kind }}
+        {{ form.kind.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ form.media_type.id_for_label }}">رسانه</label>
+        {{ form.media_type }}
+        {{ form.media_type.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ form.page_number.id_for_label }}">شماره صفحه</label>
+        {{ form.page_number }}
+        {{ form.page_number.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ form.entry_date.id_for_label }}">تاریخ</label>
+        {{ form.entry_date }}
+        {{ form.entry_date.errors }}
+      </div>
+      <div class="field full media-field" data-media="text">
+        <label for="{{ form.text_content.id_for_label }}">متن</label>
+        {{ form.text_content }}
+        {{ form.text_content.errors }}
+      </div>
+      <div class="field full media-field" data-media="image">
+        <label for="{{ form.image.id_for_label }}">تصویر</label>
+        {{ form.image }}
+        {{ form.image.errors }}
+      </div>
+      <div class="field full media-field" data-media="voice">
+        <label for="{{ form.audio.id_for_label }}">فایل صوتی</label>
+        {{ form.audio }}
+        {{ form.audio.errors }}
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">ذخیره یادداشت</button>
+      <a href="{% url 'books:detail' book.pk %}" class="btn btn-ghost">انصراف</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const mediaSelect = document.getElementById('id_media_type');
+    const fields = document.querySelectorAll('.media-field');
+    if (!mediaSelect) return;
+
+    function sync() {
+      const value = mediaSelect.value;
+      fields.forEach((field) => {
+        const media = field.getAttribute('data-media');
+        const show = media === value || (value !== 'text' && media === 'text' && false);
+        // text field always useful as optional caption for image/voice? User said text OR voice OR image.
+        // Keep text visible for text; for others show only their media + optional text as caption.
+        if (media === value) {
+          field.hidden = false;
+        } else if (media === 'text' && value !== 'text') {
+          field.hidden = false;
+          const label = field.querySelector('label');
+          if (label) label.textContent = 'توضیح (اختیاری)';
+        } else {
+          field.hidden = true;
+        }
+        if (media === 'text' && value === 'text') {
+          const label = field.querySelector('label');
+          if (label) label.textContent = 'متن';
+        }
+      });
+    }
+
+    mediaSelect.addEventListener('change', sync);
+    sync();
+  })();
+</script>
+{% endblock %}

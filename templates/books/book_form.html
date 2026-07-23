@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<section class="section narrow">
+  <div class="section-head">
+    <p class="eyebrow">کتابخانه</p>
+    <h1>{{ page_title }}</h1>
+    <p>عنوان، نویسنده، تعداد صفحات و وضعیت مطالعه را وارد کن.</p>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="form-panel">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="form-errors">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="{{ form.title.id_for_label }}">عنوان</label>
+        {{ form.title }}
+        {{ form.title.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ form.author.id_for_label }}">نویسنده</label>
+        {{ form.author }}
+        {{ form.author.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ form.total_pages.id_for_label }}">تعداد صفحات</label>
+        {{ form.total_pages }}
+        {{ form.total_pages.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ form.current_page.id_for_label }}">صفحه فعلی</label>
+        {{ form.current_page }}
+        {{ form.current_page.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ form.status.id_for_label }}">وضعیت</label>
+        {{ form.status }}
+        {{ form.status.errors }}
+      </div>
+      <div class="field">
+        <label for="{{ form.cover.id_for_label }}">جلد کتاب</label>
+        {{ form.cover }}
+        {{ form.cover.errors }}
+      </div>
+      <div class="field full">
+        <label for="{{ form.notes.id_for_label }}">یادداشت کلی</label>
+        {{ form.notes }}
+        {{ form.notes.errors }}
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">ذخیره</button>
+      {% if book %}
+      <a href="{% url 'books:detail' book.pk %}" class="btn btn-ghost">انصراف</a>
+      {% else %}
+      <a href="{% url 'books:list' %}" class="btn btn-ghost">انصراف</a>
+      {% endif %}
+    </div>
+  </form>
+</section>
+{% endblock %}

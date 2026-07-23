@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}نمی‌دونم{% endblock %} · کتابخانه</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div class="page-glow" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="{% url 'books:list' %}">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-text">
+          <strong>نمی‌دونم</strong>
+          <small>دفترخانهٔ شخصی کتاب</small>
+        </span>
+      </a>
+      <nav class="site-nav">
+        <a href="{% url 'books:list' %}" class="nav-link">کتاب‌ها</a>
+        <a href="{% url 'books:create' %}" class="btn btn-primary">کتاب جدید</a>
+      </nav>
+    </div>
+  </header>
+
+  {% if messages %}
+  <div class="container messages">
+    {% for message in messages %}
+    <div class="toast toast-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <main class="container main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>نمی‌دونم — جایی برای حس‌ها، دیدگاه‌ها و ورق‌های کتاب</p>
+    </div>
+  </footer>
+
+  <script src="{% static 'js/main.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

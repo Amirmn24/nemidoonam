@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<section class="detail-top">
+  <div class="detail-cover">
+    {% if book.cover %}
+    <img src="{{ book.cover.url }}" alt="جلد {{ book.title }}">
+    {% else %}
+    <div class="cover-fallback large">
+      <span>{{ book.title }}</span>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="detail-info">
+    <p class="eyebrow">جزئیات کتاب</p>
+    <h1>{{ book.title }}</h1>
+    <p class="author">از {{ book.author }}</p>
+
+    <div class="info-row">
+      <span class="status status-{{ book.status }}">{{ book.get_status_display }}</span>
+      <span class="meta-pill">{{ book.total_pages }} صفحه</span>
+      <span class="meta-pill">الان صفحه {{ book.current_page }}</span>
+    </div>
+
+    {% if book.notes %}
+    <p class="notes">{{ book.notes }}</p>
+    {% endif %}
+
+    <div class="hero-actions">
+      <a href="{% url 'books:entry_create' book.pk %}" class="btn btn-primary">یادداشت جدید</a>
+      <a href="{% url 'books:update' book.pk %}" class="btn btn-ghost">ویرایش کتاب</a>
+      <form method="post" action="{% url 'books:delete' book.pk %}" class="inline-form" onsubmit="return confirm('این کتاب و همه یادداشت‌هایش حذف شوند؟');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger-ghost">حذف</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="section panel" id="progress">
+  <div class="section-head">
+    <h2>پیشرفت مطالعه</h2>
+    <p>{{ book.progress_percent }}٪ مسیر را آمده‌ای.</p>
+  </div>
+
+  <div class="progress large" aria-hidden="true">
+    <span style="width: {{ book.progress_percent }}%"></span>
+  </div>
+
+  <form method="post" action="{% url 'books:progress' book.pk %}" class="progress-form">
+    {% csrf_token %}
+    <div class="form-grid two">
+      <div class="field">
+        <label for="{{ progress_form.current_page.id_for_label }}">صفحه فعلی</label>
+        {{ progress_form.current_page }}
+      </div>
+      <div class="field">
+        <label for="{{ progress_form.status.id_for_label }}">وضعیت</label>
+        {{ progress_form.status }}
+      </div>
+    </div>
+    <button type="submit" class="btn btn-secondary">ذخیره پیشرفت</button>
+  </form>
+</section>
+
+<section class="section">
+  <div class="section-head row">
+    <div>
+      <h2>یادداشت‌ها</h2>
+      <p>دیدگاه، حس و متن‌های کنار صفحات.</p>
+    </div>
+    <a href="{% url 'books:entry_create' book.pk %}" class="btn btn-primary">افزودن</a>
+  </div>
+
+  <div class="filter-row">
+    <a href="{% url 'books:detail' book.pk %}" class="chip {% if not active_kind and not active_media %}is-active{% endif %}">همه</a>
+    <a href="?kind=viewpoint" class="chip {% if active_kind == 'viewpoint' %}is-active{% endif %}">دیدگاه</a>
+    <a href="?kind=feeling" class="chip {% if active_kind == 'feeling' %}is-active{% endif %}">حس</a>
+    <a href="?kind=book_text" class="chip {% if active_kind == 'book_text' %}is-active{% endif %}">متن کتاب</a>
+    <a href="?media=text" class="chip {% if active_media == 'text' %}is-active{% endif %}">متن</a>
+    <a href="?media=voice" class="chip {% if active_media == 'voice' %}is-active{% endif %}">ویس</a>
+    <a href="?media=image" class="chip {% if active_media == 'image' %}is-active{% endif %}">تصویر</a>
+  </div>
+
+  {% if entries %}
+  <div class="entry-timeline">
+    {% for entry in entries %}
+    <article class="entry-item kind-{{ entry.kind }}">
+      <header class="entry-head">
+        <div class="entry-tags">
+          <span class="tag kind">{{ entry.get_kind_display }}</span>
+          <span class="tag media">{{ entry.get_media_type_display }}</span>
+          <span class="tag page">صفحه {{ entry.page_number }}</span>
+        </div>
+        <time datetime="{{ entry.entry_date|date:'Y-m-d' }}">{{ entry.entry_date }}</time>
+      </header>
+
+      <div class="entry-body">
+        {% if entry.media_type == 'text' %}
+        <p>{{ entry.text_content|linebreaksbr }}</p>
+        {% elif entry.media_type == 'image' and entry.image %}
+        <figure class="entry-image">
+          <img src="{{ entry.image.url }}" alt="تصویر یادداشت">
+          {% if entry.text_content %}<figcaption>{{ entry.text_content }}</figcaption>{% endif %}
+        </figure>
+        {% elif entry.media_type == 'voice' and entry.audio %}
+        <audio controls src="{{ entry.audio.url }}"></audio>
+        {% if entry.text_content %}<p class="caption">{{ entry.text_content }}</p>{% endif %}
+        {% endif %}
+      </div>
+
+      <footer class="entry-actions">
+        <a href="{% url 'books:entry_update' book.pk entry.pk %}" class="text-link">ویرایش</a>
+        <form method="post" action="{% url 'books:entry_delete' book.pk entry.pk %}" onsubmit="return confirm('این یادداشت حذف شود؟');">
+          {% csrf_token %}
+          <button type="submit" class="text-link danger">حذف</button>
+        </form>
+      </footer>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state compact">
+    <h3>یادداشتی ثبت نشده</h3>
+    <p>اولین حس یا دیدگاهت را برای این کتاب بنویس.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

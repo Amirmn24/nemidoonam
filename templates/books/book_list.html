@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}کتاب‌ها{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">کتابخانه شخصی</p>
+    <h1>نمی‌دونم</h1>
+    <p class="lead">کتاب‌هایت را نگه دار، ورق بزن، و حس‌ها و دیدگاه‌هایت را کنار هر صفحه بنویس.</p>
+    <div class="hero-actions">
+      <a href="{% url 'books:create' %}" class="btn btn-primary btn-lg">افزودن کتاب</a>
+      {% if total_count %}
+      <span class="meta-pill">{{ total_count }} کتاب در قفسه</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="hero-visual" aria-hidden="true">
+    <div class="shelf-art">
+      <span class="spine spine-a"></span>
+      <span class="spine spine-b"></span>
+      <span class="spine spine-c"></span>
+      <span class="spine spine-d"></span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <h2>قفسه کتاب‌ها</h2>
+    <p>با وضعیت مطالعه فیلتر کن و ادامه بده.</p>
+  </div>
+
+  <div class="filter-row">
+    <a href="{% url 'books:list' %}" class="chip {% if not active_status %}is-active{% endif %}">همه</a>
+    {% for value, label in statuses %}
+    <a href="?status={{ value }}" class="chip {% if active_status == value %}is-active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  {% if books %}
+  <div class="book-grid">
+    {% for book in books %}
+    <a href="{% url 'books:detail' book.pk %}" class="book-tile">
+      <div class="book-cover">
+        {% if book.cover %}
+        <img src="{{ book.cover.url }}" alt="جلد {{ book.title }}">
+        {% else %}
+        <div class="cover-fallback">
+          <span>{{ book.title|truncatechars:18 }}</span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="book-meta">
+        <h3>{{ book.title }}</h3>
+        <p class="author">{{ book.author }}</p>
+        <div class="book-stats">
+          <span class="status status-{{ book.status }}">{{ book.get_status_display }}</span>
+          <span>صفحه {{ book.current_page }} از {{ book.total_pages }}</span>
+        </div>
+        <div class="progress" aria-hidden="true">
+          <span style="width: {{ book.progress_percent }}%"></span>
+        </div>
+        <p class="entry-count">{{ book.entry_count }} یادداشت</p>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <h3>هنوز کتابی نیست</h3>
+    <p>اولین کتابت را اضافه کن و داستان مطالعه‌ات را از اینجا شروع کن.</p>
+    <a href="{% url 'books:create' %}" class="btn btn-primary">شروع کن</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
