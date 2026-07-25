@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ page_title }}{% endblock %}
 
@@ -7,50 +8,170 @@
   <div class="section-head">
     <p class="eyebrow">{{ book.title }}</p>
     <h1>{{ page_title }}</h1>
-    <p>می‌توانی متن، ویس یا تصویر ثبت کنی؛ نوعش را دیدگاه، حس یا متن کتاب بگذار.</p>
+    <p>نوع یادداشت و روش ثبت را انتخاب کن؛ متن بنویس، ویس ضبط کن یا عکس بگذار.</p>
   </div>
 
-  <form method="post" enctype="multipart/form-data" class="form-panel" id="entry-form">
+  <form method="post" enctype="multipart/form-data" class="form-panel" id="entry-form"
+        data-initial-kind="{{ form.kind.value|default:'viewpoint' }}"
+        data-initial-media="{{ form.media_type.value|default:'text' }}">
     {% csrf_token %}
     {% if form.non_field_errors %}
     <div class="form-errors">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <div class="form-grid">
-      <div class="field">
-        <label for="{{ form.kind.id_for_label }}">نوع</label>
-        {{ form.kind }}
-        {{ form.kind.errors }}
+    {# Hidden native selects — driven by choice cards #}
+    <div class="visually-hidden" aria-hidden="true">
+      {{ form.kind }}
+      {{ form.media_type }}
+    </div>
+
+    <div class="form-step">
+      <div class="form-step-label">
+        <span class="form-step-num">۱</span>
+        <span>این یادداشت چیه؟</span>
       </div>
-      <div class="field">
-        <label for="{{ form.media_type.id_for_label }}">رسانه</label>
-        {{ form.media_type }}
-        {{ form.media_type.errors }}
+      <p class="form-step-hint">دیدگاه خودت، حس لحظه‌ات، یا نقل‌قولی از کتاب.</p>
+      <div class="choice-grid" id="kind-choices" role="group" aria-label="نوع یادداشت">
+        <button type="button" class="choice-card" data-kind="viewpoint" data-target="kind">
+          <span class="choice-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+          </span>
+          <strong>دیدگاه</strong>
+          <small>نظر و برداشتت</small>
+        </button>
+        <button type="button" class="choice-card" data-kind="feeling" data-target="kind">
+          <span class="choice-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+          </span>
+          <strong>حس</strong>
+          <small>حال و هوای خواندن</small>
+        </button>
+        <button type="button" class="choice-card" data-kind="book_text" data-target="kind">
+          <span class="choice-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 7H20v13H6.5A2.5 2.5 0 0 0 4 22.5z"/></svg>
+          </span>
+          <strong>متن کتاب</strong>
+          <small>نقل‌قول یا بند</small>
+        </button>
       </div>
-      <div class="field">
-        <label for="{{ form.page_number.id_for_label }}">شماره صفحه</label>
-        {{ form.page_number }}
-        {{ form.page_number.errors }}
+      {{ form.kind.errors }}
+    </div>
+
+    <div class="form-step">
+      <div class="form-step-label">
+        <span class="form-step-num">۲</span>
+        <span>چطور ثبتش می‌کنی؟</span>
       </div>
-      <div class="field">
-        <label for="{{ form.entry_date.id_for_label }}">تاریخ</label>
-        {{ form.entry_date }}
-        {{ form.entry_date.errors }}
+      <p class="form-step-hint">یکی را انتخاب کن؛ فیلد مربوطه همین‌جا باز می‌شود.</p>
+      <div class="choice-grid" id="media-choices" role="group" aria-label="نوع رسانه">
+        <button type="button" class="choice-card" data-media="text" data-target="media">
+          <span class="choice-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </span>
+          <strong>متن</strong>
+          <small>بنویس</small>
+        </button>
+        <button type="button" class="choice-card" data-media="voice" data-target="media">
+          <span class="choice-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v5"/><path d="M8 22h8"/></svg>
+          </span>
+          <strong>ویس</strong>
+          <small>ضبط با میکروفون</small>
+        </button>
+        <button type="button" class="choice-card" data-media="image" data-target="media">
+          <span class="choice-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 15-4.5-4.5L9 18"/></svg>
+          </span>
+          <strong>تصویر</strong>
+          <small>عکس صفحه یا صحنه</small>
+        </button>
       </div>
+      {{ form.media_type.errors }}
+    </div>
+
+    <div class="form-step">
+      <div class="form-step-label">
+        <span class="form-step-num">۳</span>
+        <span>محتوا</span>
+      </div>
+
       <div class="field full media-field" data-media="text">
-        <label for="{{ form.text_content.id_for_label }}">متن</label>
+        <label for="{{ form.text_content.id_for_label }}" id="text-label">متن</label>
         {{ form.text_content }}
         {{ form.text_content.errors }}
       </div>
-      <div class="field full media-field" data-media="image">
+
+      <div class="field full media-field" data-media="image" hidden>
         <label for="{{ form.image.id_for_label }}">تصویر</label>
-        {{ form.image }}
+        {% if entry and entry.image %}
+        <div class="image-preview is-visible" id="image-existing">
+          <img src="{{ entry.image.url }}" alt="تصویر فعلی">
+          <p class="caption">تصویر فعلی — اگر تصویر جدید بگذاری جایگزین می‌شود.</p>
+        </div>
+        {% endif %}
+        <div class="image-drop" id="image-drop">
+          <div class="image-drop-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V6"/><path d="m8 9 4-4 4 4"/><path d="M4 18h16"/></svg>
+          </div>
+          <p><strong>کلیک کن</strong> یا تصویر را اینجا رها کن</p>
+          {{ form.image }}
+        </div>
+        <div class="image-preview" id="image-preview">
+          <img alt="پیش‌نمایش تصویر" id="image-preview-img">
+        </div>
         {{ form.image.errors }}
       </div>
-      <div class="field full media-field" data-media="voice">
-        <label for="{{ form.audio.id_for_label }}">فایل صوتی</label>
-        {{ form.audio }}
+
+      <div class="field full media-field" data-media="voice" hidden>
+        <span class="visually-hidden">
+          <label for="{{ form.audio.id_for_label }}">فایل صوتی</label>
+          {{ form.audio }}
+        </span>
         {{ form.audio.errors }}
+
+        <div class="voice-recorder" id="voice-recorder"
+             {% if entry and entry.audio %}data-has-existing="1"{% endif %}>
+          {% if entry and entry.audio %}
+          <div class="voice-existing" id="voice-existing">
+            <p>ویس فعلی — می‌توانی دوباره ضبط کنی تا جایگزین شود.</p>
+            <audio controls src="{{ entry.audio.url }}"></audio>
+          </div>
+          {% endif %}
+
+          <p class="voice-status" id="voice-status">برای شروع، دکمه میکروفون را بزن</p>
+          <div class="voice-timer" id="voice-timer" aria-live="polite">00:00</div>
+          <div class="voice-wave" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="voice-controls">
+            <button type="button" class="btn-record" id="voice-toggle" aria-label="شروع ضبط"></button>
+            <button type="button" class="btn btn-ghost" id="voice-rerecord" hidden>ضبط دوباره</button>
+          </div>
+          <div class="voice-playback" id="voice-playback">
+            <audio id="voice-preview" controls></audio>
+          </div>
+          <p class="voice-error" id="voice-error" role="alert"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-step">
+      <div class="form-step-label">
+        <span class="form-step-num">۴</span>
+        <span>صفحه و تاریخ</span>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="{{ form.page_number.id_for_label }}">شماره صفحه</label>
+          {{ form.page_number }}
+          {{ form.page_number.errors }}
+        </div>
+        <div class="field">
+          <label for="{{ form.entry_date.id_for_label }}">تاریخ</label>
+          {{ form.entry_date }}
+          {{ form.entry_date.errors }}
+        </div>
       </div>
     </div>
 
@@ -63,37 +184,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-  (function () {
-    const mediaSelect = document.getElementById('id_media_type');
-    const fields = document.querySelectorAll('.media-field');
-    if (!mediaSelect) return;
-
-    function sync() {
-      const value = mediaSelect.value;
-      fields.forEach((field) => {
-        const media = field.getAttribute('data-media');
-        const show = media === value || (value !== 'text' && media === 'text' && false);
-        // text field always useful as optional caption for image/voice? User said text OR voice OR image.
-        // Keep text visible for text; for others show only their media + optional text as caption.
-        if (media === value) {
-          field.hidden = false;
-        } else if (media === 'text' && value !== 'text') {
-          field.hidden = false;
-          const label = field.querySelector('label');
-          if (label) label.textContent = 'توضیح (اختیاری)';
-        } else {
-          field.hidden = true;
-        }
-        if (media === 'text' && value === 'text') {
-          const label = field.querySelector('label');
-          if (label) label.textContent = 'متن';
-        }
-      });
-    }
-
-    mediaSelect.addEventListener('change', sync);
-    sync();
-  })();
-</script>
+<script src="{% static 'js/entry-form.js' %}"></script>
 {% endblock %}

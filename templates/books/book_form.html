@@ -16,39 +16,61 @@
     <div class="form-errors">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <div class="form-grid">
-      <div class="field">
-        <label for="{{ form.title.id_for_label }}">عنوان</label>
-        {{ form.title }}
-        {{ form.title.errors }}
+    <div class="form-step">
+      <div class="form-step-label">
+        <span class="form-step-num">۱</span>
+        <span>شناسه کتاب</span>
       </div>
-      <div class="field">
-        <label for="{{ form.author.id_for_label }}">نویسنده</label>
-        {{ form.author }}
-        {{ form.author.errors }}
+      <div class="form-grid">
+        <div class="field">
+          <label for="{{ form.title.id_for_label }}">عنوان</label>
+          {{ form.title }}
+          {{ form.title.errors }}
+        </div>
+        <div class="field">
+          <label for="{{ form.author.id_for_label }}">نویسنده</label>
+          {{ form.author }}
+          {{ form.author.errors }}
+        </div>
       </div>
-      <div class="field">
-        <label for="{{ form.total_pages.id_for_label }}">تعداد صفحات</label>
-        {{ form.total_pages }}
-        {{ form.total_pages.errors }}
+    </div>
+
+    <div class="form-step">
+      <div class="form-step-label">
+        <span class="form-step-num">۲</span>
+        <span>پیشرفت مطالعه</span>
       </div>
-      <div class="field">
-        <label for="{{ form.current_page.id_for_label }}">صفحه فعلی</label>
-        {{ form.current_page }}
-        {{ form.current_page.errors }}
+      <div class="form-grid">
+        <div class="field">
+          <label for="{{ form.total_pages.id_for_label }}">تعداد صفحات</label>
+          {{ form.total_pages }}
+          {{ form.total_pages.errors }}
+        </div>
+        <div class="field">
+          <label for="{{ form.current_page.id_for_label }}">صفحه فعلی</label>
+          {{ form.current_page }}
+          {{ form.current_page.errors }}
+        </div>
+        <div class="field">
+          <label for="{{ form.status.id_for_label }}">وضعیت</label>
+          {{ form.status }}
+          {{ form.status.errors }}
+        </div>
+        <div class="field">
+          <label for="{{ form.cover.id_for_label }}">جلد کتاب</label>
+          {{ form.cover }}
+          {{ form.cover.errors }}
+        </div>
       </div>
-      <div class="field">
-        <label for="{{ form.status.id_for_label }}">وضعیت</label>
-        {{ form.status }}
-        {{ form.status.errors }}
-      </div>
-      <div class="field">
-        <label for="{{ form.cover.id_for_label }}">جلد کتاب</label>
-        {{ form.cover }}
-        {{ form.cover.errors }}
+    </div>
+
+    <div class="form-step">
+      <div class="form-step-label">
+        <span class="form-step-num">۳</span>
+        <span>یادداشت کلی</span>
       </div>
       <div class="field full">
-        <label for="{{ form.notes.id_for_label }}">یادداشت کلی</label>
+        <label class="visually-hidden" for="{{ form.notes.id_for_label }}">یادداشت کلی</label>
         {{ form.notes }}
         {{ form.notes.errors }}
       </div>

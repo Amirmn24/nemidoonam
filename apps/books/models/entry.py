@@ -72,7 +72,7 @@ class Entry(models.Model):
         elif self.media_type == EntryMediaType.IMAGE and not self.image:
             errors['image'] = 'برای محتوای تصویری، آپلود تصویر الزامی است.'
         elif self.media_type == EntryMediaType.VOICE and not self.audio:
-            errors['audio'] = 'برای محتوای صوتی، آپلود ویس الزامی است.'
+            errors['audio'] = 'برای محتوای صوتی، ضبط ویس الزامی است.'
 
         if errors:
             raise ValidationError(errors)

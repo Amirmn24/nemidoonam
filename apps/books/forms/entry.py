@@ -23,10 +23,12 @@ class EntryForm(forms.ModelForm):
             'entry_date': forms.DateInput(attrs={'type': 'date'}),
             'text_content': forms.Textarea(
                 attrs={
-                    'rows': 5,
-                    'placeholder': 'متن دیدگاه، حس یا بخشی از کتاب را بنویسید…',
+                    'rows': 6,
+                    'placeholder': 'اینجا بنویس… حس، دیدگاه یا نقل‌قولی از کتاب.',
                 }
             ),
+            'image': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
+            'audio': forms.ClearableFileInput(attrs={'accept': 'audio/*,.webm,.ogg,.m4a,.mp3'}),
         }
 
     def __init__(self, *args, book=None, **kwargs):
@@ -63,7 +65,7 @@ class EntryForm(forms.ModelForm):
         if media_type == EntryMediaType.IMAGE and not image and not (self.instance and self.instance.image):
             raise ValidationError({'image': 'برای محتوای تصویری، آپلود تصویر الزامی است.'})
         if media_type == EntryMediaType.VOICE and not audio and not (self.instance and self.instance.audio):
-            raise ValidationError({'audio': 'برای محتوای صوتی، آپلود ویس الزامی است.'})
+            raise ValidationError({'audio': 'برای محتوای صوتی، ضبط ویس الزامی است.'})
 
         cleaned['text_content'] = text_content
         return cleaned
