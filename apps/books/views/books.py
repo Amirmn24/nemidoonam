@@ -19,6 +19,8 @@ class BookListView(View):
             'statuses': BookStatus.choices,
             'active_status': status or '',
             'total_count': Book.objects.count(),
+            'reading_count': Book.objects.filter(status=BookStatus.READING).count(),
+            'finished_count': Book.objects.filter(status=BookStatus.FINISHED).count(),
         }
         return render(request, self.template_name, context)
 
