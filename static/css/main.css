@@ -774,6 +774,8 @@ img {
 input[type="text"],
 input[type="number"],
 input[type="date"],
+input[type="password"],
+input[type="email"],
 select,
 textarea {
   width: 100%;
@@ -1593,6 +1595,131 @@ textarea:focus {
   }
 
   .filter-sep {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Auth (login / future register & profile)
+   -------------------------------------------------------------------------- */
+
+.page-auth .main-content {
+  padding-top: 1.25rem;
+  padding-bottom: 3rem;
+}
+
+.page-auth .site-footer {
+  display: none;
+}
+
+.nav-user {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  font-weight: 500;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth-layout {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 2rem;
+  align-items: center;
+  min-height: min(70vh, 560px);
+  animation: rise 0.7s var(--ease) both;
+}
+
+.auth-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.auth-shelf {
+  width: min(100%, 260px);
+  height: 300px;
+}
+
+.auth-tagline {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.auth-panel {
+  max-width: 440px;
+  width: 100%;
+  justify-self: center;
+}
+
+.auth-head {
+  margin-bottom: 1.25rem;
+}
+
+.auth-head h1 {
+  margin: 0.25rem 0 0.65rem;
+  font-size: clamp(1.85rem, 4vw, 2.45rem);
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  color: var(--sky);
+}
+
+.auth-head .lead {
+  font-size: 1rem;
+  max-width: none;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-form .field {
+  gap: 0.45rem;
+}
+
+.auth-actions {
+  margin-top: 0.5rem;
+}
+
+.auth-actions .btn {
+  width: 100%;
+}
+
+@media (max-width: 860px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    gap: 1.5rem;
+  }
+
+  .auth-visual {
+    order: -1;
+  }
+
+  .auth-shelf {
+    height: 200px;
+  }
+
+  .auth-shelf .spine-a,
+  .auth-shelf .spine-b,
+  .auth-shelf .spine-c,
+  .auth-shelf .spine-d {
+    height: 120px;
+  }
+
+  .auth-panel {
+    max-width: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .nav-user {
     display: none;
   }
 }

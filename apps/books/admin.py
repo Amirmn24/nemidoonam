@@ -15,13 +15,15 @@ class BookAdmin(admin.ModelAdmin):
     list_display = (
         'title',
         'author',
+        'owner',
         'status',
         'current_page',
         'total_pages',
         'updated_at',
     )
-    list_filter = ('status',)
-    search_fields = ('title', 'author')
+    list_filter = ('status', 'owner')
+    search_fields = ('title', 'author', 'owner__username')
+    autocomplete_fields = ('owner',)
     inlines = [EntryInline]
     readonly_fields = ('created_at', 'updated_at')
 

@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 
@@ -6,11 +7,11 @@ from apps.books.forms import EntryForm
 from apps.books.models import Book, Entry
 
 
-class EntryCreateView(View):
+class EntryCreateView(LoginRequiredMixin, View):
     template_name = 'books/entry_form.html'
 
     def get(self, request, book_pk):
-        book = get_object_or_404(Book, pk=book_pk)
+        book = get_object_or_404(Book, pk=book_pk, owner=request.user)
         return render(
             request,
             self.template_name,
@@ -22,7 +23,7 @@ class EntryCreateView(View):
         )
 
     def post(self, request, book_pk):
-        book = get_object_or_404(Book, pk=book_pk)
+        book = get_object_or_404(Book, pk=book_pk, owner=request.user)
         form = EntryForm(request.POST, request.FILES, book=book)
         if form.is_valid():
             entry = form.save()
@@ -42,11 +43,11 @@ class EntryCreateView(View):
         )
 
 
-class EntryUpdateView(View):
+class EntryUpdateView(LoginRequiredMixin, View):
     template_name = 'books/entry_form.html'
 
     def get(self, request, book_pk, pk):
-        book = get_object_or_404(Book, pk=book_pk)
+        book = get_object_or_404(Book, pk=book_pk, owner=request.user)
         entry = get_object_or_404(Entry, pk=pk, book=book)
         return render(
             request,
@@ -60,7 +61,7 @@ class EntryUpdateView(View):
         )
 
     def post(self, request, book_pk, pk):
-        book = get_object_or_404(Book, pk=book_pk)
+        book = get_object_or_404(Book, pk=book_pk, owner=request.user)
         entry = get_object_or_404(Entry, pk=pk, book=book)
         form = EntryForm(request.POST, request.FILES, instance=entry, book=book)
         if form.is_valid():
@@ -79,9 +80,9 @@ class EntryUpdateView(View):
         )
 
 
-class EntryDeleteView(View):
+class EntryDeleteView(LoginRequiredMixin, View):
     def post(self, request, book_pk, pk):
-        book = get_object_or_404(Book, pk=book_pk)
+        book = get_object_or_404(Book, pk=book_pk, owner=request.user)
         entry = get_object_or_404(Entry, pk=pk, book=book)
         entry.delete()
         messages.success(request, 'یادداشت حذف شد.')

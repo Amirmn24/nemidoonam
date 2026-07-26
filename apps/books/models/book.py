@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -5,6 +6,12 @@ from .choices import BookStatus
 
 
 class Book(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='books',
+        verbose_name='مالک',
+    )
     title = models.CharField('عنوان', max_length=255)
     author = models.CharField('نویسنده', max_length=255)
     total_pages = models.PositiveIntegerField(
@@ -37,6 +44,9 @@ class Book(models.Model):
         ordering = ['-updated_at']
         verbose_name = 'کتاب'
         verbose_name_plural = 'کتاب‌ها'
+        indexes = [
+            models.Index(fields=['owner', 'status']),
+        ]
 
     def __str__(self) -> str:
         return f'{self.title} — {self.author}'
