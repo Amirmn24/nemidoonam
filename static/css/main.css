@@ -1691,6 +1691,29 @@ textarea:focus {
   width: 100%;
 }
 
+.auth-switch {
+  margin: 1.15rem 0 0;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.auth-switch a {
+  color: var(--sky);
+  font-weight: 700;
+}
+
+.auth-switch a:hover {
+  color: var(--brand);
+}
+
+.field-hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
 @media (max-width: 860px) {
   .auth-layout {
     grid-template-columns: 1fr;

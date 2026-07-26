@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}ورود{% endblock %}
+{% block title %}ثبت‌نام{% endblock %}
 {% block body_class %}page-auth{% endblock %}
 
 {% block nav_links %}{% endblock %}
@@ -21,8 +21,8 @@
   <div class="auth-panel">
     <header class="auth-head">
       <p class="eyebrow">حساب کاربری</p>
-      <h1 id="auth-title">ورود به نمی‌دونم</h1>
-      <p class="lead">با نام‌کاربری و رمز وارد شو؛ بقیهٔ پروفایل را بعداً کامل می‌کنی.</p>
+      <h1 id="auth-title">ساخت حساب در نمی‌دونم</h1>
+      <p class="lead">فقط نام‌کاربری و رمز کافی است؛ ایمیل و تلگرام را بعداً اضافه می‌کنی.</p>
     </header>
 
     <form method="post" class="form-panel auth-form" novalidate>
@@ -36,23 +36,31 @@
       <div class="field">
         <label for="{{ form.username.id_for_label }}">نام‌کاربری</label>
         {{ form.username }}
+        {% if form.username.help_text %}<p class="field-hint">{{ form.username.help_text }}</p>{% endif %}
         {{ form.username.errors }}
       </div>
 
       <div class="field">
-        <label for="{{ form.password.id_for_label }}">رمز عبور</label>
-        {{ form.password }}
-        {{ form.password.errors }}
+        <label for="{{ form.password1.id_for_label }}">رمز عبور</label>
+        {{ form.password1 }}
+        {% if form.password1.help_text %}<p class="field-hint">{{ form.password1.help_text }}</p>{% endif %}
+        {{ form.password1.errors }}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.password2.id_for_label }}">تکرار رمز عبور</label>
+        {{ form.password2 }}
+        {{ form.password2.errors }}
       </div>
 
       <div class="form-actions auth-actions">
-        <button type="submit" class="btn btn-primary btn-lg">ورود</button>
+        <button type="submit" class="btn btn-primary btn-lg">ثبت‌نام</button>
       </div>
     </form>
 
     <p class="auth-switch">
-      حساب نداری؟
-      <a href="{% url 'accounts:signup' %}{% if next %}?next={{ next|urlencode }}{% endif %}">ثبت‌نام</a>
+      قبلاً حساب داری؟
+      <a href="{% url 'accounts:login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">ورود</a>
     </p>
   </div>
 </section>

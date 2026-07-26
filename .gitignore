@@ -21,6 +21,8 @@ media/books/entries/audio/*
 
 # IDE / OS
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .DS_Store
 Thumbs.db
+venv/

@@ -1,3 +1,3 @@
-from .auth import LoginView, LogoutView
+from .auth import LoginView, LogoutView, SignupView
 
-__all__ = ['LoginView', 'LogoutView']
+__all__ = ['LoginView', 'LogoutView', 'SignupView']
