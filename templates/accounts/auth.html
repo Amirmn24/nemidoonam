@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if mode == 'signup' %}ثبت‌نام{% else %}ورود{% endif %}{% endblock %}
+{% block body_class %}page-auth{% endblock %}
+
+{% block content %}
+<div
+  class="auth-stage"
+  id="auth-stage"
+  data-mode="{{ mode }}"
+  data-login-url="{% url 'accounts:login' %}"
+  data-signup-url="{% url 'accounts:signup' %}"
+  dir="ltr"
+>
+  <aside class="auth-accent" aria-hidden="true">
+    <div class="auth-accent-inner auth-accent-login">
+      <p class="auth-accent-brand">نمی‌دونم</p>
+      <p class="auth-accent-line">دفتر حس‌ها و ورق‌ها</p>
+      <button type="button" class="auth-accent-btn" data-auth-switch="signup">ثبت‌نام</button>
+    </div>
+    <div class="auth-accent-inner auth-accent-signup">
+      <p class="auth-accent-brand">نمی‌دونم</p>
+      <p class="auth-accent-line">شروع قفسهٔ خودت</p>
+      <button type="button" class="auth-accent-btn" data-auth-switch="login">ورود</button>
+    </div>
+  </aside>
+
+  <div class="auth-forms" dir="rtl">
+    <div class="auth-forms-inner">
+      {% if messages %}
+      <div class="auth-messages" role="status">
+        {% for message in messages %}
+        <div class="toast toast-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <form
+        method="post"
+        action="{% url 'accounts:login' %}"
+        class="auth-form"
+        data-auth-form="login"
+        novalidate
+        {% if mode != 'login' %}hidden{% endif %}
+      >
+        {% csrf_token %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        <h1 class="auth-title">ورود</h1>
+
+        {% if login_form.non_field_errors %}
+        <div class="form-errors">{{ login_form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="field">
+          <label class="visually-hidden" for="{{ login_form.username.id_for_label }}">نام‌کاربری</label>
+          {{ login_form.username }}
+          {{ login_form.username.errors }}
+        </div>
+        <div class="field">
+          <label class="visually-hidden" for="{{ login_form.password.id_for_label }}">رمز عبور</label>
+          {{ login_form.password }}
+          {{ login_form.password.errors }}
+        </div>
+
+        <button type="submit" class="auth-submit auth-submit-login">ورود</button>
+        <p class="auth-mobile-switch">
+          حساب نداری؟
+          <button type="button" data-auth-switch="signup">ثبت‌نام</button>
+        </p>
+      </form>
+
+      <form
+        method="post"
+        action="{% url 'accounts:signup' %}"
+        class="auth-form"
+        data-auth-form="signup"
+        novalidate
+        {% if mode != 'signup' %}hidden{% endif %}
+      >
+        {% csrf_token %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        <h1 class="auth-title">ثبت‌نام</h1>
+
+        {% if signup_form.non_field_errors %}
+        <div class="form-errors">{{ signup_form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="field">
+          <label class="visually-hidden" for="{{ signup_form.username.id_for_label }}">نام‌کاربری</label>
+          {{ signup_form.username }}
+          {{ signup_form.username.errors }}
+        </div>
+        <div class="field">
+          <label class="visually-hidden" for="{{ signup_form.password1.id_for_label }}">رمز عبور</label>
+          {{ signup_form.password1 }}
+          {{ signup_form.password1.errors }}
+        </div>
+        <div class="field">
+          <label class="visually-hidden" for="{{ signup_form.password2.id_for_label }}">تکرار رمز</label>
+          {{ signup_form.password2 }}
+          {{ signup_form.password2.errors }}
+        </div>
+
+        <button type="submit" class="auth-submit auth-submit-signup">ثبت‌نام</button>
+        <p class="auth-mobile-switch">
+          حساب داری؟
+          <button type="button" data-auth-switch="login">ورود</button>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/auth.js' %}"></script>
+{% endblock %}

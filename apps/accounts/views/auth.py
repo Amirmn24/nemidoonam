@@ -6,6 +6,10 @@ from django.views import View
 from apps.accounts.forms import LoginForm, SignupForm
 from apps.accounts.services import login_user, register_user
 
+AUTH_TEMPLATE = 'accounts/auth.html'
+LOGIN_AUTO_ID = 'id_login_%s'
+SIGNUP_AUTO_ID = 'id_signup_%s'
+
 
 def _safe_next_url(next_url: str = '') -> str:
     if next_url and next_url.startswith('/') and not next_url.startswith('//'):
@@ -13,10 +17,23 @@ def _safe_next_url(next_url: str = '') -> str:
     return reverse('books:list')
 
 
-class LoginView(View):
-    template_name = 'accounts/login.html'
-    form_class = LoginForm
+def _auth_context(
+    request,
+    *,
+    mode: str,
+    login_form: LoginForm | None = None,
+    signup_form: SignupForm | None = None,
+    next_url: str = '',
+) -> dict:
+    return {
+        'mode': mode,
+        'login_form': login_form or LoginForm(request, auto_id=LOGIN_AUTO_ID),
+        'signup_form': signup_form or SignupForm(auto_id=SIGNUP_AUTO_ID),
+        'next': next_url,
+    }
 
+
+class LoginView(View):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             return redirect(_safe_next_url())
@@ -25,15 +42,16 @@ class LoginView(View):
     def get(self, request):
         return render(
             request,
-            self.template_name,
-            {
-                'form': self.form_class(request),
-                'next': request.GET.get('next', ''),
-            },
+            AUTH_TEMPLATE,
+            _auth_context(
+                request,
+                mode='login',
+                next_url=request.GET.get('next', ''),
+            ),
         )
 
     def post(self, request):
-        form = self.form_class(request, data=request.POST)
+        form = LoginForm(request, data=request.POST, auto_id=LOGIN_AUTO_ID)
         next_url = request.POST.get('next') or request.GET.get('next') or ''
         if form.is_valid():
             login_user(request, form.get_user())
@@ -44,15 +62,17 @@ class LoginView(View):
             return redirect(_safe_next_url(next_url))
         return render(
             request,
-            self.template_name,
-            {'form': form, 'next': next_url},
+            AUTH_TEMPLATE,
+            _auth_context(
+                request,
+                mode='login',
+                login_form=form,
+                next_url=next_url,
+            ),
         )
 
 
 class SignupView(View):
-    template_name = 'accounts/signup.html'
-    form_class = SignupForm
-
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             return redirect(_safe_next_url())
@@ -61,15 +81,16 @@ class SignupView(View):
     def get(self, request):
         return render(
             request,
-            self.template_name,
-            {
-                'form': self.form_class(),
-                'next': request.GET.get('next', ''),
-            },
+            AUTH_TEMPLATE,
+            _auth_context(
+                request,
+                mode='signup',
+                next_url=request.GET.get('next', ''),
+            ),
         )
 
     def post(self, request):
-        form = self.form_class(request.POST)
+        form = SignupForm(request.POST, auto_id=SIGNUP_AUTO_ID)
         next_url = request.POST.get('next') or request.GET.get('next') or ''
         if form.is_valid():
             user = register_user(
@@ -84,8 +105,13 @@ class SignupView(View):
             return redirect(_safe_next_url(next_url))
         return render(
             request,
-            self.template_name,
-            {'form': form, 'next': next_url},
+            AUTH_TEMPLATE,
+            _auth_context(
+                request,
+                mode='signup',
+                signup_form=form,
+                next_url=next_url,
+            ),
         )
 
 
