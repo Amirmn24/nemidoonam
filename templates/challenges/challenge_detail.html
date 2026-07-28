@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ challenge.title }}{% endblock %}
+{% block body_class %}page-challenge-detail{% endblock %}
+
+{% block content %}
+<section class="detail-hero challenge-detail-hero">
+  <div class="detail-info">
+    <p class="eyebrow">چالش مطالعه</p>
+    <h1>{{ challenge.title }}</h1>
+    {% if challenge.description %}
+    <p class="lead-soft">{{ challenge.description }}</p>
+    {% endif %}
+    <div class="info-row">
+      <span class="status status-challenge-{{ challenge.status }}">{{ challenge.get_status_display }}</span>
+      <span class="meta-pill">{{ challenge.period_label }}</span>
+      <span class="meta-pill">{{ challenge.starts_on|date:"Y/m/d" }} ← {{ challenge.ends_on|date:"Y/m/d" }}</span>
+      {% if progress.days_left %}
+      <span class="meta-pill">{{ progress.days_left }} روز مانده</span>
+      {% elif progress.is_overdue and challenge.status != 'completed' %}
+      <span class="meta-pill">مهلت گذشته</span>
+      {% endif %}
+    </div>
+    <div class="detail-actions">
+      <a href="{% url 'challenges:update' challenge.pk %}" class="btn btn-secondary">ویرایش</a>
+      <a href="{% url 'challenges:list' %}" class="btn btn-ghost">بازگشت</a>
+      <form method="post" action="{% url 'challenges:delete' challenge.pk %}" class="inline-form" onsubmit="return confirm('این چالش حذف شود؟');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger-ghost">حذف</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="detail-layout">
+  <div class="surface">
+    <div class="surface-head">
+      <h2>رصد پیشرفت</h2>
+      <p>زمان سپری‌شده و میانگین پیشرفت کتاب‌ها.</p>
+    </div>
+    <div class="dual-progress dual-progress-lg">
+      <div class="dual-progress-row">
+        <span>روند زمان</span>
+        <strong>{{ progress.time_percent }}٪ · {{ progress.days_elapsed }}/{{ progress.days_total }} روز</strong>
+      </div>
+      <div class="progress large" aria-hidden="true">
+        <span class="progress-time" style="width: {{ progress.time_percent }}%"></span>
+      </div>
+      <div class="dual-progress-row">
+        <span>روند تکمیل</span>
+        <strong>{{ progress.completion_percent }}٪ · {{ progress.books_done }}/{{ progress.books_total }} کتاب تمام</strong>
+      </div>
+      <div class="progress large" aria-hidden="true">
+        <span class="progress-done" style="width: {{ progress.completion_percent }}%"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="surface surface-muted">
+    <div class="surface-head">
+      <h3>خلاصه</h3>
+    </div>
+    <ul class="aside-list challenge-aside">
+      <li><span>وضعیت</span><strong>{{ challenge.get_status_display }}</strong></li>
+      <li><span>مدت</span><strong>{{ challenge.period_label }}</strong></li>
+      <li><span>شروع</span><strong>{{ challenge.starts_on|date:"Y/m/d" }}</strong></li>
+      <li><span>پایان</span><strong>{{ challenge.ends_on|date:"Y/m/d" }}</strong></li>
+      <li><span>کتاب‌ها</span><strong>{{ progress.books_total }}</strong></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section">
+  <div class="page-toolbar">
+    <div class="page-toolbar-copy">
+      <h2>کتاب‌های این چالش</h2>
+      <p>پیشرفت هر کتاب از قفسه شخصی‌ات می‌آید.</p>
+    </div>
+  </div>
+
+  {% if challenge_books %}
+  <div class="book-grid">
+    {% for link in challenge_books %}
+    {% with book=link.book %}
+    <a href="{% url 'books:detail' book.pk %}" class="book-tile">
+      <div class="book-cover">
+        {% if book.cover %}
+        <img src="{{ book.cover.url }}" alt="" loading="lazy">
+        {% else %}
+        <div class="cover-fallback">
+          <span>{{ book.title|truncatechars:20 }}</span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="book-meta">
+        <div class="book-meta-top">
+          <h3>{{ book.title }}</h3>
+          <p class="author">{{ book.author }}</p>
+        </div>
+        <div class="book-meta-foot">
+          <span class="status status-{{ book.status }}">{{ book.get_status_display }}</span>
+          <span class="book-progress-label">{{ book.current_page }}/{{ book.total_pages }}</span>
+        </div>
+        <div class="progress" aria-hidden="true">
+          <span style="width: {{ book.progress_percent }}%"></span>
+        </div>
+      </div>
+    </a>
+    {% endwith %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state compact">
+    <h3>کتابی در این چالش نیست</h3>
+    <p>از ویرایش، کتاب اضافه کن.</p>
+    <a href="{% url 'challenges:update' challenge.pk %}" class="btn btn-primary">ویرایش چالش</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}چالش‌ها{% endblock %}
+{% block body_class %}page-challenges{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">چالش مطالعه</p>
+    <h1>چالش‌های تو</h1>
+    <div class="hero-actions">
+      <a href="{% url 'challenges:create' %}" class="btn btn-primary btn-lg">چالش جدید</a>
+      {% if total_count %}
+      <a href="#challenge-list" class="btn btn-ghost">دیدن لیست</a>
+      {% endif %}
+    </div>
+  </div>
+  {% if total_count %}
+  <div class="hero-stats" aria-label="خلاصه چالش‌ها">
+    <div class="hero-stat">
+      <strong>{{ total_count }}</strong>
+      <span>کل</span>
+    </div>
+    <div class="hero-stat">
+      <strong>{{ active_count }}</strong>
+      <span>فعال</span>
+    </div>
+    <div class="hero-stat">
+      <strong>{{ completed_count }}</strong>
+      <span>تمام‌شده</span>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<section class="section library" id="challenge-list">
+  <div class="page-toolbar">
+    <div class="page-toolbar-copy">
+      <h2>فهرست چالش‌ها</h2>
+      <p>زمان و پیشرفت تکمیل را با هم ببین.</p>
+    </div>
+    <div class="page-toolbar-actions">
+      <a href="{% url 'challenges:create' %}" class="btn btn-ghost">چالش جدید</a>
+    </div>
+  </div>
+
+  <div class="filter-bar" role="navigation" aria-label="فیلتر وضعیت">
+    <a href="{% url 'challenges:list' %}#challenge-list" class="chip {% if not active_status %}is-active{% endif %}">همه</a>
+    {% for value, label in statuses %}
+    <a href="?status={{ value }}#challenge-list" class="chip {% if active_status == value %}is-active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  {% if items %}
+  <div class="challenge-grid">
+    {% for item in items %}
+    {% with challenge=item.challenge progress=item.progress %}
+    <a href="{% url 'challenges:detail' challenge.pk %}" class="challenge-tile">
+      <div class="challenge-tile-head">
+        <h3>{{ challenge.title }}</h3>
+        <span class="status status-challenge-{{ challenge.status }}">{{ challenge.get_status_display }}</span>
+      </div>
+      <p class="challenge-meta">
+        {{ challenge.period_label }}
+        · از {{ challenge.starts_on|date:"Y/m/d" }} تا {{ challenge.ends_on|date:"Y/m/d" }}
+      </p>
+      <div class="dual-progress">
+        <div class="dual-progress-row">
+          <span>زمان</span>
+          <strong>{{ progress.time_percent }}٪</strong>
+        </div>
+        <div class="progress" aria-hidden="true">
+          <span class="progress-time" style="width: {{ progress.time_percent }}%"></span>
+        </div>
+        <div class="dual-progress-row">
+          <span>تکمیل</span>
+          <strong>{{ progress.completion_percent }}٪ · {{ progress.books_done }}/{{ progress.books_total }} کتاب</strong>
+        </div>
+        <div class="progress" aria-hidden="true">
+          <span class="progress-done" style="width: {{ progress.completion_percent }}%"></span>
+        </div>
+      </div>
+    </a>
+    {% endwith %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <h3>{% if active_status %}چالشی با این وضعیت نیست{% else %}هنوز چالشی نیست{% endif %}</h3>
+    <p>{% if active_status %}فیلتر را عوض کن یا چالش جدید بساز.{% else %}یک بازه زمانی بگذار، کتاب‌ها را انتخاب کن و شروع کن.{% endif %}</p>
+    <div class="cluster">
+      {% if active_status %}
+      <a href="{% url 'challenges:list' %}#challenge-list" class="btn btn-ghost">نمایش همه</a>
+      {% endif %}
+      <a href="{% url 'challenges:create' %}" class="btn btn-primary">چالش جدید</a>
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

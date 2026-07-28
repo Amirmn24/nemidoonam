@@ -2069,3 +2069,156 @@ body.page-auth .main-content.container {
     animation: none !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Challenges
+   -------------------------------------------------------------------------- */
+
+.challenge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.15rem;
+}
+
+.challenge-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.15rem 1.2rem 1.25rem;
+  border-radius: 20px;
+  background: rgba(255, 249, 240, 0.78);
+  border: 1px solid var(--line);
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.2s ease;
+}
+
+.challenge-tile:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-sm);
+  border-color: rgba(15, 27, 51, 0.22);
+}
+
+.challenge-tile-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.challenge-tile-head h3 {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.35;
+  color: var(--sky);
+  letter-spacing: -0.02em;
+}
+
+.challenge-meta {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+
+.dual-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.dual-progress-lg {
+  gap: 0.65rem;
+}
+
+.dual-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+}
+
+.dual-progress-row strong {
+  color: var(--sky);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-time {
+  background: linear-gradient(90deg, var(--sky-mid), var(--sky)) !important;
+}
+
+.progress-done {
+  background: linear-gradient(90deg, var(--brand-mid), var(--brand)) !important;
+}
+
+.status-challenge-planned { background: var(--sky-soft); color: var(--sky); }
+.status-challenge-active { background: var(--brand-soft); color: var(--brand); }
+.status-challenge-completed { background: #dce8e2; color: var(--ok); }
+.status-challenge-failed { background: #f0dede; color: var(--danger); }
+.status-challenge-cancelled { background: rgba(90, 85, 76, 0.12); color: var(--ink-soft); }
+
+.challenge-detail-hero {
+  grid-template-columns: 1fr;
+  margin-bottom: 1.25rem;
+}
+
+.lead-soft {
+  margin: 0.35rem 0 0;
+  color: var(--ink-soft);
+  max-width: 40rem;
+}
+
+.challenge-aside li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 12px;
+  background: rgba(255, 249, 240, 0.55);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.challenge-aside li strong {
+  color: var(--sky);
+  font-weight: 650;
+}
+
+.book-pick-list {
+  display: grid;
+  gap: 0.55rem;
+  max-height: 280px;
+  overflow: auto;
+  padding: 0.35rem;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 249, 240, 0.55);
+}
+
+.book-pick-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.book-pick-item:hover {
+  background: rgba(212, 219, 232, 0.45);
+}
+
+.book-pick-item input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--brand);
+  flex-shrink: 0;
+}
+
+.book-pick-item span {
+  font-weight: 500;
+  color: var(--ink);
+}
+
