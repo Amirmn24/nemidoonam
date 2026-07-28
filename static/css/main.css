@@ -29,9 +29,11 @@
   --danger: #8a2438;
   --ok: #2a5244;
 
-  /* Minimal book + pen watermark tile — reused for header/footer/auth */
-  --pattern-ink: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170' viewBox='0 0 170 170'%3E%3Cg fill='none' stroke='%231a2d52' stroke-opacity='0.055' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(18,18) scale(1.3)'%3E%3Cpath d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/%3E%3Cpath d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/%3E%3C/g%3E%3Cg transform='translate(104,100) rotate(18) scale(1.15)'%3E%3Cpath d='M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  --pattern-cream: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170' viewBox='0 0 170 170'%3E%3Cg fill='none' stroke='%23fffaf3' stroke-opacity='0.16' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(18,18) scale(1.3)'%3E%3Cpath d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/%3E%3Cpath d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/%3E%3C/g%3E%3Cg transform='translate(104,100) rotate(18) scale(1.15)'%3E%3Cpath d='M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  /* Doodle open-book tile (like the sketch pattern) */
+  --pattern-books: url("../img/pattern-books.svg");
+  --pattern-books-burgundy: url("../img/pattern-books-burgundy.svg");
+  --pattern-books-light: url("../img/pattern-books-light.svg");
+  --pattern-size: 320px;
 
   --shadow: 0 20px 48px rgba(15, 27, 51, 0.12);
   --shadow-sm: 0 8px 24px rgba(15, 27, 51, 0.08);
@@ -69,9 +71,11 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.035;
   z-index: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: var(--pattern-books);
+  background-repeat: repeat;
+  background-size: var(--pattern-size);
+  opacity: 1;
 }
 
 a {
@@ -107,9 +111,9 @@ img {
   top: 0;
   z-index: 20;
   background-color: var(--sky);
-  background-image: var(--pattern-cream), linear-gradient(120deg, var(--sky) 0%, var(--sky-mid) 60%, #16274a 100%);
+  background-image: var(--pattern-books-light), linear-gradient(120deg, var(--sky) 0%, var(--sky-mid) 60%, #16274a 100%);
   background-repeat: repeat, no-repeat;
-  background-size: 170px 170px, 100% 100%;
+  background-size: var(--pattern-size), 100% 100%;
   box-shadow: 0 14px 30px -12px rgba(15, 27, 51, 0.45);
 }
 
@@ -198,9 +202,9 @@ img {
 
 .site-footer {
   background-color: var(--brand);
-  background-image: var(--pattern-cream), linear-gradient(120deg, var(--brand-mid) 0%, var(--brand) 55%, var(--brand-deep) 100%);
+  background-image: var(--pattern-books-light), linear-gradient(120deg, var(--brand-mid) 0%, var(--brand) 55%, var(--brand-deep) 100%);
   background-repeat: repeat, no-repeat;
-  background-size: 170px 170px, 100% 100%;
+  background-size: var(--pattern-size), 100% 100%;
   border-top: none;
   padding: 1.85rem 0 2.3rem;
   color: rgba(255, 250, 243, 0.78);
@@ -216,11 +220,12 @@ img {
   gap: 1.5rem;
   padding: 1.6rem 1.8rem;
   border-radius: var(--radius);
-  background: linear-gradient(135deg, rgba(255, 249, 240, 0.85), rgba(212, 219, 232, 0.42));
+  background: linear-gradient(135deg, rgba(255, 249, 240, 0.72), rgba(212, 219, 232, 0.32));
   border: 1px solid var(--line);
   box-shadow: var(--shadow-sm);
   margin-bottom: 2rem;
   animation: rise 0.6s var(--ease) both;
+  backdrop-filter: blur(2px);
 }
 
 .hero-copy h1 {
@@ -1584,9 +1589,9 @@ body.page-auth .main-content.container {
   min-height: 100svh;
   overflow: hidden;
   background-color: #efe6d8;
-  background-image: var(--pattern-ink);
+  background-image: var(--pattern-books);
   background-repeat: repeat;
-  background-size: 170px 170px;
+  background-size: var(--pattern-size);
 }
 
 /* Color panel: right + navy on login → left + burgundy on signup */
@@ -1598,9 +1603,9 @@ body.page-auth .main-content.container {
   display: grid;
   place-items: center;
   background-color: var(--sky);
-  background-image: var(--pattern-cream);
+  background-image: var(--pattern-books-light);
   background-repeat: repeat;
-  background-size: 170px 170px;
+  background-size: var(--pattern-size);
   color: #fffaf3;
   transition:
     transform var(--auth-move),
