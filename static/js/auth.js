@@ -9,11 +9,15 @@
     signup: stage.querySelector('[data-auth-form="signup"]'),
   };
 
+  const isMobileLayout = () => window.matchMedia('(max-width: 800px)').matches;
+
   const focusFirst = (mode) => {
     const form = forms[mode];
     if (!form || form.hidden) return;
     const input = form.querySelector('input:not([type="hidden"])');
-    if (input) input.focus({ preventScroll: true });
+    if (input && !isMobileLayout()) {
+      input.focus({ preventScroll: true });
+    }
   };
 
   const setMode = (mode, { push = true } = {}) => {
@@ -38,6 +42,11 @@
       if (current !== next) {
         history.pushState({ authMode: mode }, '', next);
       }
+    }
+
+    if (isMobileLayout()) {
+      stage.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     window.setTimeout(() => focusFirst(mode), 420);

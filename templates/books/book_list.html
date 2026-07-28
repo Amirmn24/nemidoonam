@@ -4,12 +4,11 @@
 {% block body_class %}page-home{% endblock %}
 
 {% block content %}
-{# Hero: brand + one line + CTA — keep first viewport uncluttered #}
+{# Compact intro: brand line + CTA, folded stats — no dead space #}
 <section class="hero">
   <div class="hero-copy">
     <p class="eyebrow">کتابخانه شخصی</p>
-    <h1>نمی‌دونم</h1>
-    <p class="lead">کتاب‌هایت را نگه دار و کنار هر صفحه، حس و دیدگاهت را ثبت کن.</p>
+    <h1>قفسهٔ کتاب‌های تو</h1>
     <div class="hero-actions">
       <a href="{% url 'books:create' %}" class="btn btn-primary btn-lg">افزودن کتاب</a>
       {% if total_count %}
@@ -17,37 +16,23 @@
       {% endif %}
     </div>
   </div>
-  <div class="hero-visual" aria-hidden="true">
-    <div class="shelf-art">
-      <span class="spine spine-a"></span>
-      <span class="spine spine-b"></span>
-      <span class="spine spine-c"></span>
-      <span class="spine spine-d"></span>
+  {% if total_count %}
+  <div class="hero-stats" aria-label="خلاصه قفسه">
+    <div class="hero-stat">
+      <strong>{{ total_count }}</strong>
+      <span>کتاب</span>
+    </div>
+    <div class="hero-stat">
+      <strong>{{ reading_count }}</strong>
+      <span>در حال خواندن</span>
+    </div>
+    <div class="hero-stat">
+      <strong>{{ finished_count }}</strong>
+      <span>تمام‌شده</span>
     </div>
   </div>
+  {% endif %}
 </section>
-
-{# Extensible overview strip — add future widgets here #}
-{% if total_count %}
-<section class="overview-strip" aria-label="خلاصه قفسه">
-  <div class="overview-item">
-    <strong>{{ total_count }}</strong>
-    <span>کتاب</span>
-  </div>
-  <div class="overview-item">
-    <strong>{{ reading_count }}</strong>
-    <span>در حال خواندن</span>
-  </div>
-  <div class="overview-item">
-    <strong>{{ finished_count }}</strong>
-    <span>تمام‌شده</span>
-  </div>
-  {% comment %}
-  Future slots e.g. notes count, streak, search shortcut:
-  <div class="overview-item overview-slot"></div>
-  {% endcomment %}
-</section>
-{% endif %}
 
 <section class="section library" id="library">
   <div class="page-toolbar">

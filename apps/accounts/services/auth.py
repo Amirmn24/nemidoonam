@@ -23,11 +23,18 @@ def register_user(
     *,
     username: str,
     password: str,
+    email: str = '',
+    display_name: str = '',
 ) -> User:
-    """ساخت کاربر جدید — نقطهٔ گسترش برای پروفایل پیش‌فرض و رویدادها."""
+    """ساخت کاربر جدید — نقطهٔ گسترش برای پروفایل پیش‌فرض و رویدادها.
+
+    ایمیل و نام نمایشی اختیاری‌اند و نیازی به یکتا بودن ندارند.
+    """
     return User.objects.create_user(
         username=username.strip(),
         password=password,
+        email=email.strip(),
+        display_name=display_name.strip(),
     )
 
 

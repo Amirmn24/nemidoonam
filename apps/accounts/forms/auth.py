@@ -40,11 +40,11 @@ class LoginForm(AuthenticationForm):
 
 
 class SignupForm(UserCreationForm):
-    """ثبت‌نام با نام‌کاربری و رمز؛ ایمیل و تلگرام بعداً."""
+    """ثبت‌نام با نام‌کاربری و رمز؛ ایمیل و نام نمایشی اختیاری‌اند و لازم نیست یکتا باشند."""
 
     class Meta:
         model = User
-        fields = ('username',)
+        fields = ('username', 'display_name', 'email')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,6 +56,27 @@ class SignupForm(UserCreationForm):
                 'placeholder': 'نام‌کاربری',
                 'autocomplete': 'username',
                 'id': 'id_signup_username',
+            }
+        )
+        self.fields['display_name'].label = 'نام نمایشی'
+        self.fields['display_name'].required = False
+        self.fields['display_name'].help_text = ''
+        self.fields['display_name'].widget.attrs.update(
+            {
+                'class': 'auth-input',
+                'placeholder': 'نام نمایشی (اختیاری)',
+                'autocomplete': 'name',
+                'id': 'id_signup_display_name',
+            }
+        )
+        self.fields['email'].label = 'ایمیل'
+        self.fields['email'].required = False
+        self.fields['email'].widget.attrs.update(
+            {
+                'class': 'auth-input',
+                'placeholder': 'ایمیل (اختیاری)',
+                'autocomplete': 'email',
+                'id': 'id_signup_email',
             }
         )
         self.fields['password1'].label = 'رمز عبور'

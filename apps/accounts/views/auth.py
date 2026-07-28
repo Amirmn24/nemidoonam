@@ -96,6 +96,8 @@ class SignupView(View):
             user = register_user(
                 username=form.cleaned_data['username'],
                 password=form.cleaned_data['password1'],
+                email=form.cleaned_data.get('email', ''),
+                display_name=form.cleaned_data.get('display_name', ''),
             )
             login_user(request, user)
             messages.success(
