@@ -21,8 +21,11 @@ class ChallengeListView(LoginRequiredMixin, View):
 
     def get(self, request):
         refresh_challenges_for_user(request.user)
-        status = request.GET.get('status')
-        challenges = get_challenges_by_status(request.user, status)
+        status = request.GET.get('status') or ''
+        if status and status not in ChallengeStatus.values:
+            status = ''
+        # همه چالش‌ها برای فیلتر سمت‌کلاینت بدون رفرش
+        challenges = get_challenges_by_status(request.user)
         items = [
             {
                 'challenge': challenge,
@@ -34,7 +37,7 @@ class ChallengeListView(LoginRequiredMixin, View):
         context = {
             'items': items,
             'statuses': ChallengeStatus.choices,
-            'active_status': status or '',
+            'active_status': status,
             'total_count': owned.count(),
             'active_count': owned.filter(status=ChallengeStatus.ACTIVE).count(),
             'completed_count': owned.filter(status=ChallengeStatus.COMPLETED).count(),

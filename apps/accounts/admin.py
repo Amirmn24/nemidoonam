@@ -26,6 +26,7 @@ class UserAdmin(DjangoUserAdmin):
             {
                 'fields': (
                     'display_name',
+                    'avatar',
                     'first_name',
                     'last_name',
                     'email',

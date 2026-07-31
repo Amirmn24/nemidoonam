@@ -13,13 +13,16 @@ class BookListView(LoginRequiredMixin, View):
     template_name = 'books/book_list.html'
 
     def get(self, request):
-        status = request.GET.get('status')
-        books = get_books_by_status(request.user, status)
+        status = request.GET.get('status') or ''
+        if status and status not in BookStatus.values:
+            status = ''
+        # همه کتاب‌ها برای فیلتر سمت‌کلاینت بدون رفرش
+        books = get_books_by_status(request.user)
         owned = Book.objects.filter(owner=request.user)
         context = {
             'books': books,
             'statuses': BookStatus.choices,
-            'active_status': status or '',
+            'active_status': status,
             'total_count': owned.count(),
             'reading_count': owned.filter(status=BookStatus.READING).count(),
             'finished_count': owned.filter(status=BookStatus.FINISHED).count(),

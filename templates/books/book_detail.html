@@ -3,8 +3,8 @@
 {% block title %}{{ book.title }}{% endblock %}
 {% block body_class %}page-detail{% endblock %}
 
-{% block nav_actions %}
-<a href="{% url 'books:entry_create' book.pk %}" class="btn btn-primary">یادداشت جدید</a>
+{% block header_cta %}
+<a href="{% url 'books:entry_create' book.pk %}" class="btn btn-primary header-cta">یادداشت جدید</a>
 {% endblock %}
 
 {% block content %}

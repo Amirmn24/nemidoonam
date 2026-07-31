@@ -4,7 +4,6 @@
 {% block body_class %}page-home{% endblock %}
 
 {% block content %}
-{# Compact intro: brand line + CTA, folded stats — no dead space #}
 <section class="hero">
   <div class="hero-copy">
     <p class="eyebrow">کتابخانه شخصی</p>
@@ -42,21 +41,32 @@
     </div>
     <div class="page-toolbar-actions">
       <a href="{% url 'books:create' %}" class="btn btn-ghost">کتاب جدید</a>
-      {% comment %}Future: search, sort, view toggle{% endcomment %}
     </div>
   </div>
 
-  <div class="filter-bar" role="navigation" aria-label="فیلتر وضعیت">
-    <a href="{% url 'books:list' %}#library" class="chip {% if not active_status %}is-active{% endif %}">همه</a>
+  <div
+    class="filter-bar"
+    role="toolbar"
+    aria-label="فیلتر وضعیت"
+    data-list-filter
+    data-param="status"
+    data-items="[data-filter-item]"
+    data-empty="[data-filter-empty]"
+  >
+    <button type="button" class="chip {% if not active_status %}is-active{% endif %}" data-filter="">همه</button>
     {% for value, label in statuses %}
-    <a href="?status={{ value }}#library" class="chip {% if active_status == value %}is-active{% endif %}">{{ label }}</a>
+    <button type="button" class="chip {% if active_status == value %}is-active{% endif %}" data-filter="{{ value }}">{{ label }}</button>
     {% endfor %}
   </div>
 
-  {% if books %}
-  <div class="book-grid">
+  <div class="book-grid" data-filter-list>
     {% for book in books %}
-    <a href="{% url 'books:detail' book.pk %}" class="book-tile">
+    <a
+      href="{% url 'books:detail' book.pk %}"
+      class="book-tile"
+      data-filter-item
+      data-status="{{ book.status }}"
+    >
       <div class="book-cover">
         {% if book.cover %}
         <img src="{{ book.cover.url }}" alt="" loading="lazy">
@@ -82,17 +92,22 @@
     </a>
     {% endfor %}
   </div>
-  {% else %}
-  <div class="empty-state">
-    <h3>{% if active_status %}کتابی با این وضعیت نیست{% else %}هنوز کتابی نیست{% endif %}</h3>
-    <p>{% if active_status %}فیلتر را عوض کن یا کتاب جدید اضافه کن.{% else %}اولین کتابت را اضافه کن و داستان مطالعه‌ات را شروع کن.{% endif %}</p>
+
+  <div
+    class="empty-state"
+    data-filter-empty
+    {% if books %}hidden{% endif %}
+    data-msg-all="هنوز کتابی نیست"
+    data-msg-filtered="کتابی با این وضعیت نیست"
+    data-desc-all="اولین کتابت را اضافه کن و داستان مطالعه‌ات را شروع کن."
+    data-desc-filtered="فیلتر را عوض کن یا کتاب جدید اضافه کن."
+  >
+    <h3 data-empty-title>{% if active_status %}کتابی با این وضعیت نیست{% else %}هنوز کتابی نیست{% endif %}</h3>
+    <p data-empty-desc>{% if active_status %}فیلتر را عوض کن یا کتاب جدید اضافه کن.{% else %}اولین کتابت را اضافه کن و داستان مطالعه‌ات را شروع کن.{% endif %}</p>
     <div class="cluster">
-      {% if active_status %}
-      <a href="{% url 'books:list' %}#library" class="btn btn-ghost">نمایش همه</a>
-      {% endif %}
+      <button type="button" class="btn btn-ghost" data-filter-reset {% if not active_status %}hidden{% endif %}>نمایش همه</button>
       <a href="{% url 'books:create' %}" class="btn btn-primary">افزودن کتاب</a>
     </div>
   </div>
-  {% endif %}
 </section>
 {% endblock %}

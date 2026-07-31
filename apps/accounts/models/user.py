@@ -23,6 +23,12 @@ class User(AbstractUser):
         blank=True,
         help_text='اگر خالی باشد، نام‌کاربری نمایش داده می‌شود.',
     )
+    avatar = models.ImageField(
+        'عکس پروفایل',
+        upload_to='accounts/avatars/',
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = 'کاربر'

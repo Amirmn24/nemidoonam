@@ -44,18 +44,30 @@
     </div>
   </div>
 
-  <div class="filter-bar" role="navigation" aria-label="فیلتر وضعیت">
-    <a href="{% url 'challenges:list' %}#challenge-list" class="chip {% if not active_status %}is-active{% endif %}">همه</a>
+  <div
+    class="filter-bar"
+    role="toolbar"
+    aria-label="فیلتر وضعیت"
+    data-list-filter
+    data-param="status"
+    data-items="[data-filter-item]"
+    data-empty="[data-filter-empty]"
+  >
+    <button type="button" class="chip {% if not active_status %}is-active{% endif %}" data-filter="">همه</button>
     {% for value, label in statuses %}
-    <a href="?status={{ value }}#challenge-list" class="chip {% if active_status == value %}is-active{% endif %}">{{ label }}</a>
+    <button type="button" class="chip {% if active_status == value %}is-active{% endif %}" data-filter="{{ value }}">{{ label }}</button>
     {% endfor %}
   </div>
 
-  {% if items %}
-  <div class="challenge-grid">
+  <div class="challenge-grid" data-filter-list>
     {% for item in items %}
     {% with challenge=item.challenge progress=item.progress %}
-    <a href="{% url 'challenges:detail' challenge.pk %}" class="challenge-tile">
+    <a
+      href="{% url 'challenges:detail' challenge.pk %}"
+      class="challenge-tile"
+      data-filter-item
+      data-status="{{ challenge.status }}"
+    >
       <div class="challenge-tile-head">
         <h3>{{ challenge.title }}</h3>
         <span class="status status-challenge-{{ challenge.status }}">{{ challenge.get_status_display }}</span>
@@ -84,17 +96,22 @@
     {% endwith %}
     {% endfor %}
   </div>
-  {% else %}
-  <div class="empty-state">
-    <h3>{% if active_status %}چالشی با این وضعیت نیست{% else %}هنوز چالشی نیست{% endif %}</h3>
-    <p>{% if active_status %}فیلتر را عوض کن یا چالش جدید بساز.{% else %}یک بازه زمانی بگذار، کتاب‌ها را انتخاب کن و شروع کن.{% endif %}</p>
+
+  <div
+    class="empty-state"
+    data-filter-empty
+    {% if items %}hidden{% endif %}
+    data-msg-all="هنوز چالشی نیست"
+    data-msg-filtered="چالشی با این وضعیت نیست"
+    data-desc-all="یک بازه زمانی بگذار، کتاب‌ها را انتخاب کن و شروع کن."
+    data-desc-filtered="فیلتر را عوض کن یا چالش جدید بساز."
+  >
+    <h3 data-empty-title>{% if active_status %}چالشی با این وضعیت نیست{% else %}هنوز چالشی نیست{% endif %}</h3>
+    <p data-empty-desc>{% if active_status %}فیلتر را عوض کن یا چالش جدید بساز.{% else %}یک بازه زمانی بگذار، کتاب‌ها را انتخاب کن و شروع کن.{% endif %}</p>
     <div class="cluster">
-      {% if active_status %}
-      <a href="{% url 'challenges:list' %}#challenge-list" class="btn btn-ghost">نمایش همه</a>
-      {% endif %}
+      <button type="button" class="btn btn-ghost" data-filter-reset {% if not active_status %}hidden{% endif %}>نمایش همه</button>
       <a href="{% url 'challenges:create' %}" class="btn btn-primary">چالش جدید</a>
     </div>
   </div>
-  {% endif %}
 </section>
 {% endblock %}
