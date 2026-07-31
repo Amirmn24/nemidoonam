@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.books.models import Book, Entry
+from apps.books.models import Book, Entry, UserBook
 
 
 class EntryInline(admin.TabularInline):
@@ -10,20 +10,39 @@ class EntryInline(admin.TabularInline):
     show_change_link = True
 
 
+class UserBookInline(admin.TabularInline):
+    model = UserBook
+    extra = 0
+    autocomplete_fields = ('user',)
+    fields = ('user', 'status', 'current_page', 'notes')
+    show_change_link = True
+
+
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
     list_display = (
         'title',
         'author',
-        'owner',
-        'status',
-        'current_page',
         'total_pages',
         'updated_at',
     )
-    list_filter = ('status', 'owner')
-    search_fields = ('title', 'author', 'owner__username')
-    autocomplete_fields = ('owner',)
+    search_fields = ('title', 'author')
+    inlines = [UserBookInline]
+    readonly_fields = ('title_normalized', 'author_normalized', 'created_at', 'updated_at')
+
+
+@admin.register(UserBook)
+class UserBookAdmin(admin.ModelAdmin):
+    list_display = (
+        'book',
+        'user',
+        'status',
+        'current_page',
+        'updated_at',
+    )
+    list_filter = ('status',)
+    search_fields = ('book__title', 'book__author', 'user__username')
+    autocomplete_fields = ('user', 'book')
     inlines = [EntryInline]
     readonly_fields = ('created_at', 'updated_at')
 
@@ -31,7 +50,7 @@ class BookAdmin(admin.ModelAdmin):
 @admin.register(Entry)
 class EntryAdmin(admin.ModelAdmin):
     list_display = (
-        'book',
+        'user_book',
         'kind',
         'media_type',
         'page_number',
@@ -39,6 +58,6 @@ class EntryAdmin(admin.ModelAdmin):
         'created_at',
     )
     list_filter = ('kind', 'media_type', 'entry_date')
-    search_fields = ('book__title', 'text_content')
-    autocomplete_fields = ('book',)
+    search_fields = ('user_book__book__title', 'text_content')
+    autocomplete_fields = ('user_book',)
     readonly_fields = ('created_at', 'updated_at')

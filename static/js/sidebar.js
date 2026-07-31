@@ -66,11 +66,14 @@
   };
 
   const initCollapsed = () => {
-    let collapsed = false;
+    // پیش‌فرض: سایدبار جمع → محتوا تمام‌عرض
+    let collapsed = true;
     try {
-      collapsed = localStorage.getItem(STORAGE_KEY) === '1';
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === '0') collapsed = false;
+      else if (stored === '1') collapsed = true;
     } catch (_) {
-      collapsed = false;
+      collapsed = true;
     }
     if (!isMobile()) {
       setCollapsed(collapsed);

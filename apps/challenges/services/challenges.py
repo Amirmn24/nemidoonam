@@ -114,10 +114,26 @@ def compute_progress(
         completion_percent = 0
         books_done = 0
     else:
-        completion_percent = round(
-            sum(book.progress_percent for book in books) / books_total
-        )
-        books_done = sum(1 for book in books if book.status == BookStatus.FINISHED)
+        from apps.books.models import UserBook
+
+        shelf = {
+            ub.book_id: ub
+            for ub in UserBook.objects.filter(
+                user=challenge.owner_id,
+                book_id__in=[b.pk for b in books],
+            )
+        }
+        percents = []
+        books_done = 0
+        for book in books:
+            ub = shelf.get(book.pk)
+            if ub is None:
+                percents.append(0)
+                continue
+            percents.append(ub.progress_percent)
+            if ub.status == BookStatus.FINISHED:
+                books_done += 1
+        completion_percent = round(sum(percents) / books_total)
 
     return ChallengeProgress(
         time_percent=time_percent,

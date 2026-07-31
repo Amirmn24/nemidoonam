@@ -3,16 +3,16 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
-from .book import Book
+from .book import UserBook
 from .choices import EntryKind, EntryMediaType
 
 
 class Entry(models.Model):
-    book = models.ForeignKey(
-        Book,
+    user_book = models.ForeignKey(
+        UserBook,
         on_delete=models.CASCADE,
         related_name='entries',
-        verbose_name='کتاب',
+        verbose_name='کتاب قفسه',
     )
     media_type = models.CharField(
         'نوع محتوا',
@@ -53,18 +53,26 @@ class Entry(models.Model):
         verbose_name = 'یادداشت'
         verbose_name_plural = 'یادداشت‌ها'
         indexes = [
-            models.Index(fields=['book', 'page_number']),
-            models.Index(fields=['book', 'kind']),
+            models.Index(fields=['user_book', 'page_number']),
+            models.Index(fields=['user_book', 'kind']),
         ]
 
     def __str__(self) -> str:
         return f'{self.get_kind_display()} · صفحه {self.page_number}'
 
+    @property
+    def book(self):
+        return self.user_book.book
+
     def clean(self):
         super().clean()
         errors = {}
 
-        if self.book_id and self.page_number and self.page_number > self.book.total_pages:
+        if (
+            self.user_book_id
+            and self.page_number
+            and self.page_number > self.user_book.book.total_pages
+        ):
             errors['page_number'] = 'شماره صفحه نمی‌تواند بیشتر از تعداد صفحات کتاب باشد.'
 
         if self.media_type == EntryMediaType.TEXT and not self.text_content.strip():

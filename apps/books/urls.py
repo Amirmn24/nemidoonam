@@ -1,11 +1,13 @@
 from django.urls import path
 
 from apps.books.views import (
+    BookAddToShelfView,
     BookCreateView,
     BookDeleteView,
     BookDetailView,
     BookListView,
     BookProgressUpdateView,
+    BookSuggestView,
     BookUpdateView,
     EntryCreateView,
     EntryDeleteView,
@@ -17,6 +19,8 @@ app_name = 'books'
 urlpatterns = [
     path('', BookListView.as_view(), name='list'),
     path('new/', BookCreateView.as_view(), name='create'),
+    path('suggest/', BookSuggestView.as_view(), name='suggest'),
+    path('catalog/<int:pk>/add/', BookAddToShelfView.as_view(), name='add_to_shelf'),
     path('<int:pk>/', BookDetailView.as_view(), name='detail'),
     path('<int:pk>/edit/', BookUpdateView.as_view(), name='update'),
     path('<int:pk>/delete/', BookDeleteView.as_view(), name='delete'),

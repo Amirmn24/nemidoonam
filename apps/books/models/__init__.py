@@ -1,4 +1,4 @@
-from .book import Book
+from .book import Book, UserBook
 from .choices import BookStatus, EntryKind, EntryMediaType
 from .entry import Entry
 
@@ -8,4 +8,5 @@ __all__ = [
     'Entry',
     'EntryKind',
     'EntryMediaType',
+    'UserBook',
 ]

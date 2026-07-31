@@ -1,19 +1,56 @@
 {% extends 'base.html' %}
 
 {% block title %}{{ page_title }}{% endblock %}
+{% block body_class %}page-book-form{% endblock %}
 
 {% block content %}
 <section class="section form-page">
   <div class="section-head">
     <p class="eyebrow">کتابخانه</p>
     <h1>{{ page_title }}</h1>
-    <p>عنوان، نویسنده، تعداد صفحات و وضعیت مطالعه را وارد کن.</p>
+    <p>کتاب در کل سیستم یکتاست؛ اگر از قبل باشد به قفسه‌ات اضافه می‌شود.</p>
   </div>
 
-  <form method="post" enctype="multipart/form-data" class="form-panel">
+  <form
+    method="post"
+    enctype="multipart/form-data"
+    class="form-panel"
+    id="book-form"
+    data-suggest-url="{{ suggest_url }}"
+    {% if book %}data-exclude-pk="{{ book.book_id }}"{% endif %}
+  >
     {% csrf_token %}
+    {{ form.catalog_book_id }}
     {% if form.non_field_errors %}
     <div class="form-errors">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    {% if existing_book %}
+    <div class="book-dup-banner is-exact" role="status">
+      <div>
+        <strong>این کتاب از قبل در قفسه‌ات هست</strong>
+        <p>«{{ existing_book.title }}» — {{ existing_book.author }}</p>
+      </div>
+      <a href="{% url 'books:detail' existing_book.pk %}" class="btn btn-primary">رفتن به همان کتاب</a>
+    </div>
+    {% elif existing_catalog_book %}
+    <div class="book-dup-banner is-similar" role="status">
+      <div>
+        <strong>این کتاب در کتابخانه هست</strong>
+        <p>«{{ existing_catalog_book.title }}» — {{ existing_catalog_book.author }} — اطلاعاتش در فرم پر شده؛ با ذخیره به قفسه‌ات اضافه می‌شود.</p>
+      </div>
+      <button
+        type="button"
+        class="btn btn-primary"
+        data-fill-book
+        data-id="{{ existing_catalog_book.pk }}"
+        data-title="{{ existing_catalog_book.title }}"
+        data-author="{{ existing_catalog_book.author }}"
+        data-pages="{{ existing_catalog_book.total_pages }}"
+      >
+        پر کردن فرم
+      </button>
+    </div>
     {% endif %}
 
     <div class="form-step">
@@ -21,18 +58,81 @@
         <span class="form-step-num">۱</span>
         <span>شناسه کتاب</span>
       </div>
+      <p class="form-step-hint">عنوان و نویسنده از کل کتابخانه پیشنهاد می‌شوند. انتخاب فقط فرم را پر می‌کند؛ با ذخیره به قفسه اضافه می‌شود.</p>
       <div class="form-grid">
-        <div class="field">
+        <div class="field book-suggest-field">
           <label for="{{ form.title.id_for_label }}">عنوان</label>
           {{ form.title }}
           {{ form.title.errors }}
+          <div class="book-suggest-dropdown" data-suggest-panel="books" hidden>
+            <div class="book-suggest-head">
+              <strong>پیشنهاد کتاب</strong>
+              <span>از کل کتابخانه</span>
+            </div>
+            <ul class="book-suggest-list" data-suggest-list="books"></ul>
+          </div>
         </div>
-        <div class="field">
+        <div class="field book-suggest-field">
           <label for="{{ form.author.id_for_label }}">نویسنده</label>
           {{ form.author }}
           {{ form.author.errors }}
+          <div class="book-suggest-dropdown" data-suggest-panel="authors" hidden>
+            <div class="book-suggest-head">
+              <strong>پیشنهاد نویسنده</strong>
+              <span>نام‌های ثبت‌شده</span>
+            </div>
+            <ul class="book-suggest-list" data-suggest-list="authors"></ul>
+          </div>
         </div>
       </div>
+
+      <div class="book-suggest-panel" data-book-suggest hidden>
+        <div class="book-suggest-head">
+          <strong data-suggest-heading>کتاب‌های شبیه</strong>
+          <span data-suggest-hint>اگر همان کتاب است، به قفسه اضافه کن.</span>
+        </div>
+        <ul class="book-suggest-list" data-suggest-list="match"></ul>
+      </div>
+
+      {% if similar_matches %}
+      <div class="book-dup-banner is-similar" role="status">
+        <div>
+          <strong>کتاب‌های شبیه پیدا شد</strong>
+          <p>اگر منظورت یکی از این‌هاست، انتخاب کن تا فرم پر شود؛ بعد با ذخیره به قفسه اضافه می‌شود.</p>
+        </div>
+        <ul class="book-suggest-list">
+          {% for match in similar_matches %}
+          <li>
+            {% if match.on_shelf and match.shelf_id %}
+            <a class="book-suggest-item" href="{% url 'books:detail' match.shelf_id %}">
+              <span class="book-suggest-copy">
+                <strong>{{ match.book.title }}</strong>
+                <small>{{ match.book.author }} · در قفسه تو</small>
+              </span>
+              <span class="book-suggest-badge">باز کردن</span>
+            </a>
+            {% else %}
+            <button
+              type="button"
+              class="book-suggest-item"
+              data-fill-book
+              data-id="{{ match.book.pk }}"
+              data-title="{{ match.book.title }}"
+              data-author="{{ match.book.author }}"
+              data-pages="{{ match.book.total_pages }}"
+            >
+              <span class="book-suggest-copy">
+                <strong>{{ match.book.title }}</strong>
+                <small>{{ match.book.author }} · در کتابخانه</small>
+              </span>
+              <span class="book-suggest-badge">انتخاب</span>
+            </button>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
     </div>
 
     <div class="form-step">
@@ -76,6 +176,13 @@
       </div>
     </div>
 
+    {% if similar_matches %}
+    <label class="book-confirm-similar">
+      {{ form.confirm_similar }}
+      <span>{{ form.confirm_similar.label }}</span>
+    </label>
+    {% endif %}
+
     <div class="form-actions">
       <button type="submit" class="btn btn-primary">ذخیره</button>
       {% if book %}
@@ -86,4 +193,9 @@
     </div>
   </form>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/book-form.js' %}"></script>
 {% endblock %}

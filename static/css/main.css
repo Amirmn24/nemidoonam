@@ -1168,6 +1168,170 @@ textarea:focus {
   font-size: 0.9rem;
 }
 
+/* Book duplicate / suggest UI */
+.book-suggest-field {
+  position: relative;
+}
+
+.book-suggest-dropdown {
+  position: absolute;
+  inset-inline: 0;
+  top: calc(100% + 0.35rem);
+  z-index: 20;
+  padding: 0.7rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: rgba(255, 250, 243, 0.98);
+  box-shadow: var(--shadow);
+  max-height: 16rem;
+  overflow: auto;
+}
+
+.book-suggest-dropdown[hidden],
+.book-suggest-panel[hidden] {
+  display: none !important;
+}
+
+.book-suggest-panel,
+.book-dup-banner {
+  margin-top: 0.9rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: rgba(255, 249, 240, 0.88);
+  box-shadow: var(--shadow-sm);
+}
+
+.book-suggest-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  margin-bottom: 0.65rem;
+}
+
+.book-suggest-head strong {
+  color: var(--sky);
+  font-size: 0.95rem;
+}
+
+.book-suggest-head span {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.book-suggest-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.book-suggest-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 250, 243, 0.95);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s var(--ease), background 0.2s ease;
+}
+
+a.book-suggest-item {
+  text-decoration: none;
+}
+
+.book-suggest-item:hover {
+  border-color: rgba(15, 27, 51, 0.28);
+  background: #fffaf3;
+  transform: translateY(-1px);
+}
+
+.book-suggest-copy {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.book-suggest-copy strong {
+  color: var(--sky);
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.book-suggest-copy small {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+
+.book-suggest-badge {
+  flex-shrink: 0;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  background: var(--sky-soft);
+  color: var(--sky);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.book-dup-banner {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.book-dup-banner.is-exact {
+  border-color: rgba(138, 36, 56, 0.28);
+  background: linear-gradient(165deg, rgba(247, 232, 235, 0.95), rgba(255, 249, 240, 0.9));
+}
+
+.book-dup-banner.is-similar {
+  border-color: rgba(15, 27, 51, 0.18);
+  background: linear-gradient(165deg, rgba(212, 219, 232, 0.45), rgba(255, 249, 240, 0.92));
+}
+
+.book-dup-banner strong {
+  display: block;
+  color: var(--sky);
+  margin-bottom: 0.2rem;
+}
+
+.book-dup-banner p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.book-dup-banner .book-suggest-list {
+  margin-top: 0.25rem;
+}
+
+.book-confirm-similar {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(107, 20, 44, 0.35);
+  background: rgba(234, 208, 215, 0.35);
+  color: var(--ink);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.book-confirm-similar input {
+  margin-top: 0.2rem;
+}
+
 .entry-timeline {
   display: grid;
   gap: 1rem;
@@ -2431,33 +2595,26 @@ body.page-auth .main-content.container {
   min-height: calc(100dvh - var(--header-height));
 }
 
-/* فقط محتوا کنار می‌رود؛ هدر/فوتر تمام‌عرض می‌مانند تا زیر سایدبار دیده شوند */
+/* محتوا کنار ریل جمع‌شده تمام‌عرض است؛ با باز شدن سایدبار جمع می‌شود */
+body.has-sidebar {
+  --sidebar-offset: var(--sidebar-width-collapsed);
+}
+
+body.has-sidebar:not(.sidebar-collapsed) {
+  --sidebar-offset: var(--sidebar-width);
+}
+
 body.has-sidebar .main-content.container,
 body.has-sidebar .messages.container {
-  margin-inline-start: max(
-    1rem,
-    calc(var(--sidebar-width) + 0.35rem)
-  );
-  margin-inline-end: auto;
-  width: min(
-    var(--max),
-    calc(100% - 2rem - var(--sidebar-width) + 0.65rem)
-  );
+  --content-gutter-start: max(1rem, calc(var(--sidebar-offset) + 0.35rem));
+  --content-gutter-end: 1rem;
+  margin-inline-start: var(--content-gutter-start);
+  margin-inline-end: var(--content-gutter-end);
+  width: calc(100% - var(--content-gutter-start) - var(--content-gutter-end));
+  max-width: none;
   transition:
     margin-inline-start 0.4s var(--sidebar-ease),
     width 0.4s var(--sidebar-ease);
-}
-
-body.has-sidebar.sidebar-collapsed .main-content.container,
-body.has-sidebar.sidebar-collapsed .messages.container {
-  margin-inline-start: max(
-    1rem,
-    calc(var(--sidebar-width-collapsed) + 0.35rem)
-  );
-  width: min(
-    var(--max),
-    calc(100% - 2rem - var(--sidebar-width-collapsed) + 0.65rem)
-  );
 }
 
 .site-sidebar {
@@ -3204,12 +3361,11 @@ body.vocab-modal-open {
 
 @media (max-width: 900px) {
   body.has-sidebar .main-content.container,
-  body.has-sidebar .messages.container,
-  body.has-sidebar.sidebar-collapsed .main-content.container,
-  body.has-sidebar.sidebar-collapsed .messages.container {
+  body.has-sidebar .messages.container {
     margin-inline-start: auto;
     margin-inline-end: auto;
     width: min(var(--max), calc(100% - 2rem));
+    max-width: none;
   }
 
   body.has-sidebar .main-content {

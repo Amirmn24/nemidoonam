@@ -32,7 +32,8 @@ class EntryForm(forms.ModelForm):
         }
 
     def __init__(self, *args, book=None, **kwargs):
-        self.book = book
+        # `book` is the user's shelf item (UserBook)
+        self.user_book = book
         super().__init__(*args, **kwargs)
         for name, field in self.fields.items():
             css = 'field-input'
@@ -55,7 +56,7 @@ class EntryForm(forms.ModelForm):
         audio = cleaned.get('audio')
         page_number = cleaned.get('page_number')
 
-        if self.book and page_number and page_number > self.book.total_pages:
+        if self.user_book and page_number and page_number > self.user_book.total_pages:
             raise ValidationError(
                 {'page_number': 'شماره صفحه نمی‌تواند بیشتر از تعداد صفحات کتاب باشد.'}
             )
@@ -72,8 +73,8 @@ class EntryForm(forms.ModelForm):
 
     def save(self, commit=True):
         entry = super().save(commit=False)
-        if self.book is not None:
-            entry.book = self.book
+        if self.user_book is not None:
+            entry.user_book = self.user_book
         if commit:
             entry.save()
         return entry

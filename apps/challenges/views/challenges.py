@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 
+from apps.books.models import UserBook
 from apps.challenges.forms import ChallengeForm
 from apps.challenges.models import Challenge, ChallengeStatus
 from apps.challenges.services import (
@@ -89,7 +90,18 @@ class ChallengeDetailView(LoginRequiredMixin, View):
         )
         refresh_status(challenge)
         progress = compute_progress(challenge)
-        challenge_books = challenge.challenge_books.select_related('book')
+        challenge_books = list(
+            challenge.challenge_books.select_related('book')
+        )
+        shelf_by_book = {
+            ub.book_id: ub
+            for ub in UserBook.objects.filter(
+                user=request.user,
+                book_id__in=[link.book_id for link in challenge_books],
+            )
+        }
+        for link in challenge_books:
+            link.shelf_book = shelf_by_book.get(link.book_id)
         context = {
             'challenge': challenge,
             'progress': progress,

@@ -81,8 +81,8 @@
   {% if challenge_books %}
   <div class="book-grid">
     {% for link in challenge_books %}
-    {% with book=link.book %}
-    <a href="{% url 'books:detail' book.pk %}" class="book-tile">
+    {% with book=link.book shelf=link.shelf_book %}
+    <a href="{% if shelf %}{% url 'books:detail' shelf.pk %}{% else %}#{% endif %}" class="book-tile">
       <div class="book-cover">
         {% if book.cover %}
         <img src="{{ book.cover.url }}" alt="" loading="lazy">
@@ -98,11 +98,16 @@
           <p class="author">{{ book.author }}</p>
         </div>
         <div class="book-meta-foot">
-          <span class="status status-{{ book.status }}">{{ book.get_status_display }}</span>
-          <span class="book-progress-label">{{ book.current_page }}/{{ book.total_pages }}</span>
+          {% if shelf %}
+          <span class="status status-{{ shelf.status }}">{{ shelf.get_status_display }}</span>
+          <span class="book-progress-label">{{ shelf.current_page }}/{{ book.total_pages }}</span>
+          {% else %}
+          <span class="status">خارج از قفسه</span>
+          <span class="book-progress-label">—/{{ book.total_pages }}</span>
+          {% endif %}
         </div>
         <div class="progress" aria-hidden="true">
-          <span style="width: {{ book.progress_percent }}%"></span>
+          <span style="width: {% if shelf %}{{ shelf.progress_percent }}{% else %}0{% endif %}%"></span>
         </div>
       </div>
     </a>

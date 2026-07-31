@@ -1,7 +1,7 @@
 from django import forms
 from django.utils import timezone
 
-from apps.books.models import Book
+from apps.books.models import Book, UserBook
 from apps.challenges.models import Challenge
 from apps.challenges.services import compute_ends_on
 
@@ -9,7 +9,7 @@ from apps.challenges.services import compute_ends_on
 class ChallengeForm(forms.ModelForm):
     books = forms.ModelMultipleChoiceField(
         label='کتاب‌ها',
-        queryset=Book.objects.none(),
+        queryset=UserBook.objects.none(),
         widget=forms.CheckboxSelectMultiple,
         help_text='حداقل یک کتاب از قفسه خودت انتخاب کن.',
     )
@@ -39,11 +39,19 @@ class ChallengeForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
-        self.fields['books'].queryset = Book.objects.filter(owner=user).order_by(
-            'title'
+        self.fields['books'].queryset = (
+            UserBook.objects.filter(user=user)
+            .select_related('book')
+            .order_by('book__title')
+        )
+        self.fields['books'].label_from_instance = (
+            lambda ub: f'{ub.book.title} — {ub.book.author}'
         )
         if self.instance and self.instance.pk:
-            self.fields['books'].initial = self.instance.books.all()
+            self.fields['books'].initial = UserBook.objects.filter(
+                user=user,
+                book__in=self.instance.books.all(),
+            )
         else:
             self.fields['starts_on'].initial = timezone.localdate()
 
@@ -62,13 +70,15 @@ class ChallengeForm(forms.ModelForm):
         self.fields['starts_on'].label = 'تاریخ شروع'
 
     def clean_books(self):
-        books = self.cleaned_data['books']
-        if not books.exists():
+        shelf_books = self.cleaned_data['books']
+        if not shelf_books.exists():
             raise forms.ValidationError('حداقل یک کتاب انتخاب کن.')
-        invalid = books.exclude(owner=self.user)
+        invalid = shelf_books.exclude(user=self.user)
         if invalid.exists():
-            raise forms.ValidationError('فقط کتاب‌های خودت را می‌توانی انتخاب کنی.')
-        return books
+            raise forms.ValidationError('فقط کتاب‌های قفسه خودت را می‌توانی انتخاب کنی.')
+        # Store catalog Book objects for challenge M2M
+        return Book.objects.filter(pk__in=shelf_books.values_list('book_id', flat=True))
+
 
     def clean(self):
         cleaned = super().clean()
