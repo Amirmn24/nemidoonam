@@ -121,6 +121,25 @@
           </span>
         </a>
         <a
+          href="{% url 'vocabulary:list' %}"
+          class="sidebar-link {% if request.resolver_match.app_name == 'vocabulary' %}is-active{% endif %}"
+          title="واژه‌نامه"
+          data-sidebar-link
+        >
+          <span class="sidebar-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 4h10v16H7z"/>
+              <path d="M10 8h4"/>
+              <path d="M9 12h6"/>
+              <path d="M10 16h4"/>
+            </svg>
+          </span>
+          <span class="sidebar-label">
+            <span class="sidebar-label-title">واژه‌نامه</span>
+            <span class="sidebar-label-sub">فلش‌کارت واژه</span>
+          </span>
+        </a>
+        <a
           href="{% url 'accounts:profile' %}"
           class="sidebar-link {% if request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name == 'profile' %}is-active{% endif %}"
           title="پروفایل"
@@ -180,6 +199,18 @@
         <path d="M12 3l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 15.9 7.2 18l.9-5.4L4.2 8.7l5.4-.8z"/>
       </svg>
       <span>چالش‌ها</span>
+    </a>
+    <a
+      href="{% url 'vocabulary:list' %}"
+      class="mobile-dock-item {% if request.resolver_match.app_name == 'vocabulary' %}is-active{% endif %}"
+    >
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M7 4h10v16H7z"/>
+        <path d="M10 8h4"/>
+        <path d="M9 12h6"/>
+        <path d="M10 16h4"/>
+      </svg>
+      <span>واژه</span>
     </a>
     <button type="button" class="mobile-dock-item" data-sidebar-toggle aria-controls="site-sidebar" aria-expanded="false" aria-label="باز کردن منو">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">

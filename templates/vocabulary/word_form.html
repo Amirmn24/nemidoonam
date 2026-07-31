@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block body_class %}page-vocabulary-form{% endblock %}
+
+{% block content %}
+<section class="section form-page">
+  <div class="section-head">
+    <p class="eyebrow">واژه‌نامه</p>
+    <h1>{{ page_title }}</h1>
+    <p>واژه و معنی را بنویس؛ کاربرد و تلفظ اختیاری‌اند.</p>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="form-panel" id="vocab-form">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="form-errors">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="form-step">
+      <div class="form-step-label">
+        <span class="form-step-num">۱</span>
+        <span>واژه و معنی</span>
+      </div>
+      <div class="form-grid">
+        <div class="field full">
+          <label for="{{ form.term.id_for_label }}">واژه</label>
+          {{ form.term }}
+          {{ form.term.errors }}
+        </div>
+        <div class="field full">
+          <label for="{{ form.meaning.id_for_label }}">معنی</label>
+          {{ form.meaning }}
+          {{ form.meaning.errors }}
+        </div>
+      </div>
+    </div>
+
+    <div class="form-step">
+      <div class="form-step-label">
+        <span class="form-step-num">۲</span>
+        <span>کاربرد در جمله</span>
+      </div>
+      <p class="form-step-hint">اختیاری — روی فلش‌کارت با دکمه «i» دیده می‌شود.</p>
+      <div class="form-grid">
+        <div class="field full">
+          <label for="{{ form.usage.id_for_label }}">جمله نمونه</label>
+          {{ form.usage }}
+          {{ form.usage.errors }}
+        </div>
+      </div>
+    </div>
+
+    <div class="form-step">
+      <div class="form-step-label">
+        <span class="form-step-num">۳</span>
+        <span>تلفظ (ویس)</span>
+      </div>
+      <p class="form-step-hint">اختیاری — روی فلش‌کارت با دکمه پخش شنیده می‌شود.</p>
+
+      <span class="visually-hidden">
+        <label for="{{ form.audio.id_for_label }}">فایل صوتی</label>
+        {{ form.audio }}
+      </span>
+      {{ form.audio.errors }}
+
+      <div class="voice-recorder" id="voice-recorder"
+           {% if word and word.audio %}data-has-existing="1"{% endif %}>
+        {% if word and word.audio %}
+        <div class="voice-existing" id="voice-existing">
+          <p>تلفظ فعلی — می‌توانی دوباره ضبط کنی تا جایگزین شود.</p>
+          <audio controls src="{{ word.audio.url }}"></audio>
+          <label class="voice-clear">
+            <input type="checkbox" name="clear_audio" value="1">
+            حذف تلفظ فعلی
+          </label>
+        </div>
+        {% endif %}
+
+        <p class="voice-status" id="voice-status">برای شروع، دکمه میکروفون را بزن</p>
+        <div class="voice-timer" id="voice-timer" aria-live="polite">00:00</div>
+        <div class="voice-wave" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="voice-controls">
+          <button type="button" class="btn-record" id="voice-toggle" aria-label="شروع ضبط"></button>
+          <button type="button" class="btn btn-ghost" id="voice-rerecord" hidden>ضبط دوباره</button>
+        </div>
+        <div class="voice-playback" id="voice-playback">
+          <audio id="voice-preview" controls></audio>
+        </div>
+        <p class="voice-error" id="voice-error" role="alert"></p>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">ذخیره</button>
+      <a href="{% url 'vocabulary:list' %}" class="btn btn-ghost">انصراف</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/vocabulary-form.js' %}"></script>
+{% endblock %}

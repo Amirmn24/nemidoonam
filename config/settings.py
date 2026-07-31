@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.books',
     'apps.challenges',
+    'apps.vocabulary',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
