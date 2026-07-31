@@ -19,12 +19,25 @@
   </div>
 </section>
 
-<section class="section narrow">
+<section class="section form-page">
   <div class="section-head">
     <p class="eyebrow">ویرایش</p>
     <h2>اطلاعات پروفایل</h2>
-    <p>نام نمایشی، ایمیل، تلگرام و عکس را اینجا کامل یا به‌روز کن.</p>
+    <p>نام نمایشی، تلگرام و عکس را اینجا کامل یا به‌روز کن.</p>
   </div>
+
+  <dl class="profile-readonly">
+    <div class="profile-readonly-item">
+      <dt>نام‌کاربری</dt>
+      <dd>@{{ profile_user.username }}</dd>
+    </div>
+    {% if profile_user.email %}
+    <div class="profile-readonly-item">
+      <dt>ایمیل</dt>
+      <dd>{{ profile_user.email }}</dd>
+    </div>
+    {% endif %}
+  </dl>
 
   <form method="post" enctype="multipart/form-data" class="form-panel profile-form">
     {% csrf_token %}
@@ -37,7 +50,7 @@
         <span class="form-step-num">۱</span>
         <span>هویت</span>
       </div>
-      <div class="form-grid">
+      <div class="form-grid form-grid-3">
         <div class="field">
           <label for="{{ form.display_name.id_for_label }}">نام نمایشی</label>
           {{ form.display_name }}
@@ -62,11 +75,6 @@
         <span>ارتباط</span>
       </div>
       <div class="form-grid">
-        <div class="field">
-          <label for="{{ form.email.id_for_label }}">ایمیل</label>
-          {{ form.email }}
-          {{ form.email.errors }}
-        </div>
         <div class="field">
           <label for="{{ form.telegram_id.id_for_label }}">آیدی تلگرام</label>
           {{ form.telegram_id }}

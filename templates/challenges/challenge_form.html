@@ -4,7 +4,7 @@
 {% block body_class %}page-challenge-form{% endblock %}
 
 {% block content %}
-<section class="section narrow">
+<section class="section form-page">
   <div class="section-head">
     <p class="eyebrow">چالش</p>
     <h1>{{ page_title }}</h1>
@@ -42,7 +42,7 @@
         <span>بازه زمانی</span>
       </div>
       <p class="form-step-hint">واحد (روز / هفته / ماه) و تعداد را بگذار؛ تاریخ پایان خودکار حساب می‌شود.</p>
-      <div class="form-grid">
+      <div class="form-grid form-grid-3">
         <div class="field">
           <label for="{{ form.period_unit.id_for_label }}">واحد زمان</label>
           {{ form.period_unit }}

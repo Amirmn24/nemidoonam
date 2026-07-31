@@ -391,6 +391,43 @@ img {
   max-width: 720px;
 }
 
+.section.form-page {
+  width: 100%;
+  max-width: none;
+}
+
+.profile-readonly {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+}
+
+.profile-readonly-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  background: rgba(255, 249, 240, 0.72);
+  border: 1px solid var(--line);
+}
+
+.profile-readonly-item dt {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.profile-readonly-item dd {
+  margin: 0;
+  color: var(--sky);
+  font-weight: 650;
+  word-break: break-word;
+}
+
 .panel {
   padding: 1.45rem;
   border-radius: var(--radius);
@@ -670,6 +707,7 @@ img {
 .progress-form,
 .form-panel {
   margin-top: 0.5rem;
+  width: 100%;
 }
 
 .form-panel {
@@ -817,6 +855,10 @@ img {
 
 .form-grid.two {
   grid-template-columns: 1fr 1fr;
+}
+
+.form-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .field {
@@ -1295,10 +1337,17 @@ textarea:focus {
   100% { box-shadow: 0 0 0 0 rgba(107, 20, 44, 0), 0 12px 28px rgba(107, 20, 44, 0.3); }
 }
 
+@media (max-width: 1100px) {
+  .form-grid-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 860px) {
   .detail-top,
   .form-grid,
-  .form-grid.two {
+  .form-grid.two,
+  .form-grid-3 {
     grid-template-columns: 1fr;
   }
 
@@ -1324,6 +1373,34 @@ textarea:focus {
   .choice-grid {
     grid-template-columns: 1fr;
   }
+
+  .form-panel {
+    padding: 1.25rem 1.1rem;
+  }
+
+  .profile-avatar-field {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .profile-avatar-preview {
+    margin-inline: auto;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .book-pick-list {
+    max-height: none;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1341,7 +1418,33 @@ textarea:focus {
   }
 
   .form-panel {
-    padding: 1.15rem;
+    padding: 1rem 0.85rem;
+    border-radius: 18px;
+  }
+
+  .form-step {
+    margin-bottom: 1.15rem;
+    padding-bottom: 1.1rem;
+  }
+
+  .section-head h1,
+  .section-head h2 {
+    font-size: 1.35rem;
+  }
+
+  .field-input,
+  .field-textarea,
+  .field-select,
+  .field-file,
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  input[type="password"],
+  input[type="email"],
+  select,
+  textarea {
+    padding: 0.72rem 0.85rem;
+    font-size: 1rem;
   }
 
   .choice-grid {
@@ -1354,6 +1457,10 @@ textarea:focus {
 
   .choice-card {
     padding: 0.85rem 0.4rem;
+  }
+
+  .profile-readonly {
+    grid-template-columns: 1fr;
   }
 }
 

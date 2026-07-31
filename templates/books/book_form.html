@@ -3,7 +3,7 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<section class="section narrow">
+<section class="section form-page">
   <div class="section-head">
     <p class="eyebrow">کتابخانه</p>
     <h1>{{ page_title }}</h1>
@@ -40,7 +40,7 @@
         <span class="form-step-num">۲</span>
         <span>پیشرفت مطالعه</span>
       </div>
-      <div class="form-grid">
+      <div class="form-grid form-grid-3">
         <div class="field">
           <label for="{{ form.total_pages.id_for_label }}">تعداد صفحات</label>
           {{ form.total_pages }}

@@ -4,7 +4,7 @@ from apps.accounts.models import User
 
 
 class ProfileForm(forms.ModelForm):
-    """ویرایش اطلاعات پروفایل کاربر."""
+    """ویرایش اطلاعات پروفایل کاربر (بدون تغییر ایمیل)."""
 
     clear_avatar = forms.BooleanField(
         required=False,
@@ -17,19 +17,27 @@ class ProfileForm(forms.ModelForm):
             'display_name',
             'first_name',
             'last_name',
-            'email',
             'telegram_id',
             'avatar',
         )
         widgets = {
             'display_name': forms.TextInput(
-                attrs={'placeholder': 'نامی که در هدر دیده می‌شود'}
+                attrs={
+                    'placeholder': 'نامی که در هدر دیده می‌شود',
+                    'autocomplete': 'nickname',
+                }
             ),
-            'first_name': forms.TextInput(attrs={'placeholder': 'نام'}),
-            'last_name': forms.TextInput(attrs={'placeholder': 'نام خانوادگی'}),
-            'email': forms.EmailInput(attrs={'placeholder': 'email@example.com'}),
+            'first_name': forms.TextInput(
+                attrs={'placeholder': 'نام', 'autocomplete': 'given-name'}
+            ),
+            'last_name': forms.TextInput(
+                attrs={'placeholder': 'نام خانوادگی', 'autocomplete': 'family-name'}
+            ),
             'telegram_id': forms.TextInput(
-                attrs={'placeholder': '@username یا شناسه عددی'}
+                attrs={
+                    'placeholder': '@username یا شناسه عددی',
+                    'autocomplete': 'off',
+                }
             ),
             'avatar': forms.FileInput(attrs={'accept': 'image/*'}),
         }
