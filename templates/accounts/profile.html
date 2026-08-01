@@ -15,7 +15,7 @@
   <div class="profile-hero-copy">
     <p class="eyebrow">حساب کاربری</p>
     <h1>{{ profile_user.get_display_label }}</h1>
-    <p class="profile-username">@{{ profile_user.username }}</p>
+    <p class="profile-username">{{ profile_user.email }}</p>
   </div>
 </section>
 
@@ -23,20 +23,14 @@
   <div class="section-head">
     <p class="eyebrow">ویرایش</p>
     <h2>اطلاعات پروفایل</h2>
-    <p>نام نمایشی، تلگرام و عکس را اینجا کامل یا به‌روز کن.</p>
+    <p>نام کاربری را عوض کن؛ ایمیل برای ورود ثابت می‌ماند.</p>
   </div>
 
   <dl class="profile-readonly">
     <div class="profile-readonly-item">
-      <dt>نام‌کاربری</dt>
-      <dd>@{{ profile_user.username }}</dd>
-    </div>
-    {% if profile_user.email %}
-    <div class="profile-readonly-item">
-      <dt>ایمیل</dt>
+      <dt>ایمیل ورود</dt>
       <dd>{{ profile_user.email }}</dd>
     </div>
-    {% endif %}
   </dl>
 
   <form method="post" enctype="multipart/form-data" class="form-panel profile-form">
@@ -52,9 +46,12 @@
       </div>
       <div class="form-grid form-grid-3">
         <div class="field">
-          <label for="{{ form.display_name.id_for_label }}">نام نمایشی</label>
-          {{ form.display_name }}
-          {{ form.display_name.errors }}
+          <label for="{{ form.username.id_for_label }}">نام کاربری</label>
+          {{ form.username }}
+          {% if form.username.help_text %}
+          <p class="field-hint">{{ form.username.help_text }}</p>
+          {% endif %}
+          {{ form.username.errors }}
         </div>
         <div class="field">
           <label for="{{ form.first_name.id_for_label }}">نام</label>

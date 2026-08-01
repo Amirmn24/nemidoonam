@@ -15,6 +15,8 @@ media/books/entries/audio/*
 !media/books/covers/.gitkeep
 !media/books/entries/images/.gitkeep
 !media/books/entries/audio/.gitkeep
+**/migrations/*.py
+!**/migrations/__init__.py
 
 # Env
 .env

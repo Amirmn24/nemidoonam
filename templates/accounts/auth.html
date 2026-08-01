@@ -53,7 +53,7 @@
         {% endif %}
 
         <div class="field">
-          <label class="visually-hidden" for="{{ login_form.username.id_for_label }}">نام‌کاربری</label>
+          <label class="visually-hidden" for="{{ login_form.username.id_for_label }}">ایمیل</label>
           {{ login_form.username }}
           {{ login_form.username.errors }}
         </div>
@@ -87,19 +87,14 @@
         {% endif %}
 
         <div class="field">
-          <label class="visually-hidden" for="{{ signup_form.username.id_for_label }}">نام‌کاربری</label>
-          {{ signup_form.username }}
-          {{ signup_form.username.errors }}
-        </div>
-        <div class="field">
-          <label class="visually-hidden" for="{{ signup_form.display_name.id_for_label }}">نام نمایشی</label>
-          {{ signup_form.display_name }}
-          {{ signup_form.display_name.errors }}
-        </div>
-        <div class="field">
           <label class="visually-hidden" for="{{ signup_form.email.id_for_label }}">ایمیل</label>
           {{ signup_form.email }}
           {{ signup_form.email.errors }}
+        </div>
+        <div class="field">
+          <label class="visually-hidden" for="{{ signup_form.username.id_for_label }}">نام کاربری</label>
+          {{ signup_form.username }}
+          {{ signup_form.username.errors }}
         </div>
         <div class="field">
           <label class="visually-hidden" for="{{ signup_form.password1.id_for_label }}">رمز عبور</label>

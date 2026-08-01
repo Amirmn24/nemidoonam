@@ -7,32 +7,31 @@ from apps.accounts.models import User
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
     list_display = (
-        'username',
-        'display_name',
         'email',
+        'username',
         'telegram_id',
         'is_staff',
         'is_active',
         'date_joined',
     )
     list_filter = ('is_staff', 'is_active', 'is_superuser')
-    search_fields = ('username', 'display_name', 'email', 'telegram_id', 'first_name', 'last_name')
-    ordering = ('username',)
+    search_fields = ('email', 'username', 'telegram_id', 'first_name', 'last_name')
+    ordering = ('email',)
 
     fieldsets = (
-        (None, {'fields': ('username', 'password')}),
+        (None, {'fields': ('email', 'password')}),
         (
             'پروفایل',
             {
                 'fields': (
+                    'username',
                     'display_name',
                     'avatar',
                     'first_name',
                     'last_name',
-                    'email',
                     'telegram_id',
                 ),
-                'description': 'ایمیل و تلگرام اختیاری‌اند و بعداً قابل تکمیل‌اند.',
+                'description': 'ایمیل برای ورود یکتاست؛ نام کاربری فقط نمایشی است.',
             },
         ),
         (
@@ -46,7 +45,7 @@ class UserAdmin(DjangoUserAdmin):
             None,
             {
                 'classes': ('wide',),
-                'fields': ('username', 'password1', 'password2', 'is_staff', 'is_active'),
+                'fields': ('email', 'username', 'password1', 'password2', 'is_staff', 'is_active'),
             },
         ),
     )

@@ -4,7 +4,7 @@ from apps.accounts.models import User
 
 
 class ProfileForm(forms.ModelForm):
-    """ویرایش اطلاعات پروفایل کاربر (بدون تغییر ایمیل)."""
+    """ویرایش پروفایل — ایمیل ورود ثابت می‌ماند؛ نام کاربری قابل تغییر است."""
 
     clear_avatar = forms.BooleanField(
         required=False,
@@ -14,16 +14,16 @@ class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
         fields = (
-            'display_name',
+            'username',
             'first_name',
             'last_name',
             'telegram_id',
             'avatar',
         )
         widgets = {
-            'display_name': forms.TextInput(
+            'username': forms.TextInput(
                 attrs={
-                    'placeholder': 'نامی که در هدر دیده می‌شود',
+                    'placeholder': 'نامی که با آن صدا زده می‌شوی',
                     'autocomplete': 'nickname',
                 }
             ),
@@ -44,6 +44,8 @@ class ProfileForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['username'].label = 'نام کاربری'
+        self.fields['username'].help_text = 'می‌تواند با دیگران یکسان باشد.'
         for name, field in self.fields.items():
             if name == 'clear_avatar':
                 continue
@@ -51,10 +53,17 @@ class ProfileForm(forms.ModelForm):
             if isinstance(field.widget, forms.FileInput):
                 css = 'field-file'
             field.widget.attrs.setdefault('class', css)
-            field.required = False
+            if name != 'username':
+                field.required = False
 
         if not self.instance or not self.instance.avatar:
             self.fields['clear_avatar'].widget = forms.HiddenInput()
+
+    def clean_username(self):
+        username = (self.cleaned_data.get('username') or '').strip()
+        if not username:
+            raise forms.ValidationError('نام کاربری را وارد کن.')
+        return username
 
     def save(self, commit=True):
         user = super().save(commit=False)

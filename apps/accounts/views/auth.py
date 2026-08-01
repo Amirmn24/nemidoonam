@@ -94,10 +94,9 @@ class SignupView(View):
         next_url = request.POST.get('next') or request.GET.get('next') or ''
         if form.is_valid():
             user = register_user(
-                username=form.cleaned_data['username'],
+                email=form.cleaned_data['email'],
                 password=form.cleaned_data['password1'],
-                email=form.cleaned_data.get('email', ''),
-                display_name=form.cleaned_data.get('display_name', ''),
+                username=form.cleaned_data['username'],
             )
             login_user(request, user)
             messages.success(

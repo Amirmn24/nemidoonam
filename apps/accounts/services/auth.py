@@ -8,33 +8,28 @@ from apps.accounts.models import User
 def authenticate_user(
     request: HttpRequest,
     *,
-    username: str,
+    email: str,
     password: str,
 ) -> AbstractBaseUser | None:
-    """احراز هویت متمرکز — نقطهٔ گسترش برای لاگ، محدودیت نرخ و غیره."""
+    """احراز هویت با ایمیل — ModelBackend از USERNAME_FIELD استفاده می‌کند."""
     return authenticate(
         request,
-        username=username.strip(),
+        username=email.strip(),
         password=password,
     )
 
 
 def register_user(
     *,
-    username: str,
+    email: str,
     password: str,
-    email: str = '',
-    display_name: str = '',
+    username: str,
 ) -> User:
-    """ساخت کاربر جدید — نقطهٔ گسترش برای پروفایل پیش‌فرض و رویدادها.
-
-    ایمیل و نام نمایشی اختیاری‌اند و نیازی به یکتا بودن ندارند.
-    """
+    """ساخت کاربر جدید با ایمیل یکتا و نام کاربری نمایشی."""
     return User.objects.create_user(
-        username=username.strip(),
-        password=password,
         email=email.strip(),
-        display_name=display_name.strip(),
+        password=password,
+        username=username.strip(),
     )
 
 
