@@ -7,9 +7,11 @@ import unicodedata
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 
-from django.urls import reverse
-
 from apps.books.models import Book, UserBook
+
+
+def _shelf_detail_path(shelf_id: int | None) -> str:
+    return f'/books/{shelf_id}' if shelf_id else ''
 
 _CHAR_MAP = str.maketrans({
     'ي': 'ی',
@@ -251,9 +253,7 @@ def search_title_suggestions(*, owner, query: str, limit: int = 10) -> list[dict
                 'cover_url': book.cover.url if book.cover else '',
                 'on_shelf': on_shelf,
                 'shelf_id': shelf_id,
-                'detail_url': (
-                    reverse('books:detail', kwargs={'pk': shelf_id}) if on_shelf else ''
-                ),
+                'detail_url': _shelf_detail_path(shelf_id) if on_shelf else '',
                 'score': round(score, 3),
                 'source_label': 'در قفسه تو' if on_shelf else 'در کتابخانه',
             }
@@ -322,7 +322,7 @@ def serialize_match(match: BookMatch) -> dict:
         'is_exact': match.is_exact,
         'score': round(match.score, 3),
         'detail_url': (
-            reverse('books:detail', kwargs={'pk': match.shelf_id})
+            _shelf_detail_path(match.shelf_id)
             if match.on_shelf and match.shelf_id
             else ''
         ),

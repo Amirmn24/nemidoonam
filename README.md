@@ -1,38 +1,68 @@
 # نمی‌دونم
 
-دفترخانه شخصی کتاب با Django — تمیز، ماژولار و قابل توسعه.
+دفترخانه شخصی کتاب — Django API + React SPA
 
 ## قابلیت‌ها
 
-- افزودن کتاب (عنوان، نویسنده، تعداد صفحات، صفحه فعلی، وضعیت، جلد)
-- وضعیت‌ها: می‌خواهم بخوانم / در حال خواندن / متوقف / تمام شده / رها شده
-- ثبت یادداشت روی هر صفحه با نوع:
-  - رسانه: متن، ویس، تصویر
-  - محتوا: دیدگاه، حس، متن کتاب
-- فیلتر کتاب‌ها و یادداشت‌ها
-- رابط کاربری RTL فارسی با استایل ملایم
+- قفسه کتاب با وضعیت و پیشرفت
+- یادداشت متن / ویس / تصویر
+- چالش مطالعه
+- واژه‌نامه با فلش‌کارت
+- رابط RTL فارسی
 
-## اجرا
+## معماری
 
-```bash
+- **Backend:** Django + DRF (`/api/v1/`) با Session + CSRF
+- **Frontend:** React + Vite در پوشه `frontend/`
+- مدل‌ها و `services/` بدون تغییر منطق دامنه پشت API مانده‌اند
+
+## اجرا (توسعه)
+
+### ۱) بک‌اند
+
+```bat
 python -m pip install -r requirements.txt
 python manage.py migrate
-python manage.py runserver
+python manage.py runserver 127.0.0.1:8000
 ```
 
-سپس به آدرس [http://127.0.0.1:8000](http://127.0.0.1:8000) برو.
+### ۲) فرانت (HMR)
+
+```bat
+cd frontend
+npm install
+npm run dev
+```
+
+سپس Vite روی [http://127.0.0.1:5173](http://127.0.0.1:5173) با proxy به API جنگو.
+
+### سرو از خود جنگو (بدون Vite)
+
+```bat
+cd frontend
+npm run build
+cd ..
+python manage.py runserver 127.0.0.1:8000
+```
+
+بعد به [http://127.0.0.1:8000](http://127.0.0.1:8000) برو.
 
 ## ساختار
 
 ```
-apps/books/
-  models/      # Book, Entry, choices
-  forms/       # فرم‌های کتاب و یادداشت
-  views/       # ویوهای کلاس‌محور
-  services/    # کوئری‌ها و منطق قابل استفاده مجدد
-  urls.py
-  admin.py
-templates/
-static/
-config/        # تنظیمات پروژه
+apps/                 # accounts, books, challenges, vocabulary
+  */api.py            # DRF endpoints
+  models/ services/   # منطق دامنه
+frontend/             # React SPA (feature-based)
+config/               # settings + api_urls + spa
 ```
+
+## API
+
+پایه: `/api/v1/`
+
+- `auth/csrf|login|signup|logout|me`
+- `shelf/` + entries + progress
+- `books/suggest/`
+- `challenges/`
+- `vocabulary/`

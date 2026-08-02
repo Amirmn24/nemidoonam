@@ -28,3 +28,8 @@ media/books/entries/audio/*
 .DS_Store
 Thumbs.db
 venv/
+
+# Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
