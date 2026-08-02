@@ -164,12 +164,14 @@ export default function AppLayout() {
           </div>
         </div>
       </aside>
-      <div
-        className="sidebar-backdrop"
-        data-sidebar-backdrop
-        onClick={() => setMobileOpen(false)}
-        aria-hidden="true"
-      />
+      {mobileOpen ? (
+        <div
+          className="sidebar-backdrop"
+          data-sidebar-backdrop
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      ) : null}
 
       <div className="app-frame">
         <ToastHost />
