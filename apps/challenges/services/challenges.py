@@ -176,11 +176,20 @@ def refresh_status(
     today: date | None = None,
     save: bool = True,
 ) -> Challenge:
+    previous_status = challenge.status
     new_status = derive_status(challenge, today=today)
-    if challenge.status != new_status:
+    if previous_status != new_status:
         challenge.status = new_status
         if save:
             challenge.save(update_fields=['status', 'updated_at'])
+        if new_status == ChallengeStatus.COMPLETED:
+            from emails.services.queue import enqueue
+            from emails.tasks import send_challenge_completed_email
+
+            challenge_id = challenge.pk
+            transaction.on_commit(
+                lambda: enqueue(send_challenge_completed_email, challenge_id)
+            )
     return challenge
 
 
@@ -221,7 +230,16 @@ def create_challenge(
         status=ChallengeStatus.PLANNED,
     )
     _set_challenge_books(challenge, books)
-    return refresh_status(challenge)
+    challenge = refresh_status(challenge)
+
+    from emails.services.queue import enqueue
+    from emails.tasks import send_challenge_started_email
+
+    challenge_id = challenge.pk
+    transaction.on_commit(
+        lambda: enqueue(send_challenge_started_email, challenge_id)
+    )
+    return challenge
 
 
 @transaction.atomic

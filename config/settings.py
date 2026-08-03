@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -31,6 +32,7 @@ INSTALLED_APPS = [
     'apps.books',
     'apps.challenges',
     'apps.vocabulary',
+    'emails.apps.EmailsConfig',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -139,3 +141,52 @@ CSRF_TRUSTED_ORIGINS = [
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
+
+# --- Email (SMTP) ---
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'amirryansedaghatpour@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'true').lower() in {'1', 'true', 'yes'}
+EMAIL_REPLY_TO = os.getenv('EMAIL_REPLY_TO', EMAIL_HOST_USER)
+# نام نمایشی فرستنده کمک می‌کند کمتر شبیه اسپم به نظر برسد
+DEFAULT_FROM_EMAIL = os.getenv(
+    'DEFAULT_FROM_EMAIL',
+    f'نمی‌دونم <{EMAIL_HOST_USER}>',
+)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+if EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    # بدون رمز اپ Gmail، ایمیل در کنسول چاپ می‌شود
+    EMAIL_BACKEND = os.getenv(
+        'EMAIL_BACKEND',
+        'django.core.mail.backends.console.EmailBackend',
+    )
+
+# --- Celery ---
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
+# نتیجهٔ تسک لازم نیست؛ با غیرفعال کردنش ارور ذخیرهٔ Redis کمتر می‌شود
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', '') or None
+CELERY_TASK_IGNORE_RESULT = True
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+CELERY_TASK_ALWAYS_EAGER = os.getenv('CELERY_TASK_ALWAYS_EAGER', 'false').lower() in {
+    '1',
+    'true',
+    'yes',
+}
+CELERY_TASK_EAGER_PROPAGATES = True
+# روی ویندوز حتماً solo؛ وگرنه ValueError در billiard می‌آید
+if os.name == 'nt':
+    CELERY_WORKER_POOL = 'solo'
+CELERY_BEAT_SCHEDULE = {
+    'check-challenge-email-reminders': {
+        'task': 'emails.tasks.check_all_challenge_reminders',
+        'schedule': timedelta(hours=1),
+    },
+}
