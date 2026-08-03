@@ -12,6 +12,33 @@ function useDebounced(value, ms = 280) {
   return v
 }
 
+function SuggestItem({ item, onPick }) {
+  if (item.on_shelf && item.shelf_id) {
+    return (
+      <li>
+        <Link to={`/books/${item.shelf_id}`} className="book-suggest-item">
+          <span className="book-suggest-copy">
+            <strong>{item.title || item.author}</strong>
+            {item.title ? <small>{item.author} · {item.source_label || ''}</small> : null}
+          </span>
+          <span className="book-suggest-badge">باز کردن</span>
+        </Link>
+      </li>
+    )
+  }
+  return (
+    <li>
+      <button type="button" className="book-suggest-item" onClick={() => onPick(item)}>
+        <span className="book-suggest-copy">
+          <strong>{item.title || item.author}</strong>
+          {item.title ? <small>{item.author} · {item.source_label || ''}</small> : null}
+        </span>
+        <span className="book-suggest-badge">انتخاب</span>
+      </button>
+    </li>
+  )
+}
+
 export default function BookFormPage() {
   const { id } = useParams()
   const isEdit = Boolean(id)
@@ -21,9 +48,11 @@ export default function BookFormPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [similar, setSimilar] = useState([])
+  const [matchResults, setMatchResults] = useState([])
   const [book, setBook] = useState(null)
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
+  const [totalPages, setTotalPages] = useState(1)
   const [catalogId, setCatalogId] = useState('')
   const [bookSuggestions, setBookSuggestions] = useState([])
   const [authorSuggestions, setAuthorSuggestions] = useState([])
@@ -39,6 +68,7 @@ export default function BookFormPage() {
         setBook(data.book)
         setTitle(data.book.title)
         setAuthor(data.book.author)
+        setTotalPages(data.book.total_pages || 1)
         excludeRef.current = data.book.book_id
       })
       .catch((err) => setError(err.message))
@@ -67,11 +97,31 @@ export default function BookFormPage() {
       .catch(() => setAuthorSuggestions([]))
   }, [debouncedAuthor])
 
+  useEffect(() => {
+    if (debouncedTitle.length < 2 || debouncedAuthor.length < 2) {
+      setMatchResults([])
+      return
+    }
+    const params = {
+      mode: 'match',
+      title: debouncedTitle,
+      author: debouncedAuthor,
+    }
+    if (excludeRef.current) params.exclude = String(excludeRef.current)
+    booksApi
+      .suggest(params)
+      .then((res) => setMatchResults(res.results || []))
+      .catch(() => setMatchResults([]))
+  }, [debouncedTitle, debouncedAuthor])
+
   const fillFromSuggestion = (item) => {
-    setTitle(item.title)
-    setAuthor(item.author)
-    setCatalogId(String(item.id))
+    if (item.title) setTitle(item.title)
+    if (item.author) setAuthor(item.author)
+    if (item.total_pages) setTotalPages(item.total_pages)
+    setCatalogId(item.id ? String(item.id) : '')
     setBookSuggestions([])
+    setAuthorSuggestions([])
+    setMatchResults([])
     setSimilar([])
   }
 
@@ -155,15 +205,11 @@ export default function BookFormPage() {
                   <div className="book-suggest-panel" data-suggest-panel="books">
                     <ul data-suggest-list>
                       {bookSuggestions.map((item) => (
-                        <li key={`${item.id}-${item.title}`}>
-                          <button type="button" className="book-suggest-item" onClick={() => fillFromSuggestion(item)}>
-                            <span className="book-suggest-copy">
-                              <strong>{item.title}</strong>
-                              <small>{item.author}</small>
-                            </span>
-                            <span className="book-suggest-badge">{item.source_label}</span>
-                          </button>
-                        </li>
+                        <SuggestItem
+                          key={`${item.id}-${item.title}`}
+                          item={item}
+                          onPick={fillFromSuggestion}
+                        />
                       ))}
                     </ul>
                   </div>
@@ -197,7 +243,9 @@ export default function BookFormPage() {
                           >
                             <span className="book-suggest-copy">
                               <strong>{item.author}</strong>
+                              <small>{item.source_label || 'نویسنده ثبت‌شده'}</small>
                             </span>
+                            <span className="book-suggest-badge">انتخاب</span>
                           </button>
                         </li>
                       ))}
@@ -206,6 +254,16 @@ export default function BookFormPage() {
                 ) : null}
               </div>
             </div>
+            {matchResults.length > 0 ? (
+              <div className="book-suggest-panel is-match" data-book-suggest>
+                <p className="book-suggest-hint">موارد شبیه در کتابخانه:</p>
+                <ul data-suggest-list="match">
+                  {matchResults.map((item) => (
+                    <SuggestItem key={`m-${item.id}`} item={item} onPick={fillFromSuggestion} />
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
 
           <div className="form-step">
@@ -220,7 +278,8 @@ export default function BookFormPage() {
                   type="number"
                   min="1"
                   className="field-input"
-                  defaultValue={book?.total_pages || 1}
+                  value={totalPages}
+                  onChange={(e) => setTotalPages(e.target.value)}
                   required
                 />
               </div>

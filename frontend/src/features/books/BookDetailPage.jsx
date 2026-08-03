@@ -213,13 +213,13 @@ export default function BookDetailPage() {
                   <span className="meta-pill">صفحه {entry.page_number}</span>
                   <span className="meta-pill">{entry.entry_date}</span>
                 </div>
-                {entry.media_type === 'text' ? <p>{entry.text_content}</p> : null}
                 {entry.media_type === 'image' && entry.image_url ? (
                   <img src={entry.image_url} alt="" style={{ maxWidth: '100%', borderRadius: 12 }} />
                 ) : null}
                 {entry.media_type === 'voice' && entry.audio_url ? (
                   <audio controls src={entry.audio_url} />
                 ) : null}
+                {entry.text_content ? <p>{entry.text_content}</p> : null}
                 <div className="cluster">
                   <Link className="text-link" to={`/books/${id}/entries/${entry.id}/edit`}>
                     ویرایش

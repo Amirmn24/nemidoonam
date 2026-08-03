@@ -154,20 +154,35 @@ export default function EntryFormPage() {
             </div>
           </div>
 
-          {media === 'text' ? (
-            <div className="field media-field">
-              <label>متن</label>
-              <textarea
-                name="text_content"
-                className="field-textarea"
-                rows={6}
-                defaultValue={entry?.text_content || ''}
-              />
-            </div>
-          ) : null}
+          <div className="field media-field">
+            <label>{media === 'text' ? 'متن' : 'توضیح (اختیاری)'}</label>
+            <textarea
+              name="text_content"
+              className="field-textarea"
+              rows={media === 'text' ? 6 : 3}
+              defaultValue={entry?.text_content || ''}
+              required={media === 'text'}
+              key={`text-${entry?.id || 'new'}-${media}`}
+            />
+          </div>
 
           {media === 'image' ? (
-            <div className="field media-field">
+            <div
+              className="field media-field"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault()
+                const file = e.dataTransfer.files?.[0]
+                if (!file || !file.type.startsWith('image/')) return
+                const input = e.currentTarget.querySelector('input[name="image"]')
+                if (input) {
+                  const dt = new DataTransfer()
+                  dt.items.add(file)
+                  input.files = dt.files
+                }
+                setImagePreview(URL.createObjectURL(file))
+              }}
+            >
               <label>تصویر</label>
               <input
                 name="image"
@@ -200,6 +215,9 @@ export default function EntryFormPage() {
                 <span>{`${String(Math.floor(timer / 60)).padStart(2, '0')}:${String(timer % 60).padStart(2, '0')}`}</span>
               </div>
               {audioUrl ? <audio controls src={audioUrl} className="is-visible" /> : null}
+              {entry?.audio_url && !audioBlob ? (
+                <p className="field-hint">ویس قبلی نگه داشته می‌شود مگر دوباره ضبط کنی</p>
+              ) : null}
             </div>
           ) : null}
 
