@@ -10,6 +10,7 @@ import EntryFormPage from './features/books/EntryFormPage'
 import ChallengeDetailPage from './features/challenges/ChallengeDetailPage'
 import ChallengeFormPage from './features/challenges/ChallengeFormPage'
 import ChallengeListPage from './features/challenges/ChallengeListPage'
+import DashboardPage from './features/dashboard/DashboardPage'
 import WordFormPage from './features/vocabulary/WordFormPage'
 import WordListPage from './features/vocabulary/WordListPage'
 import { AuthProvider } from './shared/AuthContext'
@@ -26,7 +27,8 @@ export default function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route path="/" element={<BookListPage />} />
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/books" element={<BookListPage />} />
               <Route path="/books/new" element={<BookFormPage />} />
               <Route path="/books/:id" element={<BookDetailPage />} />
               <Route path="/books/:id/edit" element={<BookFormPage />} />

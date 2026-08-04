@@ -329,7 +329,7 @@ export default function BookFormPage() {
             <button type="submit" className="btn btn-primary" disabled={busy}>
               ذخیره
             </button>
-            <Link to={isEdit ? `/books/${id}` : '/'} className="btn btn-ghost">
+            <Link to={isEdit ? `/books/${id}` : '/books'} className="btn btn-ghost">
               انصراف
             </Link>
           </div>

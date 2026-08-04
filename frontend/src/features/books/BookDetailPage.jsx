@@ -54,7 +54,7 @@ export default function BookDetailPage() {
     if (!window.confirm('این کتاب از قفسه حذف شود؟')) return
     await booksApi.remove(id)
     showToast('حذف شد.')
-    navigate('/')
+    navigate('/books')
   }
 
   const onDeleteEntry = async (entryId) => {

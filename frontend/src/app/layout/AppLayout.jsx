@@ -13,6 +13,13 @@ function dockClass(isActive) {
   return `mobile-dock-item${isActive ? ' is-active' : ''}`
 }
 
+const IconHome = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 10.5L12 4l8 6.5" />
+    <path d="M7 10v9h10v-9" />
+  </svg>
+)
+
 const IconBook = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z" />
@@ -178,6 +185,15 @@ export default function AppLayout() {
           <nav className="sidebar-nav">
             <NavLink to="/" end className={navClass}>
               <span className="sidebar-icon" aria-hidden="true">
+                <IconHome />
+              </span>
+              <span className="sidebar-label">
+                <span className="sidebar-label-title">داشبورد</span>
+                <span className="sidebar-label-sub">نبض فعالیت</span>
+              </span>
+            </NavLink>
+            <NavLink to="/books" className={navClass}>
+              <span className="sidebar-icon" aria-hidden="true">
                 <IconBook />
               </span>
               <span className="sidebar-label">
@@ -249,17 +265,17 @@ export default function AppLayout() {
       </div>
 
       <nav className="mobile-dock" aria-label="ناوبری سریع">
-        <Link to="/" className={dockClass(path === '/' || path.startsWith('/books'))}>
+        <Link to="/" className={dockClass(path === '/')}>
+          <IconHome />
+          <span>خانه</span>
+        </Link>
+        <Link to="/books" className={dockClass(path.startsWith('/books'))}>
           <IconBook />
           <span>کتاب‌ها</span>
         </Link>
         <Link to="/challenges" className={dockClass(path.startsWith('/challenges'))}>
           <IconStar />
           <span>چالش‌ها</span>
-        </Link>
-        <Link to="/vocabulary" className={dockClass(path.startsWith('/vocabulary'))}>
-          <IconCards />
-          <span>واژه</span>
         </Link>
         <button
           type="button"

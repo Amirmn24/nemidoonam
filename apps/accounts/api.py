@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.models import User
 from apps.accounts.services.auth import authenticate_user, login_user, register_user
+from apps.accounts.services.dashboard import get_dashboard_payload
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -196,3 +197,15 @@ class LogoutView(APIView):
     def post(self, request):
         logout(request)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DashboardView(APIView):
+    """Aggregated home payload: hero stats, heatmap days, streak, quick links."""
+
+    def get(self, request):
+        weeks_raw = request.query_params.get('weeks', '53')
+        try:
+            weeks = max(12, min(53, int(weeks_raw)))
+        except (TypeError, ValueError):
+            weeks = 53
+        return Response(get_dashboard_payload(request.user, weeks=weeks))

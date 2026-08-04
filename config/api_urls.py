@@ -1,7 +1,14 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from apps.accounts.api import CsrfView, LoginView, LogoutView, MeView, SignupView
+from apps.accounts.api import (
+    CsrfView,
+    DashboardView,
+    LoginView,
+    LogoutView,
+    MeView,
+    SignupView,
+)
 from apps.books.api import CatalogAddView, EntryViewSet, MetaChoicesView, ShelfViewSet, SuggestView
 from apps.challenges.api import ChallengeViewSet
 from apps.vocabulary.api import WordViewSet
@@ -22,6 +29,7 @@ urlpatterns = [
     path('auth/signup/', SignupView.as_view(), name='api-signup'),
     path('auth/logout/', LogoutView.as_view(), name='api-logout'),
     path('auth/me/', MeView.as_view(), name='api-me'),
+    path('dashboard/', DashboardView.as_view(), name='api-dashboard'),
     path('meta/choices/', MetaChoicesView.as_view(), name='api-meta-choices'),
     path('books/suggest/', SuggestView.as_view(), name='api-suggest'),
     path('catalog/<int:pk>/add/', CatalogAddView.as_view(), name='api-catalog-add'),

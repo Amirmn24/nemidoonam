@@ -88,6 +88,15 @@ export const authApi = {
     }),
 }
 
+export const dashboardApi = {
+  summary: (params = {}) => {
+    const q = new URLSearchParams()
+    if (params.weeks) q.set('weeks', String(params.weeks))
+    const qs = q.toString()
+    return api(`/dashboard/${qs ? `?${qs}` : ''}`)
+  },
+}
+
 export const booksApi = {
   list: (params = {}) => {
     const q = new URLSearchParams()
