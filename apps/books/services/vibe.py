@@ -225,8 +225,12 @@ def analyze_vibe_with_ai(
             'change_summary': change_summary,
             'source': 'openai',
         }
-    except Exception:
-        logger.exception('تحلیل OpenAI برای وایب ناموفق بود؛ از heuristic استفاده می‌شود.')
+    except Exception as exc:
+        # کمبود اعتبار / خطای شبکه طبیعی است؛ traceback کامل لازم نیست
+        logger.warning(
+            'تحلیل OpenAI برای وایب ناموفق بود (%s)؛ از heuristic استفاده می‌شود.',
+            exc.__class__.__name__,
+        )
         axes = _heuristic_axes(new_book_title, new_book_author, previous_axes)
         tops = top_moods(axes, limit=2)
         mood_bits = ' و '.join(f'{m["value"]}٪ {m["label"]}' for m in tops)

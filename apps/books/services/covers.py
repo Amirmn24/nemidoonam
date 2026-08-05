@@ -1,4 +1,4 @@
-"""جست‌وجوی خودکار جلد کتاب از چند منبع (Open Library / Wikipedia / Google / GPT hint)."""
+"""جست‌وجوی خودکار جلد چاپ ایران — اولویت با فروشگاه‌های ایرانی (Digikala)."""
 
 from __future__ import annotations
 
@@ -14,22 +14,30 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import transaction
 
+from apps.books.services.matching import fingerprint, text_similarity
+
 logger = logging.getLogger(__name__)
 
-OPEN_LIBRARY_SEARCH = 'https://openlibrary.org/search.json'
+DIGIKALA_SEARCH = 'https://api.digikala.com/v1/search/'
 GOOGLE_BOOKS_URL = 'https://www.googleapis.com/books/v1/volumes'
-USER_AGENT = 'NemidoonamBookCoverBot/1.0 (reading-app; cover-lookup)'
+USER_AGENT = (
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+    'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+)
+
+_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
-def _http_get_json(url: str, *, timeout: float = 15.0) -> dict[str, Any]:
-    request = urllib.request.Request(
-        url,
-        headers={
-            'User-Agent': USER_AGENT,
-            'Accept': 'application/json',
-        },
-    )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
+def _http_get_json(url: str, *, timeout: float = 18.0, referer: str = '') -> dict[str, Any]:
+    headers = {
+        'User-Agent': USER_AGENT,
+        'Accept': 'application/json,text/plain,*/*',
+        'Accept-Language': 'fa-IR,fa;q=0.9,en;q=0.8',
+    }
+    if referer:
+        headers['Referer'] = referer
+    request = urllib.request.Request(url, headers=headers)
+    with _OPENER.open(request, timeout=timeout) as response:
         raw = response.read().decode('utf-8', errors='replace')
     data = json.loads(raw)
     return data if isinstance(data, dict) else {}
@@ -38,153 +46,137 @@ def _http_get_json(url: str, *, timeout: float = 15.0) -> dict[str, Any]:
 def _http_get_bytes(url: str, *, timeout: float = 20.0) -> tuple[bytes, str]:
     if url.startswith('http://'):
         url = 'https://' + url[len('http://') :]
-    # ویکی‌مدیا گاهی query اضافه می‌کند
-    url = url.split('?utm_')[0]
     request = urllib.request.Request(
         url,
         headers={'User-Agent': USER_AGENT, 'Accept': 'image/*,*/*'},
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
+    with _OPENER.open(request, timeout=timeout) as response:
         content_type = (response.headers.get('Content-Type') or '').split(';')[0].strip()
         return response.read(), content_type
 
 
-def _open_library_cover_from_docs(docs: list[dict[str, Any]]) -> str:
-    for doc in docs:
-        cover_i = doc.get('cover_i')
-        if cover_i:
-            return f'https://covers.openlibrary.org/b/id/{cover_i}-L.jpg'
-        for isbn in doc.get('isbn') or []:
-            if isbn:
-                return f'https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg'
-        for edition in doc.get('edition_key') or []:
-            if edition:
-                return f'https://covers.openlibrary.org/b/olid/{edition}-L.jpg'
-    return ''
-
-
-def _search_open_library(params: dict[str, str]) -> str:
-    query = {
-        **params,
-        'limit': params.get('limit', '8'),
-        'fields': 'key,title,author_name,cover_i,isbn,edition_key',
-    }
-    url = f'{OPEN_LIBRARY_SEARCH}?{urllib.parse.urlencode(query)}'
-    try:
-        payload = _http_get_json(url)
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError) as exc:
-        logger.warning('Open Library ناموفق (%s): %s', params, exc)
+def _larger_digikala_image(url: str) -> str:
+    """thumbnail ۳۰۰px را به نسخهٔ بزرگ‌تر تبدیل می‌کند."""
+    if not url:
         return ''
-    return _open_library_cover_from_docs(list(payload.get('docs') or []))
+    return (
+        url.replace(',h_300,w_300', ',h_800,w_800')
+        .replace('h_300,w_300', 'h_800,w_800')
+        .replace(',h_200,w_200', ',h_800,w_800')
+    )
 
 
-def find_open_library_cover_url(title: str, author: str) -> str:
+def _extract_digikala_image(product: dict[str, Any]) -> str:
+    images = product.get('images') or {}
+    main = images.get('main')
+    candidates: list[str] = []
+    if isinstance(main, dict):
+        for key in ('url', 'webp_url'):
+            value = main.get(key)
+            if isinstance(value, list):
+                candidates.extend(str(item) for item in value if item)
+            elif isinstance(value, str) and value:
+                candidates.append(value)
+    elif isinstance(main, list):
+        for item in main:
+            if isinstance(item, str):
+                candidates.append(item)
+            elif isinstance(item, dict) and item.get('url'):
+                candidates.append(str(item['url']))
+    elif isinstance(main, str):
+        candidates.append(main)
+
+    for default in images.get('default') or []:
+        if isinstance(default, str):
+            candidates.append(default)
+
+    if not candidates:
+        return ''
+    # آخرین آیتم معمولاً کیفیت بهتری دارد
+    return _larger_digikala_image(candidates[-1])
+
+
+def _is_iranian_book_match(title: str, author: str, product_title: str) -> bool:
+    """فقط وقتی عنوان کتاب (و نویسنده در صورت وجود) در عنوان محصول ایرانی دیده شود."""
+    product_title = (product_title or '').strip()
+    if not product_title:
+        return False
+
+    fp_title = fingerprint(title)
+    fp_author = fingerprint(author)
+    fp_product = fingerprint(product_title)
+    if not fp_title or len(fp_title) < 3:
+        return False
+
+    title_ok = fp_title in fp_product or text_similarity(title, product_title) >= 0.62
+    if not title_ok:
+        return False
+
+    if fp_author and len(fp_author) >= 3:
+        author_ok = fp_author in fp_product or text_similarity(author, product_title) >= 0.5
+        if not author_ok:
+            return False
+
+    # رد کردن لوازم جانبی/غیرکتاب اگر عنوان محصول خیلی بی‌ربط باشد
+    junk = ('شارژر', 'کاور گوشی', 'قاب', 'لوازم', 'هدفون')
+    if any(word in product_title for word in junk) and 'کتاب' not in product_title:
+        return False
+    return True
+
+
+def find_digikala_cover_url(title: str, author: str) -> str:
     title = (title or '').strip()
     author = (author or '').strip()
     if not title:
         return ''
 
-    attempts: list[dict[str, str]] = []
-    if author:
-        attempts.append({'title': title, 'author': author})
-        attempts.append({'q': f'{title} {author}'})
-    attempts.append({'title': title})
-    attempts.append({'q': title})
+    queries = [
+        f'کتاب {title} {author}'.strip(),
+        f'{title} {author}'.strip(),
+        f'کتاب {title}'.strip(),
+    ]
+    seen_q: set[str] = set()
+    best_url = ''
+    best_score = 0.0
 
-    seen: set[str] = set()
-    for params in attempts:
-        key = urllib.parse.urlencode(params)
-        if key in seen:
+    for query in queries:
+        if not query or query in seen_q:
             continue
-        seen.add(key)
-        url = _search_open_library(params)
-        if url:
-            return url
-    return ''
-
-
-def find_wikipedia_cover_url(title: str, author: str) -> str:
-    """برای کتاب‌های فارسی معروف، تصویر صفحهٔ ویکی‌پدیا اغلب همان جلد است."""
-    title = (title or '').strip()
-    author = (author or '').strip()
-    if not title:
-        return ''
-
-    for lang in ('fa', 'en'):
-        search_q = f'{title} {author}'.strip()
-        search_url = (
-            f'https://{lang}.wikipedia.org/w/api.php?'
-            + urllib.parse.urlencode(
-                {
-                    'action': 'query',
-                    'list': 'search',
-                    'srsearch': search_q,
-                    'format': 'json',
-                    'srlimit': '8',
-                }
-            )
-        )
+        seen_q.add(query)
+        url = f'{DIGIKALA_SEARCH}?{urllib.parse.urlencode({"q": query})}'
         try:
-            payload = _http_get_json(search_url)
+            payload = _http_get_json(url, referer='https://www.digikala.com/')
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError) as exc:
-            logger.warning('Wikipedia search (%s) ناموفق: %s', lang, exc)
+            logger.warning('جست‌وجوی دیجی‌کالا ناموفق: %s', exc)
             continue
 
-        hits = list((payload.get('query') or {}).get('search') or [])
-        if not hits:
-            continue
-
-        # اولویت: عنوان دقیق کتاب، بعد صفحه‌هایی که عنوان کتاب را دارند (نه فقط نویسنده)
-        def rank(item: dict[str, Any]) -> tuple[int, int]:
-            page_title = (item.get('title') or '').strip()
-            if page_title == title:
-                return (0, 0)
-            if title in page_title:
-                return (1, abs(len(page_title) - len(title)))
-            if author and page_title == author:
-                return (9, 0)
-            return (5, abs(len(page_title) - len(title)))
-
-        hits.sort(key=rank)
-        candidates = [h.get('title') for h in hits[:4] if h.get('title')]
-        if title not in candidates:
-            candidates.insert(0, title)
-
-        for page_title in candidates:
-            img_url = (
-                f'https://{lang}.wikipedia.org/w/api.php?'
-                + urllib.parse.urlencode(
-                    {
-                        'action': 'query',
-                        'titles': page_title,
-                        'prop': 'pageimages',
-                        'format': 'json',
-                        'pithumbsize': '800',
-                        'piprop': 'thumbnail',
-                    }
-                )
-            )
-            try:
-                img_payload = _http_get_json(img_url)
-            except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError):
+        products = list(((payload.get('data') or {}).get('products')) or [])
+        for product in products[:12]:
+            product_title = str(product.get('title_fa') or product.get('title_en') or '')
+            if not _is_iranian_book_match(title, author, product_title):
                 continue
-            pages = (img_payload.get('query') or {}).get('pages') or {}
-            for page in pages.values():
-                if page.get('missing') is not None or int(page.get('ns', 0)) != 0:
-                    continue
-                # صفحهٔ نویسنده را رد کن
-                if author and (page.get('title') or '').strip() == author:
-                    continue
-                thumb = (page.get('thumbnail') or {}).get('source')
-                if thumb:
-                    return str(thumb)
-    return ''
+            image_url = _extract_digikala_image(product)
+            if not image_url:
+                continue
+            score = text_similarity(title, product_title)
+            if author:
+                score = (score * 0.7) + (text_similarity(author, product_title) * 0.3)
+            if score > best_score:
+                best_score = score
+                best_url = image_url
+
+        if best_url and best_score >= 0.55:
+            break
+
+    if best_url:
+        logger.info('جلد ایرانی از دیجی‌کالا پیدا شد (score=%.2f).', best_score)
+    return best_url
 
 
-def find_google_books_cover_url(title: str, author: str) -> str:
+def find_google_books_fa_cover_url(title: str, author: str) -> str:
+    """فقط اگر API key باشد؛ با فیلتر زبان فارسی برای نزدیک‌شدن به چاپ ایران."""
     api_key = getattr(settings, 'GOOGLE_BOOKS_API_KEY', '') or ''
     if not api_key:
-        # بدون key معمولاً 403/429 می‌دهد؛ بی‌خودی صدا نزن
         return ''
 
     title = (title or '').strip()
@@ -192,10 +184,11 @@ def find_google_books_cover_url(title: str, author: str) -> str:
     if not title:
         return ''
 
-    params: dict[str, str] = {
-        'q': f'{title} {author}'.strip(),
-        'maxResults': '8',
+    params = {
+        'q': f'intitle:{title}' + (f'+inauthor:{author}' if author else ''),
+        'maxResults': '10',
         'printType': 'books',
+        'langRestrict': 'fa',
         'key': api_key,
     }
     url = f'{GOOGLE_BOOKS_URL}?{urllib.parse.urlencode(params)}'
@@ -206,83 +199,25 @@ def find_google_books_cover_url(title: str, author: str) -> str:
         return ''
 
     for item in payload.get('items') or []:
-        links = ((item.get('volumeInfo') or {}).get('imageLinks')) or {}
-        for key in ('extraLarge', 'large', 'medium', 'small', 'thumbnail', 'smallThumbnail'):
+        info = item.get('volumeInfo') or {}
+        item_title = str(info.get('title') or '')
+        authors = ' '.join(info.get('authors') or [])
+        if not _is_iranian_book_match(title, author, f'{item_title} {authors}'):
+            continue
+        links = info.get('imageLinks') or {}
+        for key in ('extraLarge', 'large', 'medium', 'small', 'thumbnail'):
             image = links.get(key)
             if image:
-                return str(image).replace('zoom=1', 'zoom=2')
+                return str(image).replace('http://', 'https://').replace('zoom=1', 'zoom=2')
     return ''
-
-
-def _latin_search_hint_via_openai(title: str, author: str) -> str:
-    """برای کتاب‌های فارسی، یک کوئری لاتین مناسب Open Library می‌سازد."""
-    api_key = getattr(settings, 'OPENAI_API_KEY', '') or ''
-    if not api_key:
-        return ''
-    try:
-        from openai import OpenAI
-    except ImportError:
-        logger.warning('پکیج openai نصب نیست؛ hint لاتین جلد رد شد.')
-        return ''
-
-    model = getattr(settings, 'OPENAI_VIBE_MODEL', 'gpt-4o-mini')
-    client = OpenAI(api_key=api_key)
-    prompt = (
-        'برای پیدا کردن جلد کتاب در Open Library، یک کوئری لاتین/انگلیسی کوتاه بده. '
-        'فقط JSON برگردان مثل {"query":"Sal-e Balva Abbas Maroufi"}.\n'
-        f'title: {title}\nauthor: {author}'
-    )
-    try:
-        response = client.chat.completions.create(
-            model=model,
-            temperature=0.2,
-            response_format={'type': 'json_object'},
-            messages=[
-                {
-                    'role': 'system',
-                    'content': 'You help find Latin/English book search queries for Open Library. JSON only.',
-                },
-                {'role': 'user', 'content': prompt},
-            ],
-        )
-        content = response.choices[0].message.content or '{}'
-        data = json.loads(content)
-        query = str(data.get('query') or '').strip()
-        return query
-    except Exception as exc:
-        logger.warning('ساخت کوئری لاتین جلد ناموفق: %s', exc)
-        return ''
 
 
 def find_cover_url(title: str, author: str) -> str:
-    title = (title or '').strip()
-    author = (author or '').strip()
-
-    for finder, label in (
-        (find_open_library_cover_url, 'openlibrary'),
-        (find_wikipedia_cover_url, 'wikipedia'),
-        (find_google_books_cover_url, 'google'),
-    ):
-        url = finder(title, author)
-        if url:
-            logger.info('جلد از %s پیدا شد.', label)
-            return url
-
-    # کتاب‌های فارسی اغلب فقط با عنوان لاتین در Open Library هستند
-    hint = _latin_search_hint_via_openai(title, author)
-    if hint:
-        url = _search_open_library({'q': hint})
-        if url:
-            logger.info('جلد با hint لاتین Open Library پیدا شد: %s', hint)
-            return url
-        # اگر query شبیه "Title Author" بود، جدا هم امتحان کن
-        parts = hint.split()
-        if len(parts) >= 2:
-            url = _search_open_library({'title': ' '.join(parts[:-1]), 'author': parts[-1]})
-            if url:
-                return url
-
-    return ''
+    """اولویت: جلد چاپ ایران از دیجی‌کالا؛ بعد Google Books فارسی (در صورت داشتن key)."""
+    url = find_digikala_cover_url(title, author)
+    if url:
+        return url
+    return find_google_books_fa_cover_url(title, author)
 
 
 def _extension_for(content_type: str, url: str) -> str:
@@ -341,11 +276,11 @@ def fetch_and_set_book_cover(book_id: int) -> bool:
 
     image_url = find_cover_url(book.title, book.author)
     if not image_url:
-        logger.info('جلدی برای «%s — %s» پیدا نشد.', book.title, book.author)
+        logger.info('جلد ایرانی برای «%s — %s» پیدا نشد.', book.title, book.author)
         return False
     ok = attach_cover_from_url(book, image_url)
     if ok:
-        logger.info('جلد کتاب %s ست شد.', book.pk)
+        logger.info('جلد ایرانی کتاب %s ست شد.', book.pk)
     return ok
 
 
