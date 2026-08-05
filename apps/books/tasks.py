@@ -28,3 +28,18 @@ def analyze_reading_vibe_task(self, user_book_id: int) -> bool:
             raise self.retry(exc=exc)
         except self.MaxRetriesExceededError:
             return False
+
+
+@shared_task(bind=True, max_retries=2, default_retry_delay=30)
+def fetch_book_cover_task(self, book_id: int) -> bool:
+    """اگر جلد نباشد، از Google Books می‌گیرد و روی کاتالوگ ست می‌کند."""
+    from apps.books.services.covers import fetch_and_set_book_cover
+
+    try:
+        return fetch_and_set_book_cover(book_id)
+    except Exception as exc:
+        logger.exception('دریافت جلد برای Book %s شکست خورد.', book_id)
+        try:
+            raise self.retry(exc=exc)
+        except self.MaxRetriesExceededError:
+            return False

@@ -4013,9 +4013,42 @@ body.vocab-modal-open {
 }
 
 .dash-vibe-log h3 {
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.25rem;
   font-size: 0.95rem;
   color: var(--sky);
+}
+
+.dash-vibe-log-hint {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+.dash-vibe-deltas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.dash-vibe-delta {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(15, 27, 51, 0.06);
+  color: var(--sky);
+}
+
+.dash-vibe-delta b {
+  font-weight: 700;
+}
+
+.dash-vibe-delta.is-up b {
+  color: var(--ok);
+}
+
+.dash-vibe-delta.is-down b {
+  color: var(--brand);
 }
 
 .dash-vibe-log ul {

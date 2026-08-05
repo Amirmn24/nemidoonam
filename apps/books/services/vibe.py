@@ -65,6 +65,31 @@ def top_moods(axes: dict[str, int] | None, *, limit: int = 3) -> list[dict[str, 
     ]
 
 
+def axis_deltas(
+    previous: dict[str, int] | None,
+    new: dict[str, int] | None,
+) -> list[dict[str, Any]]:
+    """تغییر هر محور نسبت به وایب قبلی (همهٔ لاگ‌ها در DB می‌مانند)."""
+    prev = normalize_axes(previous or {})
+    nxt = normalize_axes(new or {})
+    deltas: list[dict[str, Any]] = []
+    for key in AXIS_KEYS:
+        delta = nxt[key] - prev[key]
+        if delta == 0:
+            continue
+        deltas.append(
+            {
+                'key': key,
+                'label': AXIS_LABELS[key],
+                'from': prev[key],
+                'to': nxt[key],
+                'delta': delta,
+            }
+        )
+    deltas.sort(key=lambda item: abs(item['delta']), reverse=True)
+    return deltas
+
+
 def _extract_json(text: str) -> dict[str, Any]:
     text = (text or '').strip()
     if not text:
@@ -260,6 +285,7 @@ def get_vibe_dashboard_payload(user) -> dict[str, Any]:
             'axes', 'quote', 'mood_label', 'updated_at'
         ).first()
     )
+    # همهٔ لاگ‌ها در DB می‌مانند؛ فقط ۵تای آخر برای UI
     logs = (
         ReadingVibeLog.objects.filter(user=user)
         .only(
@@ -271,7 +297,7 @@ def get_vibe_dashboard_payload(user) -> dict[str, Any]:
             'mood_label',
             'change_summary',
             'created_at',
-        )[:8]
+        )[:5]
     )
 
     if not profile:
@@ -303,6 +329,7 @@ def get_vibe_dashboard_payload(user) -> dict[str, Any]:
                 'quote': log.quote,
                 'mood_label': log.mood_label,
                 'change_summary': log.change_summary,
+                'deltas': axis_deltas(log.previous_axes, log.new_axes),
                 'previous_axes': axes_for_chart(log.previous_axes),
                 'new_axes': axes_for_chart(log.new_axes),
                 'created_at': log.created_at.isoformat(),

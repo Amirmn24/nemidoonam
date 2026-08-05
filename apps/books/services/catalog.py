@@ -8,6 +8,20 @@ from apps.books.models import Book, BookStatus, UserBook
 from apps.books.services.matching import fingerprint
 
 
+def _enqueue_cover_if_missing(book: Book) -> None:
+    """بعد از commit، اگر جلد نباشد از Google Books بگیرد (روی کاتالوگ مشترک)."""
+    if book.cover:
+        return
+    book_id = book.pk
+
+    def _run() -> None:
+        from apps.books.services.covers import enqueue_cover_fetch
+
+        enqueue_cover_fetch(book_id)
+
+    transaction.on_commit(_run)
+
+
 def get_catalog_book_by_identity(title: str, author: str) -> Book | None:
     title_fp = fingerprint(title)
     author_fp = fingerprint(author)
@@ -72,6 +86,8 @@ def add_book_to_shelf(
             'notes': notes or '',
         },
     )
+    # اگر از کاتالوگ بدون جلد اضافه شد، یک‌بار تلاش برای پر کردن جلد
+    _enqueue_cover_if_missing(book)
     return user_book, created
 
 

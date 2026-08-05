@@ -164,6 +164,7 @@ export default function VibeRadar({ vibe: initialVibe }) {
 
               <div className="dash-vibe-log">
                 <h3>لاگ تغییر وایب</h3>
+                <p className="dash-vibe-log-hint">۵ تغییر اخیر · همهٔ تاریخچه ذخیره می‌شود</p>
                 {logs.length === 0 ? (
                   <p className="dash-vibe-log-empty">هنوز لاگی نیست.</p>
                 ) : (
@@ -175,6 +176,24 @@ export default function VibeRadar({ vibe: initialVibe }) {
                           <time dateTime={log.created_at}>{formatFaDate(log.created_at)}</time>
                         </div>
                         <p>{log.change_summary}</p>
+                        {log.deltas?.length ? (
+                          <div className="dash-vibe-deltas" aria-label="جزئیات تغییر مود">
+                            {log.deltas.map((d) => (
+                              <span
+                                key={d.key}
+                                className={`dash-vibe-delta ${d.delta > 0 ? 'is-up' : 'is-down'}`}
+                              >
+                                {d.label} {d.from}→{d.to}{' '}
+                                <b>
+                                  {d.delta > 0 ? '+' : ''}
+                                  {d.delta}
+                                </b>
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="dash-vibe-log-empty">تغییر عددی محسوسی نبود.</p>
+                        )}
                       </li>
                     ))}
                   </ul>

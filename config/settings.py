@@ -194,3 +194,6 @@ CELERY_BEAT_SCHEDULE = {
 # --- OpenAI (Reading Vibe) ---
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
 OPENAI_VIBE_MODEL = os.getenv('OPENAI_VIBE_MODEL', 'gpt-4o-mini')
+
+# --- Google Books (optional API key for higher quota) ---
+GOOGLE_BOOKS_API_KEY = os.getenv('GOOGLE_BOOKS_API_KEY', '')
