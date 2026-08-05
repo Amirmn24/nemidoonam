@@ -12,6 +12,12 @@ from rest_framework.views import APIView
 from apps.accounts.models import User
 from apps.accounts.services.auth import authenticate_user, login_user, register_user
 from apps.accounts.services.dashboard import get_dashboard_payload
+from apps.books.models import UserBook
+from apps.books.services.vibe import (
+    enqueue_vibe_update,
+    get_vibe_dashboard_payload,
+    update_user_vibe_from_user_book,
+)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -209,3 +215,28 @@ class DashboardView(APIView):
         except (TypeError, ValueError):
             weeks = 53
         return Response(get_dashboard_payload(request.user, weeks=weeks))
+
+
+class VibeRefreshView(APIView):
+    """تحلیل/بازسازی وایب مطالعاتی بر اساس آخرین کتاب قفسه."""
+
+    def post(self, request):
+        from apps.books.models import UserBook
+        from apps.books.services.vibe import (
+            get_vibe_dashboard_payload,
+            update_user_vibe_from_user_book,
+        )
+
+        latest = (
+            UserBook.objects.filter(user=request.user)
+            .select_related('book', 'user')
+            .order_by('-created_at')
+            .first()
+        )
+        if not latest:
+            return Response(
+                {'detail': 'اول یک کتاب به قفسه اضافه کن.', 'vibe': get_vibe_dashboard_payload(request.user)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        update_user_vibe_from_user_book(latest)
+        return Response({'vibe': get_vibe_dashboard_payload(request.user)})

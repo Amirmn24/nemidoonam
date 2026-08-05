@@ -29,7 +29,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'apps.accounts',
-    'apps.books',
+    'apps.books.apps.BooksConfig',
     'apps.challenges',
     'apps.vocabulary',
     'emails.apps.EmailsConfig',
@@ -190,3 +190,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(hours=1),
     },
 }
+
+# --- OpenAI (Reading Vibe) ---
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+OPENAI_VIBE_MODEL = os.getenv('OPENAI_VIBE_MODEL', 'gpt-4o-mini')

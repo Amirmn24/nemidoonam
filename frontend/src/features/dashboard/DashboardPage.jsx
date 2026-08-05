@@ -5,6 +5,7 @@ import { dashboardApi } from '../../shared/api'
 import ActivityHeatmap from './components/ActivityHeatmap'
 import HeroStatBar from './components/HeroStatBar'
 import QuickActions from './components/QuickActions'
+import VibeRadar from './components/VibeRadar'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -53,6 +54,8 @@ export default function DashboardPage() {
       <HeroStatBar stats={data.stats} />
 
       <ActivityHeatmap heatmap={data.heatmap} stats={data.stats} />
+
+      <VibeRadar vibe={data.vibe} />
 
       <QuickActions quick={data.quick} />
     </div>

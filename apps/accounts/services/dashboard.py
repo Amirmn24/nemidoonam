@@ -17,6 +17,7 @@ from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 from apps.books.models import BookStatus, Entry, UserBook
+from apps.books.services.vibe import get_vibe_dashboard_payload
 from apps.challenges.models import Challenge, ChallengeStatus
 from apps.vocabulary.models import Word
 
@@ -194,6 +195,7 @@ def get_dashboard_payload(user, *, weeks: int = 53) -> dict[str, Any]:
             'types': list(ACTIVITY_TYPES),
             'days': days,
         },
+        'vibe': get_vibe_dashboard_payload(user),
         'quick': {
             'vocabulary_count': stats['words_count'],
             'challenges_active': stats['challenges_active'],

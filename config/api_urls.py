@@ -8,6 +8,7 @@ from apps.accounts.api import (
     LogoutView,
     MeView,
     SignupView,
+    VibeRefreshView,
 )
 from apps.books.api import CatalogAddView, EntryViewSet, MetaChoicesView, ShelfViewSet, SuggestView
 from apps.challenges.api import ChallengeViewSet
@@ -30,6 +31,7 @@ urlpatterns = [
     path('auth/logout/', LogoutView.as_view(), name='api-logout'),
     path('auth/me/', MeView.as_view(), name='api-me'),
     path('dashboard/', DashboardView.as_view(), name='api-dashboard'),
+    path('dashboard/vibe/refresh/', VibeRefreshView.as_view(), name='api-vibe-refresh'),
     path('meta/choices/', MetaChoicesView.as_view(), name='api-meta-choices'),
     path('books/suggest/', SuggestView.as_view(), name='api-suggest'),
     path('catalog/<int:pk>/add/', CatalogAddView.as_view(), name='api-catalog-add'),

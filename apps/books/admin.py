@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.books.models import Book, Entry, UserBook
+from apps.books.models import Book, Entry, ReadingVibeLog, ReadingVibeProfile, UserBook
 
 
 class EntryInline(admin.TabularInline):
@@ -61,3 +61,18 @@ class EntryAdmin(admin.ModelAdmin):
     search_fields = ('user_book__book__title', 'text_content')
     autocomplete_fields = ('user_book',)
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(ReadingVibeProfile)
+class ReadingVibeProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'mood_label', 'updated_at')
+    search_fields = ('user__username', 'mood_label', 'quote')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(ReadingVibeLog)
+class ReadingVibeLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'book_title', 'mood_label', 'created_at')
+    search_fields = ('user__username', 'book_title', 'book_author', 'change_summary')
+    autocomplete_fields = ('user', 'user_book')
+    readonly_fields = ('created_at',)

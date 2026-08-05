@@ -95,6 +95,7 @@ export const dashboardApi = {
     const qs = q.toString()
     return api(`/dashboard/${qs ? `?${qs}` : ''}`)
   },
+  refreshVibe: () => api('/dashboard/vibe/refresh/', { method: 'POST' }),
 }
 
 export const booksApi = {

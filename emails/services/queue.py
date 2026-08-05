@@ -17,9 +17,11 @@ def enqueue(task: Any, *args, **kwargs):
 
     try:
         return task.delay(*args, **kwargs)
-    except Exception:
-        logger.exception(
-            'صف Celery در دسترس نبود؛ تسک %s هم‌زمان اجرا می‌شود.',
+    except Exception as exc:
+        # Redis/Celery خاموش بودن در لوکال طبیعی است؛ traceback کامل لازم نیست
+        logger.warning(
+            'صف Celery در دسترس نبود (%s)؛ تسک %s هم‌زمان اجرا می‌شود.',
+            exc.__class__.__name__,
             getattr(task, 'name', task),
         )
         return task.apply(args=args, kwargs=kwargs)
