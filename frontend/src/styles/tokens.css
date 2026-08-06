@@ -1,0 +1,149 @@
+/* Vyrvona design tokens — single source of truth for theme colors */
+
+:root,
+[data-theme="light"] {
+  /* Backgrounds */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-elevated: #ffffff;
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #ffffff;
+
+  /* Brand */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #dbeafe;
+
+  --secondary: #0f766e;
+  --secondary-hover: #0d9488;
+  --secondary-light: #ccfbf1;
+
+  --accent: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-light: #fef3c7;
+
+  /* Semantic */
+  --success: #059669;
+  --success-light: #d1fae5;
+  --warning: #d97706;
+  --warning-light: #ffedd5;
+  --danger: #dc2626;
+  --danger-light: #fee2e2;
+
+  /* Borders & focus */
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --ring: #2563eb;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 12px 28px -8px rgb(15 23 42 / 0.18);
+
+  /* Surfaces derived for chrome (header/sidebar/dock) */
+  --chrome: #0f172a;
+  --chrome-mid: #1e293b;
+  --on-chrome: #f8fafc;
+  --on-chrome-muted: color-mix(in srgb, var(--on-chrome) 72%, transparent);
+
+  /* Patterns */
+  --pattern-books: url("/img/pattern-books.svg");
+  --pattern-books-burgundy: url("/img/pattern-books-burgundy.svg");
+  --pattern-books-light: url("/img/pattern-books-light.svg");
+  --pattern-size: 320px;
+  --pattern-opacity: 0.35;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-elevated: #1e293b;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-inverse: #0f172a;
+
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --primary-light: #1e3a8a;
+
+  --secondary: #14b8a6;
+  --secondary-hover: #2dd4bf;
+  --secondary-light: #134e4a;
+
+  --accent: #fbbf24;
+  --accent-hover: #fcd34d;
+  --accent-light: #78350f;
+
+  --success: #10b981;
+  --success-light: #064e3b;
+  --warning: #f59e0b;
+  --warning-light: #78350f;
+  --danger: #ef4444;
+  --danger-light: #7f1d1d;
+
+  --border: #334155;
+  --border-strong: #475569;
+  --ring: #3b82f6;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 16px 36px -10px rgb(0 0 0 / 0.55);
+
+  --chrome: #020617;
+  --chrome-mid: #0f172a;
+  --on-chrome: #f1f5f9;
+  --on-chrome-muted: color-mix(in srgb, var(--on-chrome) 68%, transparent);
+
+  --pattern-opacity: 0.12;
+  --pattern-books: url("/img/pattern-books-light.svg");
+}
+
+/* Legacy aliases — keep existing main.css selectors working */
+:root,
+[data-theme="light"],
+[data-theme="dark"] {
+  --bg-0: var(--bg-primary);
+  --bg-1: var(--bg-tertiary);
+  --ink: var(--text-primary);
+  --ink-soft: var(--text-secondary);
+  --line: var(--border);
+
+  --brand: var(--primary);
+  --brand-deep: var(--primary-hover);
+  --brand-mid: var(--primary);
+  --brand-soft: var(--primary-light);
+
+  /* sky/navy historically meant "ink navy" for text — keep theme-aware */
+  --sky: var(--text-primary);
+  --sky-mid: var(--text-secondary);
+  --sky-soft: var(--primary-light);
+  --navy: var(--text-primary);
+  --navy-mid: var(--text-secondary);
+  --navy-soft: var(--primary-light);
+
+  --accent-soft: var(--accent-light);
+  --feeling: var(--accent);
+  --viewpoint: var(--secondary);
+  --book-text: var(--text-primary);
+  --ok: var(--success);
+
+  --shadow: var(--shadow-md);
+
+  --radius: 24px;
+  --radius-sm: 16px;
+  --max: 1120px;
+  --font: "Vazirmatn", system-ui, sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Warm parchment stand-ins → slate neutrals */
+  --cream: var(--bg-secondary);
+  --cream-muted: var(--bg-tertiary);
+}

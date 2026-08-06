@@ -56,7 +56,7 @@ function RadarSvg({ axes }) {
   const shape = polygonPoints(axes)
 
   return (
-    <svg className="dash-vibe-svg" viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label="گراف شخصیت مطالعاتی">
+    <svg className="dash-vibe-svg" viewBox="-8 -8 296 296" role="img" aria-label="گراف شخصیت مطالعاتی">
       {grid.map((pts, i) => (
         <polygon key={`ring-${i}`} points={pts} className="dash-vibe-ring" />
       ))}
@@ -65,7 +65,7 @@ function RadarSvg({ axes }) {
       ))}
       <polygon points={shape} className="dash-vibe-shape" />
       {spokes.map((spoke, i) => {
-        const [lx, ly] = polar(i * step, RADIUS + 28)
+        const [lx, ly] = polar(i * step, RADIUS + 22)
         return (
           <text key={`lbl-${i}`} x={lx} y={ly} className="dash-vibe-axis-label" textAnchor="middle" dominantBaseline="middle">
             {spoke.label}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const TYPE_META = {
   entries: { label: 'یادداشت', short: 'یادداشت' },
@@ -78,7 +78,6 @@ function buildWeeks(days) {
   const start = parseISO(days[0].date)
   const end = parseISO(days[days.length - 1].date)
 
-  // Align to Saturday
   const cursor = new Date(start)
   while (cursor.getDay() !== 6) cursor.setDate(cursor.getDate() - 1)
 
@@ -122,31 +121,44 @@ function buildMonthLabels(weeks) {
   return labels
 }
 
+function buildTooltip(day, date, filter) {
+  const count = filteredCount(day, filter)
+  const parts = []
+  const b = day?.breakdown
+  if (b) {
+    if (b.entries) parts.push(`${b.entries} یادداشت`)
+    if (b.challenges) parts.push(`${b.challenges} چالش`)
+    if (b.reading) parts.push(`${b.reading} مطالعه`)
+  }
+  return {
+    title: formatFaDate(date),
+    line: count
+      ? `${count} فعالیت${parts.length ? ` — ${parts.join(' · ')}` : ''}`
+      : 'بدون فعالیت',
+  }
+}
+
 export default function ActivityHeatmap({ heatmap, stats }) {
   const [filter, setFilter] = useState('all')
   const [hover, setHover] = useState(null)
+  const scrollRef = useRef(null)
 
   const weeks = useMemo(() => buildWeeks(heatmap?.days || []), [heatmap])
   const monthLabels = useMemo(() => buildMonthLabels(weeks), [weeks])
 
-  const tooltip = hover
-    ? (() => {
-        const count = filteredCount(hover.day, filter)
-        const parts = []
-        const b = hover.day?.breakdown
-        if (b) {
-          if (b.entries) parts.push(`${b.entries} یادداشت`)
-          if (b.challenges) parts.push(`${b.challenges} چالش`)
-          if (b.reading) parts.push(`${b.reading} مطالعه`)
-        }
-        return {
-          title: formatFaDate(hover.date),
-          line: count
-            ? `${count} فعالیت${parts.length ? ` — ${parts.join(' · ')}` : ''}`
-            : 'بدون فعالیت',
-        }
-      })()
-    : null
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    // LTR grid: انتهای اسکرول = هفته‌های اخیر
+    el.scrollLeft = el.scrollWidth
+  }, [weeks])
+
+  const tooltip = hover ? buildTooltip(hover.day, hover.date, filter) : null
+
+  const selectCell = (cell) => {
+    if (!cell.inRange) return
+    setHover({ date: cell.date, day: cell.day })
+  }
 
   return (
     <section className="dash-heatmap section" aria-label="نقشه فعالیت">
@@ -154,7 +166,7 @@ export default function ActivityHeatmap({ heatmap, stats }) {
         <div className="section-head">
           <h2>نقشهٔ فعالیت</h2>
           <p>
-            مثل گیت‌هاب، هر مربع یک روز است. Streak فعلی:{' '}
+            هر مربع یک روز است. Streak فعلی:{' '}
             <strong>{stats?.streak_current ?? 0}</strong> روز
             {stats?.streak_longest ? (
               <>
@@ -180,56 +192,57 @@ export default function ActivityHeatmap({ heatmap, stats }) {
         </div>
       </div>
 
-        <div className="dash-heatmap-panel">
-        <div className="dash-heatmap-body">
-          <div className="dash-heatmap-weekdays" aria-hidden="true">
-            <span className="dash-heatmap-weekday-spacer" />
-            {WEEKDAY_LABELS.map((label, i) => (
-              <span key={label} className={i % 2 === 0 ? 'is-visible' : ''}>
-                {i % 2 === 0 ? label : ''}
-              </span>
-            ))}
-          </div>
-
-          <div className="dash-heatmap-scroll" dir="ltr">
-            <div className="dash-heatmap-months" aria-hidden="true">
-              {monthLabels.map((m) => (
-                <span key={`m-${m.index}`} className="dash-heatmap-month">
-                  {m.label}
+      <div className="dash-heatmap-panel">
+        <div className="dash-heatmap-scroll-x" ref={scrollRef}>
+          <div className="dash-heatmap-body">
+            <div className="dash-heatmap-weekdays" aria-hidden="true">
+              <span className="dash-heatmap-weekday-spacer" />
+              {WEEKDAY_LABELS.map((label, i) => (
+                <span key={label} className={i % 2 === 0 ? 'is-visible' : ''}>
+                  {i % 2 === 0 ? label : ''}
                 </span>
               ))}
             </div>
-            <div className="dash-heatmap-grid">
-              {weeks.map((week, wi) => (
-                <div key={`w-${wi}`} className="dash-heatmap-week">
-                  {week.map((cell) => {
-                    const count = filteredCount(cell.day, filter)
-                    const level = cell.inRange ? levelForCount(count) : -1
-                    const dom =
-                      filter === 'all' ? dominantType(cell.day?.breakdown) : filter
-                    const typeClass = count > 0 && dom ? ` type-${dom}` : ''
-                    return (
-                      <button
-                        key={cell.date}
-                        type="button"
-                        className={`dash-heat-cell level-${level}${typeClass}${
-                          !cell.inRange ? ' is-out' : ''
-                        }`}
-                        disabled={!cell.inRange}
-                        aria-label={`${cell.date}: ${count} فعالیت`}
-                        onMouseEnter={() =>
-                          cell.inRange && setHover({ date: cell.date, day: cell.day })
-                        }
-                        onMouseLeave={() => setHover(null)}
-                        onFocus={() =>
-                          cell.inRange && setHover({ date: cell.date, day: cell.day })
-                        }
-                        onBlur={() => setHover(null)}
-                      />
-                    )
-                  })}
-                </div>
-              ))}
+
+            <div className="dash-heatmap-canvas" dir="ltr">
+              <div className="dash-heatmap-months" aria-hidden="true">
+                {monthLabels.map((m) => (
+                  <span key={`m-${m.index}`} className="dash-heatmap-month">
+                    {m.label}
+                  </span>
+                ))}
+              </div>
+              <div className="dash-heatmap-grid">
+                {weeks.map((week, wi) => (
+                  <div key={`w-${wi}`} className="dash-heatmap-week">
+                    {week.map((cell) => {
+                      const count = filteredCount(cell.day, filter)
+                      const level = cell.inRange ? levelForCount(count) : -1
+                      const dom =
+                        filter === 'all' ? dominantType(cell.day?.breakdown) : filter
+                      const typeClass = count > 0 && dom ? ` type-${dom}` : ''
+                      const selected = hover?.date === cell.date
+                      return (
+                        <button
+                          key={cell.date}
+                          type="button"
+                          className={`dash-heat-cell level-${level}${typeClass}${
+                            !cell.inRange ? ' is-out' : ''
+                          }${selected ? ' is-selected' : ''}`}
+                          disabled={!cell.inRange}
+                          aria-label={`${cell.date}: ${count} فعالیت`}
+                          aria-pressed={selected}
+                          onMouseEnter={() => selectCell(cell)}
+                          onMouseLeave={() => setHover(null)}
+                          onFocus={() => selectCell(cell)}
+                          onBlur={() => setHover(null)}
+                          onClick={() => selectCell(cell)}
+                        />
+                      )
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -255,7 +268,9 @@ export default function ActivityHeatmap({ heatmap, stats }) {
               <span>{tooltip.line}</span>
             </div>
           ) : (
-            <div className="dash-heatmap-tooltip is-placeholder">روی یک روز بمان</div>
+            <div className="dash-heatmap-tooltip is-placeholder">
+              یک روز را لمس کن یا نشانگر را روی آن بگذار
+            </div>
           )}
         </div>
       </div>

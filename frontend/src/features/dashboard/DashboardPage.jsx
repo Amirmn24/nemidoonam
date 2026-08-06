@@ -44,20 +44,20 @@ export default function DashboardPage() {
         <div className="dash-intro-copy">
           <p className="eyebrow">داشبورد</p>
           <h1>سلام، {name}</h1>
-          <p>این‌جا نبض مطالعه‌ات است — streak، فعالیت روزانه و میان‌برهای سریع.</p>
+          <p>نبض مطالعه‌ات — streak، فعالیت روزانه و میان‌برهای سریع.</p>
         </div>
-        <Link to="/books" className="btn btn-secondary">
+        <Link to="/books" className="btn btn-secondary dash-intro-cta">
           برو به قفسه
         </Link>
       </section>
 
       <HeroStatBar stats={data.stats} />
 
+      <QuickActions quick={data.quick} />
+
       <ActivityHeatmap heatmap={data.heatmap} stats={data.stats} />
 
       <VibeRadar vibe={data.vibe} />
-
-      <QuickActions quick={data.quick} />
     </div>
   )
 }

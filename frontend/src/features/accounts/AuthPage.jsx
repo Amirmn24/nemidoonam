@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
+import ThemeToggle from '../../shared/ThemeToggle'
 import ToastHost from '../../shared/ToastHost'
 
 export default function AuthPage({ mode: initialMode = 'login' }) {
@@ -66,6 +67,9 @@ export default function AuthPage({ mode: initialMode = 'login' }) {
 
   return (
     <div className="auth-stage" id="auth-stage" data-mode={mode} dir="ltr">
+      <div className="auth-theme-slot">
+        <ThemeToggle />
+      </div>
       <div className="auth-accent">
         <div className={`auth-accent-panel auth-accent-login${mode === 'login' ? ' is-active' : ''}`}>
           <h2>سلام دوباره</h2>
@@ -152,8 +156,8 @@ export default function AuthPage({ mode: initialMode = 'login' }) {
             </p>
           </form>
 
-          <p style={{ marginTop: '1rem', opacity: 0.7 }}>
-            <Link to="/">بازگشت</Link>
+          <p className="auth-back-wrap">
+            <Link className="auth-back-link" to="/">بازگشت</Link>
           </p>
         </div>
       </div>

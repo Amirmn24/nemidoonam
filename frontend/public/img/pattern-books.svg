@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320">
   <!-- Doodle open-book seamless tile — navy on cream -->
-  <g fill="none" stroke="#0f1b33" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" opacity="0.13">
+  <g fill="none" stroke="#0f172a" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" opacity="0.13">
     <g transform="translate(24,20) rotate(-10)">
       <path d="M2 8 C14 0 30 0 38 8 L38 50 C28 42 14 42 2 50 Z"/>
       <path d="M74 8 C62 0 46 0 38 8 L38 50 C48 42 62 42 74 50 Z"/>

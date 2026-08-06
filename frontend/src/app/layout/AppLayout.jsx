@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../shared/AuthContext'
+import ThemeToggle from '../../shared/ThemeToggle'
 import ToastHost from '../../shared/ToastHost'
 
 const STORAGE_KEY = 'nemidoonam.sidebarCollapsed'
@@ -141,6 +142,7 @@ export default function AppLayout() {
             </Link>
           </div>
           <div className="header-end">
+            <ThemeToggle />
             <Link to="/books/new" className="btn btn-primary header-cta">
               کتاب جدید
             </Link>
