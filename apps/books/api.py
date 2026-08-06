@@ -8,12 +8,14 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
 from apps.books.models import Book, BookStatus, Entry, EntryKind, EntryMediaType, UserBook
+from apps.books.models.choices import RATING_FACTORS
 from apps.books.services.books import (
     filter_entries,
     get_books_by_status,
     get_shelf_queryset,
 )
 from apps.books.services.catalog import add_book_to_shelf, create_shelf_book, update_shelf_book
+from apps.books.services.entries import is_entry_content_locked, redact_entry_for_response
 from apps.books.services.matching import (
     find_duplicates,
     find_exact_catalog,
@@ -22,6 +24,7 @@ from apps.books.services.matching import (
     search_book_suggestions,
     serialize_match,
 )
+from apps.books.services.ratings import get_rating_for_shelf, serialize_rating, upsert_book_rating
 
 
 def _media_url(request, field):
@@ -44,6 +47,8 @@ class ShelfBookSerializer(serializers.Serializer):
     status_display = serializers.CharField(source='get_status_display')
     notes = serializers.CharField()
     entry_count = serializers.SerializerMethodField()
+    overall_score = serializers.SerializerMethodField()
+    has_rating = serializers.SerializerMethodField()
     updated_at = serializers.DateTimeField()
     created_at = serializers.DateTimeField()
 
@@ -54,6 +59,13 @@ class ShelfBookSerializer(serializers.Serializer):
         if hasattr(obj, 'entry_count'):
             return obj.entry_count
         return obj.entries.count()
+
+    def get_overall_score(self, obj):
+        rating = get_rating_for_shelf(obj)
+        return rating.overall_score if rating else None
+
+    def get_has_rating(self, obj):
+        return get_rating_for_shelf(obj) is not None
 
 
 class EntrySerializer(serializers.Serializer):
@@ -67,15 +79,36 @@ class EntrySerializer(serializers.Serializer):
     text_content = serializers.CharField()
     image_url = serializers.SerializerMethodField()
     audio_url = serializers.SerializerMethodField()
+    is_public = serializers.BooleanField()
+    is_sealed = serializers.BooleanField()
+    is_content_locked = serializers.SerializerMethodField()
     entry_date = serializers.DateField()
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
 
+    def get_is_content_locked(self, obj):
+        return bool(getattr(obj, '_content_locked', False))
+
     def get_image_url(self, obj):
+        if getattr(obj, '_content_locked', False):
+            return None
         return _media_url(self.context.get('request'), obj.image)
 
     def get_audio_url(self, obj):
+        if getattr(obj, '_content_locked', False):
+            return None
         return _media_url(self.context.get('request'), obj.audio)
+
+
+def _serialize_entries(entries, user_book, request, *, redact_locked=True):
+    payload = []
+    for entry in entries:
+        locked = is_entry_content_locked(entry, user_book)
+        entry._content_locked = locked
+        if redact_locked and locked:
+            redact_entry_for_response(entry, locked=True)
+        payload.append(entry)
+    return EntrySerializer(payload, many=True, context={'request': request}).data
 
 
 class EmptyIntegerField(serializers.IntegerField):
@@ -191,6 +224,8 @@ class EntryWriteSerializer(serializers.Serializer):
     text_content = serializers.CharField(required=False, allow_blank=True, default='')
     image = serializers.ImageField(required=False, allow_null=True)
     audio = serializers.FileField(required=False, allow_null=True)
+    is_public = serializers.BooleanField(required=False, default=False)
+    is_sealed = serializers.BooleanField(required=False, default=False)
 
     def validate(self, attrs):
         user_book = self.context['user_book']
@@ -205,16 +240,32 @@ class EntryWriteSerializer(serializers.Serializer):
         text_content = (attrs.get('text_content') or '').strip()
         image = attrs.get('image')
         audio = attrs.get('audio')
+        content_locked = bool(
+            instance
+            and is_entry_content_locked(instance, user_book)
+            and attrs.get('is_sealed', instance.is_sealed)
+        )
 
-        if media_type == EntryMediaType.TEXT and not text_content:
-            raise serializers.ValidationError({'text_content': 'برای محتوای متنی، نوشتن متن الزامی است.'})
-        if media_type == EntryMediaType.IMAGE and not image and not (instance and instance.image):
-            raise serializers.ValidationError({'image': 'برای محتوای تصویری، آپلود تصویر الزامی است.'})
-        if media_type == EntryMediaType.VOICE and not audio and not (instance and instance.audio):
-            raise serializers.ValidationError({'audio': 'برای محتوای صوتی، ضبط ویس الزامی است.'})
+        if not content_locked:
+            if media_type == EntryMediaType.TEXT and not text_content:
+                raise serializers.ValidationError({'text_content': 'برای محتوای متنی، نوشتن متن الزامی است.'})
+            if media_type == EntryMediaType.IMAGE and not image and not (instance and instance.image):
+                raise serializers.ValidationError({'image': 'برای محتوای تصویری، آپلود تصویر الزامی است.'})
+            if media_type == EntryMediaType.VOICE and not audio and not (instance and instance.audio):
+                raise serializers.ValidationError({'audio': 'برای محتوای صوتی، ضبط ویس الزامی است.'})
 
         attrs['text_content'] = text_content
+        attrs['_content_locked'] = content_locked
         return attrs
+
+
+class RatingWriteSerializer(serializers.Serializer):
+    writing = serializers.IntegerField(min_value=1, max_value=5)
+    content = serializers.IntegerField(min_value=1, max_value=5)
+    characters = serializers.IntegerField(min_value=1, max_value=5)
+    pacing = serializers.IntegerField(min_value=1, max_value=5)
+    impact = serializers.IntegerField(min_value=1, max_value=5)
+    review = serializers.CharField(required=False, allow_blank=True, default='')
 
 
 class MetaChoicesView(APIView):
@@ -229,6 +280,9 @@ class MetaChoicesView(APIView):
                 ],
                 'entry_media_types': [
                     {'value': value, 'label': label} for value, label in EntryMediaType.choices
+                ],
+                'rating_factors': [
+                    {'key': key, 'label': label} for key, label in RATING_FACTORS
                 ],
             }
         )
@@ -289,10 +343,15 @@ class ShelfViewSet(ViewSet):
         kind = request.query_params.get('kind') or None
         media = request.query_params.get('media') or None
         entries = filter_entries(user_book, kind=kind, media_type=media)
+        rating = get_rating_for_shelf(user_book)
         return Response(
             {
                 'book': ShelfBookSerializer(user_book, context={'request': request}).data,
-                'entries': EntrySerializer(entries, many=True, context={'request': request}).data,
+                'entries': _serialize_entries(entries, user_book, request),
+                'rating': serialize_rating(rating),
+                'rating_factors': [
+                    {'key': key, 'label': label} for key, label in RATING_FACTORS
+                ],
                 'active_kind': kind or '',
                 'active_media': media or '',
             }
@@ -427,6 +486,60 @@ class ShelfViewSet(ViewSet):
         user_book = get_shelf_queryset(request.user).get(pk=user_book.pk)
         return Response(ShelfBookSerializer(user_book, context={'request': request}).data)
 
+    @action(detail=True, methods=['post'])
+    def finish(self, request, pk=None):
+        """تیک پایان کتاب — صفحه را کامل و وضعیت را finished می‌کند."""
+        user_book = self._get_shelf(request, pk)
+        user_book.current_page = user_book.total_pages
+        user_book.status = BookStatus.FINISHED
+        user_book.save(update_fields=['current_page', 'status', 'updated_at'])
+        user_book = get_shelf_queryset(request.user).get(pk=user_book.pk)
+        return Response(
+            {
+                'book': ShelfBookSerializer(user_book, context={'request': request}).data,
+                'rating': serialize_rating(get_rating_for_shelf(user_book)),
+                'rating_factors': [
+                    {'key': key, 'label': label} for key, label in RATING_FACTORS
+                ],
+            }
+        )
+
+    @action(detail=True, methods=['get', 'put', 'patch'])
+    def rating(self, request, pk=None):
+        user_book = self._get_shelf(request, pk)
+        if request.method == 'GET':
+            return Response(
+                {
+                    'rating': serialize_rating(get_rating_for_shelf(user_book)),
+                    'rating_factors': [
+                        {'key': key, 'label': label} for key, label in RATING_FACTORS
+                    ],
+                    'can_rate': user_book.status == BookStatus.FINISHED,
+                }
+            )
+
+        serializer = RatingWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        try:
+            rating = upsert_book_rating(
+                user_book,
+                scores={key: data[key] for key, _ in RATING_FACTORS},
+                review=data.get('review') or '',
+            )
+        except DjangoValidationError as exc:
+            message = exc.messages[0] if hasattr(exc, 'messages') else str(exc)
+            detail = exc.message_dict if hasattr(exc, 'message_dict') else {'detail': message}
+            return Response(detail, status=status.HTTP_400_BAD_REQUEST)
+
+        user_book = get_shelf_queryset(request.user).get(pk=user_book.pk)
+        return Response(
+            {
+                'book': ShelfBookSerializer(user_book, context={'request': request}).data,
+                'rating': serialize_rating(rating),
+            }
+        )
+
 
 class CatalogAddView(APIView):
     def post(self, request, pk):
@@ -445,14 +558,19 @@ class EntryViewSet(ViewSet):
     def _get_shelf(self, request, book_pk):
         return get_object_or_404(get_shelf_queryset(request.user), pk=book_pk)
 
+    def _entry_response(self, entry, user_book, request, *, redact_locked=True):
+        locked = is_entry_content_locked(entry, user_book)
+        entry._content_locked = locked
+        if redact_locked and locked:
+            redact_entry_for_response(entry, locked=True)
+        return EntrySerializer(entry, context={'request': request}).data
+
     def list(self, request, book_pk=None):
         user_book = self._get_shelf(request, book_pk)
         kind = request.query_params.get('kind') or None
         media = request.query_params.get('media') or None
         entries = filter_entries(user_book, kind=kind, media_type=media)
-        return Response(
-            EntrySerializer(entries, many=True, context={'request': request}).data
-        )
+        return Response(_serialize_entries(entries, user_book, request))
 
     def create(self, request, book_pk=None):
         user_book = self._get_shelf(request, book_pk)
@@ -471,6 +589,8 @@ class EntryViewSet(ViewSet):
             page_number=data['page_number'],
             entry_date=data.get('entry_date') or timezone.localdate(),
             text_content=data.get('text_content') or '',
+            is_public=bool(data.get('is_public', False)),
+            is_sealed=bool(data.get('is_sealed', False)),
         )
         if data.get('image'):
             entry.image = data['image']
@@ -483,18 +603,13 @@ class EntryViewSet(ViewSet):
             user_book.save(update_fields=['current_page', 'updated_at'])
 
         return Response(
-            EntrySerializer(entry, context={'request': request}).data,
+            self._entry_response(entry, user_book, request),
             status=status.HTTP_201_CREATED,
         )
 
     def partial_update(self, request, book_pk=None, pk=None):
         user_book = self._get_shelf(request, book_pk)
         entry = get_object_or_404(Entry, pk=pk, user_book=user_book)
-        serializer = EntryWriteSerializer(
-            data=request.data,
-            context={'user_book': user_book, 'instance': entry},
-            partial=True,
-        )
         # Fill defaults from instance for partial
         merged = {
             'kind': request.data.get('kind', entry.kind),
@@ -502,6 +617,8 @@ class EntryViewSet(ViewSet):
             'page_number': request.data.get('page_number', entry.page_number),
             'entry_date': request.data.get('entry_date', entry.entry_date),
             'text_content': request.data.get('text_content', entry.text_content),
+            'is_public': request.data.get('is_public', entry.is_public),
+            'is_sealed': request.data.get('is_sealed', entry.is_sealed),
         }
         if 'image' in request.data:
             merged['image'] = request.data.get('image')
@@ -518,13 +635,18 @@ class EntryViewSet(ViewSet):
         entry.page_number = data['page_number']
         if data.get('entry_date'):
             entry.entry_date = data['entry_date']
-        entry.text_content = data.get('text_content') or ''
-        if data.get('image'):
-            entry.image = data['image']
-        if data.get('audio'):
-            entry.audio = data['audio']
+        entry.is_public = bool(data.get('is_public', False))
+        entry.is_sealed = bool(data.get('is_sealed', False))
+        if not data.get('_content_locked'):
+            entry.text_content = data.get('text_content') or ''
+            if data.get('image'):
+                entry.image = data['image']
+            if data.get('audio'):
+                entry.audio = data['audio']
         entry.save()
-        return Response(EntrySerializer(entry, context={'request': request}).data)
+        # Refresh from DB so redaction doesn't wipe real files in memory for response path
+        entry.refresh_from_db()
+        return Response(self._entry_response(entry, user_book, request, redact_locked=False))
 
     def destroy(self, request, book_pk=None, pk=None):
         user_book = self._get_shelf(request, book_pk)
@@ -539,4 +661,7 @@ class EntryViewSet(ViewSet):
     def retrieve(self, request, book_pk=None, pk=None):
         user_book = self._get_shelf(request, book_pk)
         entry = get_object_or_404(Entry, pk=pk, user_book=user_book)
+        # برای فرم ویرایش محتوا را برمی‌گردانیم؛ قفل فقط در تایم‌لاین اعمال می‌شود.
+        locked = is_entry_content_locked(entry, user_book)
+        entry._content_locked = locked
         return Response(EntrySerializer(entry, context={'request': request}).data)

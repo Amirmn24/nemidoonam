@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { booksApi } from '../../shared/api'
+import { RatingBadge } from './components/BookRatingPanel'
 
 export default function BookListPage() {
   const [data, setData] = useState(null)
@@ -100,7 +101,10 @@ export default function BookListPage() {
                 <div className="book-meta">
                   <h3>{book.title}</h3>
                   <p>{book.author}</p>
-                  <span className={`status status-${book.status}`}>{book.status_display}</span>
+                  <div className="cluster">
+                    <span className={`status status-${book.status}`}>{book.status_display}</span>
+                    <RatingBadge score={book.overall_score} />
+                  </div>
                   <div className="book-progress-label">
                     {book.current_page} / {book.total_pages} · {book.progress_percent}%
                   </div>

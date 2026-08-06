@@ -126,6 +126,9 @@ export const booksApi = {
     }),
   remove: (id) => api(`/shelf/${id}/`, { method: 'DELETE' }),
   progress: (id, body) => api(`/shelf/${id}/progress/`, { method: 'POST', body }),
+  finish: (id) => api(`/shelf/${id}/finish/`, { method: 'POST' }),
+  getRating: (id) => api(`/shelf/${id}/rating/`),
+  saveRating: (id, body) => api(`/shelf/${id}/rating/`, { method: 'PUT', body }),
   suggest: (params) => {
     const q = new URLSearchParams(params)
     return api(`/books/suggest/?${q}`)

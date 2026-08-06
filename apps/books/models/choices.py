@@ -19,3 +19,13 @@ class EntryKind(models.TextChoices):
     VIEWPOINT = 'viewpoint', 'دیدگاه'
     FEELING = 'feeling', 'حس'
     BOOK_TEXT = 'book_text', 'متن کتاب'
+
+
+# فاکتورهای امتیازدهی چندبُعدی (۱ تا ۵) — میانگین‌شان نمره کلی می‌شود
+RATING_FACTORS = (
+    ('writing', 'نثر و زبان'),
+    ('content', 'محتوا و ایده'),
+    ('characters', 'شخصیت‌پردازی'),
+    ('pacing', 'ریتم روایت'),
+    ('impact', 'تأثیر عاطفی'),
+)

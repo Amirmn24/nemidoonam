@@ -44,6 +44,16 @@ class Entry(models.Model):
         blank=True,
         null=True,
     )
+    is_public = models.BooleanField(
+        'عمومی',
+        default=False,
+        help_text='اگر فعال باشد، بعداً می‌توان این دیدگاه را عمومی کرد.',
+    )
+    is_sealed = models.BooleanField(
+        'مهروموم',
+        default=False,
+        help_text='تا پایان کتاب محتوا قفل می‌ماند و دیده/شنیده نمی‌شود.',
+    )
     entry_date = models.DateField('تاریخ', default=timezone.localdate)
     created_at = models.DateTimeField('تاریخ ایجاد', auto_now_add=True)
     updated_at = models.DateTimeField('آخرین به‌روزرسانی', auto_now=True)

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { booksApi, ApiError } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
+import EntryFlagToggles from './components/EntryFlagToggles'
 
 const KINDS = [
   { value: 'viewpoint', label: 'دیدگاه' },
@@ -21,6 +22,8 @@ export default function EntryFormPage() {
   const { showToast } = useAuth()
   const [kind, setKind] = useState('viewpoint')
   const [media, setMedia] = useState('text')
+  const [isPublic, setIsPublic] = useState(false)
+  const [isSealed, setIsSealed] = useState(false)
   const [entry, setEntry] = useState(null)
   const [book, setBook] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -41,6 +44,8 @@ export default function EntryFormPage() {
         setEntry(data)
         setKind(data.kind)
         setMedia(data.media_type)
+        setIsPublic(Boolean(data.is_public))
+        setIsSealed(Boolean(data.is_sealed))
         if (data.image_url) setImagePreview(data.image_url)
         if (data.audio_url) setAudioUrl(data.audio_url)
       })
@@ -95,6 +100,8 @@ export default function EntryFormPage() {
     fd.set('page_number', form.page_number.value)
     fd.set('entry_date', form.entry_date.value)
     fd.set('text_content', form.text_content?.value || '')
+    fd.set('is_public', isPublic ? 'true' : 'false')
+    fd.set('is_sealed', isSealed ? 'true' : 'false')
     if (media === 'image' && form.image?.files?.[0]) fd.set('image', form.image.files[0])
     if (media === 'voice' && audioBlob) {
       fd.set('audio', audioBlob, 'recording.webm')
@@ -113,6 +120,7 @@ export default function EntryFormPage() {
   }
 
   const today = new Date().toISOString().slice(0, 10)
+  const showPublicToggle = kind === 'viewpoint'
 
   return (
     <div className="page-entry-form">
@@ -131,7 +139,10 @@ export default function EntryFormPage() {
                   key={item.value}
                   type="button"
                   className={`choice-card${kind === item.value ? ' is-active' : ''}`}
-                  onClick={() => setKind(item.value)}
+                  onClick={() => {
+                    setKind(item.value)
+                    if (item.value !== 'viewpoint') setIsPublic(false)
+                  }}
                 >
                   {item.label}
                 </button>
@@ -152,6 +163,17 @@ export default function EntryFormPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="form-step">
+            <div className="form-step-label">پرچم‌ها</div>
+            <EntryFlagToggles
+              isPublic={isPublic}
+              isSealed={isSealed}
+              showPublic={showPublicToggle}
+              onPublicChange={setIsPublic}
+              onSealedChange={setIsSealed}
+            />
           </div>
 
           <div className="field media-field">

@@ -6,7 +6,7 @@ from apps.books.models import BookStatus, Entry, UserBook
 def get_shelf_queryset(user) -> QuerySet[UserBook]:
     return (
         UserBook.objects.filter(user=user)
-        .select_related('book')
+        .select_related('book', 'rating')
         .annotate(entry_count=Count('entries'))
     )
 

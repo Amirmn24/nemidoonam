@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { booksApi, ApiError } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
+import BookRatingPanel, { RatingBadge } from './components/BookRatingPanel'
+import EntryTimelineItem from './components/EntryTimelineItem'
 
 export default function BookDetailPage() {
   const { id } = useParams()
@@ -50,6 +52,33 @@ export default function BookDetailPage() {
     }
   }
 
+  const onFinish = async () => {
+    if (!window.confirm('کتاب را به‌عنوان تمام‌شده علامت بزنم؟ یادداشت‌های مهروموم باز می‌شوند.')) return
+    setBusy(true)
+    try {
+      await booksApi.finish(id)
+      showToast('کتاب تمام شد. حالا می‌توانی امتیاز بدهی.', 'success')
+      await load()
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onSaveRating = async (payload) => {
+    setBusy(true)
+    try {
+      await booksApi.saveRating(id, payload)
+      showToast('امتیاز ذخیره شد.', 'success')
+      await load()
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const onDelete = async () => {
     if (!window.confirm('این کتاب از قفسه حذف شود؟')) return
     await booksApi.remove(id)
@@ -68,6 +97,7 @@ export default function BookDetailPage() {
   if (!data) return <p>در حال بارگذاری…</p>
 
   const book = data.book
+  const isFinished = book.status === 'finished'
   const statuses = [
     ['want_to_read', 'می‌خواهم بخوانم'],
     ['reading', 'در حال خواندن'],
@@ -83,7 +113,10 @@ export default function BookDetailPage() {
           {book.cover_url ? <img src={book.cover_url} alt="" /> : <div className="cover-fallback" />}
         </div>
         <div className="detail-info">
-          <span className={`status status-${book.status}`}>{book.status_display}</span>
+          <div className="cluster">
+            <span className={`status status-${book.status}`}>{book.status_display}</span>
+            <RatingBadge score={book.overall_score} />
+          </div>
           <h1>{book.title}</h1>
           <p className="meta-pill">{book.author}</p>
           {book.notes ? <p>{book.notes}</p> : null}
@@ -91,7 +124,12 @@ export default function BookDetailPage() {
             <Link to={`/books/${id}/entries/new`} className="btn btn-primary">
               یادداشت جدید
             </Link>
-            <Link to={`/books/${id}/edit`} className="btn btn-secondary">
+            {!isFinished ? (
+              <button type="button" className="btn btn-secondary" onClick={onFinish} disabled={busy}>
+                تیک پایان
+              </button>
+            ) : null}
+            <Link to={`/books/${id}/edit`} className="btn btn-ghost">
               ویرایش
             </Link>
             <button type="button" className="btn btn-danger-ghost" onClick={onDelete}>
@@ -149,8 +187,26 @@ export default function BookDetailPage() {
               <span>یادداشت‌ها</span>
               <strong>{book.entry_count}</strong>
             </li>
+            {book.overall_score != null ? (
+              <li>
+                <span>نمره تو</span>
+                <strong>★ {Number(book.overall_score).toFixed(1)}</strong>
+              </li>
+            ) : null}
           </ul>
         </aside>
+      </section>
+
+      <section className="section" id="rating">
+        <div className="surface">
+          <BookRatingPanel
+            factors={data.rating_factors}
+            rating={data.rating}
+            canRate={isFinished}
+            busy={busy}
+            onSubmit={onSaveRating}
+          />
+        </div>
       </section>
 
       <section className="section" id="entries">
@@ -206,29 +262,12 @@ export default function BookDetailPage() {
         ) : (
           <div className="entry-timeline">
             {data.entries.map((entry) => (
-              <article key={entry.id} className={`entry-item kind-${entry.kind}`}>
-                <div className="cluster">
-                  <span className="tag">{entry.kind_display}</span>
-                  <span className="tag">{entry.media_type_display}</span>
-                  <span className="meta-pill">صفحه {entry.page_number}</span>
-                  <span className="meta-pill">{entry.entry_date}</span>
-                </div>
-                {entry.media_type === 'image' && entry.image_url ? (
-                  <img src={entry.image_url} alt="" style={{ maxWidth: '100%', borderRadius: 12 }} />
-                ) : null}
-                {entry.media_type === 'voice' && entry.audio_url ? (
-                  <audio controls src={entry.audio_url} />
-                ) : null}
-                {entry.text_content ? <p>{entry.text_content}</p> : null}
-                <div className="cluster">
-                  <Link className="text-link" to={`/books/${id}/entries/${entry.id}/edit`}>
-                    ویرایش
-                  </Link>
-                  <button type="button" className="text-link" onClick={() => onDeleteEntry(entry.id)}>
-                    حذف
-                  </button>
-                </div>
-              </article>
+              <EntryTimelineItem
+                key={entry.id}
+                entry={entry}
+                bookId={id}
+                onDelete={onDeleteEntry}
+              />
             ))}
           </div>
         )}
