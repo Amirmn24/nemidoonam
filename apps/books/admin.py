@@ -61,6 +61,16 @@ class UserBookAdmin(admin.ModelAdmin):
     autocomplete_fields = ('user', 'book')
     inlines = [EntryInline, BookRatingInline]
     readonly_fields = ('created_at', 'updated_at')
+    fields = (
+        'user',
+        'book',
+        'status',
+        'current_page',
+        'notes',
+        'midpoint_prompt_done',
+        'created_at',
+        'updated_at',
+    )
 
 
 @admin.register(Entry)

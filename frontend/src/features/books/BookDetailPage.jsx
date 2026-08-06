@@ -4,100 +4,22 @@ import { booksApi, ApiError } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
 import BookRatingPanel, { RatingBadge } from './components/BookRatingPanel'
 import EntryTimelineItem from './components/EntryTimelineItem'
+import FinishedBookPlaylist from './components/FinishedBookPlaylist'
+import MidpointPredictionModal from './components/MidpointPredictionModal'
 
-export default function BookDetailPage() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const { showToast } = useAuth()
-  const [params, setParams] = useSearchParams()
-  const [data, setData] = useState(null)
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
-
-  const kind = params.get('kind') || ''
-  const media = params.get('media') || ''
-
-  const load = () =>
-    booksApi
-      .detail(id, { kind: kind || undefined, media: media || undefined })
-      .then(setData)
-      .catch((err) => setError(err.message))
-
-  useEffect(() => {
-    load()
-  }, [id, kind, media])
-
-  const setFilter = (key, value) => {
-    const next = new URLSearchParams(params)
-    if (value) next.set(key, value)
-    else next.delete(key)
-    setParams(next, { replace: true })
-  }
-
-  const onProgress = async (e) => {
-    e.preventDefault()
-    setBusy(true)
-    const fd = new FormData(e.target)
-    try {
-      await booksApi.progress(id, {
-        current_page: Number(fd.get('current_page')),
-        status: fd.get('status'),
-      })
-      showToast('پیشرفت ذخیره شد.', 'success')
-      await load()
-    } catch (err) {
-      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const onFinish = async () => {
-    if (!window.confirm('کتاب را به‌عنوان تمام‌شده علامت بزنم؟ یادداشت‌های مهروموم باز می‌شوند.')) return
-    setBusy(true)
-    try {
-      await booksApi.finish(id)
-      showToast('کتاب تمام شد. حالا می‌توانی امتیاز بدهی.', 'success')
-      await load()
-    } catch (err) {
-      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const onSaveRating = async (payload) => {
-    setBusy(true)
-    try {
-      await booksApi.saveRating(id, payload)
-      showToast('امتیاز ذخیره شد.', 'success')
-      await load()
-    } catch (err) {
-      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const onDelete = async () => {
-    if (!window.confirm('این کتاب از قفسه حذف شود؟')) return
-    await booksApi.remove(id)
-    showToast('حذف شد.')
-    navigate('/books')
-  }
-
-  const onDeleteEntry = async (entryId) => {
-    if (!window.confirm('یادداشت حذف شود؟')) return
-    await booksApi.deleteEntry(id, entryId)
-    showToast('یادداشت حذف شد.')
-    await load()
-  }
-
-  if (error) return <p className="form-errors">{error}</p>
-  if (!data) return <p>در حال بارگذاری…</p>
-
-  const book = data.book
-  const isFinished = book.status === 'finished'
+function ReadingDetail({
+  id,
+  book,
+  data,
+  kind,
+  media,
+  busy,
+  onProgress,
+  onFinish,
+  onDelete,
+  onDeleteEntry,
+  setFilter,
+}) {
   const statuses = [
     ['want_to_read', 'می‌خواهم بخوانم'],
     ['reading', 'در حال خواندن'],
@@ -107,7 +29,7 @@ export default function BookDetailPage() {
   ]
 
   return (
-    <div className="page-detail">
+    <>
       <section className="detail-hero">
         <div className="detail-cover">
           {book.cover_url ? <img src={book.cover_url} alt="" /> : <div className="cover-fallback" />}
@@ -124,11 +46,9 @@ export default function BookDetailPage() {
             <Link to={`/books/${id}/entries/new`} className="btn btn-primary">
               یادداشت جدید
             </Link>
-            {!isFinished ? (
-              <button type="button" className="btn btn-secondary" onClick={onFinish} disabled={busy}>
-                تیک پایان
-              </button>
-            ) : null}
+            <button type="button" className="btn btn-secondary" onClick={onFinish} disabled={busy}>
+              تیک پایان
+            </button>
             <Link to={`/books/${id}/edit`} className="btn btn-ghost">
               ویرایش
             </Link>
@@ -187,26 +107,8 @@ export default function BookDetailPage() {
               <span>یادداشت‌ها</span>
               <strong>{book.entry_count}</strong>
             </li>
-            {book.overall_score != null ? (
-              <li>
-                <span>نمره تو</span>
-                <strong>★ {Number(book.overall_score).toFixed(1)}</strong>
-              </li>
-            ) : null}
           </ul>
         </aside>
-      </section>
-
-      <section className="section" id="rating">
-        <div className="surface">
-          <BookRatingPanel
-            factors={data.rating_factors}
-            rating={data.rating}
-            canRate={isFinished}
-            busy={busy}
-            onSubmit={onSaveRating}
-          />
-        </div>
       </section>
 
       <section className="section" id="entries">
@@ -272,6 +174,217 @@ export default function BookDetailPage() {
           </div>
         )}
       </section>
+    </>
+  )
+}
+
+function FinishedDetail({ id, book, data, busy, onSaveRating, onDelete }) {
+  return (
+    <>
+      <section className="detail-hero detail-hero-finished">
+        <div className="detail-cover">
+          {book.cover_url ? <img src={book.cover_url} alt="" /> : <div className="cover-fallback" />}
+        </div>
+        <div className="detail-info">
+          <div className="cluster">
+            <span className={`status status-${book.status}`}>{book.status_display}</span>
+            <RatingBadge score={book.overall_score} />
+          </div>
+          <h1>{book.title}</h1>
+          <p className="meta-pill">{book.author}</p>
+          <p className="finished-lead">
+            کتاب تمام شد؛ حالا می‌توانی امتیاز بدهی و یادداشت‌هایت را مثل پلی‌لیست مرور کنی.
+          </p>
+          <div className="cluster">
+            <Link to={`/books/${id}/edit`} className="btn btn-ghost">
+              ویرایش مشخصات
+            </Link>
+            <button type="button" className="btn btn-danger-ghost" onClick={onDelete}>
+              حذف از قفسه
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="section" id="rating">
+        <div className="surface">
+          <BookRatingPanel
+            factors={data.rating_factors}
+            rating={data.rating}
+            canRate
+            busy={busy}
+            onSubmit={onSaveRating}
+          />
+        </div>
+      </section>
+
+      <FinishedBookPlaylist entries={data.entries} />
+    </>
+  )
+}
+
+export default function BookDetailPage() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { showToast } = useAuth()
+  const [params, setParams] = useSearchParams()
+  const [data, setData] = useState(null)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [showMidpoint, setShowMidpoint] = useState(false)
+
+  const kind = params.get('kind') || ''
+  const media = params.get('media') || ''
+
+  const load = () =>
+    booksApi
+      .detail(id, { kind: kind || undefined, media: media || undefined })
+      .then((payload) => {
+        setData(payload)
+        if (payload.ask_midpoint_prediction || payload.book?.ask_midpoint_prediction) {
+          setShowMidpoint(true)
+        }
+      })
+      .catch((err) => setError(err.message))
+
+  useEffect(() => {
+    load()
+  }, [id, kind, media])
+
+  const setFilter = (key, value) => {
+    const next = new URLSearchParams(params)
+    if (value) next.set(key, value)
+    else next.delete(key)
+    setParams(next, { replace: true })
+  }
+
+  const onProgress = async (e) => {
+    e.preventDefault()
+    setBusy(true)
+    const fd = new FormData(e.target)
+    try {
+      const result = await booksApi.progress(id, {
+        current_page: Number(fd.get('current_page')),
+        status: fd.get('status'),
+      })
+      showToast('پیشرفت ذخیره شد.', 'success')
+      if (result.ask_midpoint_prediction) setShowMidpoint(true)
+      await load()
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onFinish = async () => {
+    if (!window.confirm('کتاب را به‌عنوان تمام‌شده علامت بزنم؟ یادداشت‌های مهروموم باز می‌شوند.')) return
+    setBusy(true)
+    try {
+      await booksApi.finish(id)
+      showToast('کتاب تمام شد. حالا می‌توانی امتیاز بدهی.', 'success')
+      setShowMidpoint(false)
+      await load()
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onSaveRating = async (payload) => {
+    setBusy(true)
+    try {
+      await booksApi.saveRating(id, payload)
+      showToast('امتیاز ذخیره شد.', 'success')
+      await load()
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onSubmitMidpoint = async (text) => {
+    setBusy(true)
+    try {
+      await booksApi.midpointPrediction(id, { text })
+      showToast('پیش‌بینی‌ات مهروموم شد.', 'success')
+      setShowMidpoint(false)
+      await load()
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onDismissMidpoint = async () => {
+    setBusy(true)
+    try {
+      await booksApi.midpointPrediction(id, { dismiss: true })
+      setShowMidpoint(false)
+      await load()
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onDelete = async () => {
+    if (!window.confirm('این کتاب از قفسه حذف شود؟')) return
+    await booksApi.remove(id)
+    showToast('حذف شد.')
+    navigate('/books')
+  }
+
+  const onDeleteEntry = async (entryId) => {
+    if (!window.confirm('یادداشت حذف شود؟')) return
+    await booksApi.deleteEntry(id, entryId)
+    showToast('یادداشت حذف شد.')
+    await load()
+  }
+
+  if (error) return <p className="form-errors">{error}</p>
+  if (!data) return <p>در حال بارگذاری…</p>
+
+  const book = data.book
+  const isFinished = book.status === 'finished' || data.view_mode === 'playlist'
+
+  return (
+    <div className={`page-detail${isFinished ? ' is-finished' : ''}`}>
+      {isFinished ? (
+        <FinishedDetail
+          id={id}
+          book={book}
+          data={data}
+          busy={busy}
+          onSaveRating={onSaveRating}
+          onDelete={onDelete}
+        />
+      ) : (
+        <ReadingDetail
+          id={id}
+          book={book}
+          data={data}
+          kind={kind}
+          media={media}
+          busy={busy}
+          onProgress={onProgress}
+          onFinish={onFinish}
+          onDelete={onDelete}
+          onDeleteEntry={onDeleteEntry}
+          setFilter={setFilter}
+        />
+      )}
+
+      <MidpointPredictionModal
+        open={showMidpoint && !isFinished}
+        busy={busy}
+        onSubmit={onSubmitMidpoint}
+        onDismiss={onDismissMidpoint}
+      />
     </div>
   )
 }

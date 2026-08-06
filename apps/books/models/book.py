@@ -95,6 +95,11 @@ class UserBook(models.Model):
         db_index=True,
     )
     notes = models.TextField('یادداشت کلی', blank=True)
+    midpoint_prompt_done = models.BooleanField(
+        'پاپ‌آپ نیمه‌راه انجام شده',
+        default=False,
+        help_text='اولین عبور از نیمهٔ کتاب برای پیش‌بینی پایان پرسیده شده است.',
+    )
     created_at = models.DateTimeField('تاریخ ایجاد', auto_now_add=True)
     updated_at = models.DateTimeField('آخرین به‌روزرسانی', auto_now=True)
 

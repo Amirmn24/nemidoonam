@@ -127,6 +127,8 @@ export const booksApi = {
   remove: (id) => api(`/shelf/${id}/`, { method: 'DELETE' }),
   progress: (id, body) => api(`/shelf/${id}/progress/`, { method: 'POST', body }),
   finish: (id) => api(`/shelf/${id}/finish/`, { method: 'POST' }),
+  midpointPrediction: (id, body) =>
+    api(`/shelf/${id}/midpoint-prediction/`, { method: 'POST', body }),
   getRating: (id) => api(`/shelf/${id}/rating/`),
   saveRating: (id, body) => api(`/shelf/${id}/rating/`, { method: 'PUT', body }),
   suggest: (params) => {
