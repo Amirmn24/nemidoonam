@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { booksApi, ApiError } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
+import BookAddProgressOverlay from './components/BookAddProgressOverlay'
 
 function useDebounced(value, ms = 280) {
   const [v, setV] = useState(value)
@@ -39,6 +40,26 @@ function SuggestItem({ item, onPick }) {
   )
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function waitForSetup(shelfId, onUpdate, { timeoutMs = 180000 } = {}) {
+  const started = Date.now()
+  let delay = 700
+  while (Date.now() - started < timeoutMs) {
+    const status = await booksApi.setupStatus(shelfId)
+    onUpdate(status)
+    if (status.ready) return status
+    await sleep(delay)
+    delay = Math.min(delay + 250, 2200)
+  }
+  return booksApi.setupStatus(shelfId).then((status) => {
+    onUpdate(status)
+    return status
+  })
+}
+
 export default function BookFormPage() {
   const { id } = useParams()
   const isEdit = Boolean(id)
@@ -56,6 +77,9 @@ export default function BookFormPage() {
   const [catalogId, setCatalogId] = useState('')
   const [bookSuggestions, setBookSuggestions] = useState([])
   const [authorSuggestions, setAuthorSuggestions] = useState([])
+  const [journeyOpen, setJourneyOpen] = useState(false)
+  const [journeySaving, setJourneySaving] = useState(false)
+  const [journeySetup, setJourneySetup] = useState(null)
   const debouncedTitle = useDebounced(title)
   const debouncedAuthor = useDebounced(author)
   const excludeRef = useRef(null)
@@ -136,11 +160,35 @@ export default function BookFormPage() {
     if (!form.confirm_similar?.checked) fd.delete('confirm_similar')
     else fd.set('confirm_similar', 'true')
 
+    const isCreate = !isEdit
+    if (isCreate) {
+      setJourneyOpen(true)
+      setJourneySaving(true)
+      setJourneySetup(null)
+    }
+
     try {
       const saved = isEdit ? await booksApi.update(id, fd) : await booksApi.create(fd)
-      showToast(isEdit ? 'کتاب به‌روز شد.' : 'کتاب به قفسه اضافه شد.', 'success')
+      if (isCreate) {
+        setJourneySaving(false)
+        if (saved.setup) setJourneySetup(saved.setup)
+        if (saved.await_setup) {
+          await waitForSetup(saved.id, setJourneySetup)
+          await sleep(650)
+        } else if (saved.setup) {
+          setJourneySetup({ ...saved.setup, ready: true, current_step: 'done' })
+          await sleep(500)
+        }
+        showToast('کتاب به قفسه اضافه شد.', 'success')
+        navigate(`/books/${saved.id}`)
+        return
+      }
+      showToast('کتاب به‌روز شد.', 'success')
       navigate(`/books/${saved.id}`)
     } catch (err) {
+      setJourneyOpen(false)
+      setJourneySaving(false)
+      setJourneySetup(null)
       if (err instanceof ApiError) {
         setError(err.message)
         setSimilar(err.payload?.similar_matches || [])
@@ -156,6 +204,12 @@ export default function BookFormPage() {
 
   return (
     <div className="page-book-form">
+      <BookAddProgressOverlay
+        open={journeyOpen}
+        saving={journeySaving}
+        setup={journeySetup}
+        bookTitle={title}
+      />
       <section className="section form-page">
         <div className="page-toolbar">
           <h1>{isEdit ? 'ویرایش کتاب' : 'افزودن کتاب'}</h1>

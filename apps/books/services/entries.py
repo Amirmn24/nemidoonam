@@ -15,3 +15,8 @@ def redact_entry_for_response(entry: Entry, *, locked: bool) -> Entry:
     entry.image = None
     entry.audio = None
     return entry
+
+
+def playlist_entries(user_book: UserBook):
+    """ترتیب روایی برای پلی‌لیست بعد از اتمام: صفحه → تاریخ."""
+    return user_book.entries.order_by('page_number', 'entry_date', 'created_at')

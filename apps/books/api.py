@@ -15,7 +15,11 @@ from apps.books.services.books import (
     get_shelf_queryset,
 )
 from apps.books.services.catalog import add_book_to_shelf, create_shelf_book, update_shelf_book
-from apps.books.services.entries import is_entry_content_locked, redact_entry_for_response
+from apps.books.services.entries import (
+    is_entry_content_locked,
+    playlist_entries,
+    redact_entry_for_response,
+)
 from apps.books.services.matching import (
     find_duplicates,
     find_exact_catalog,
@@ -24,7 +28,14 @@ from apps.books.services.matching import (
     search_book_suggestions,
     serialize_match,
 )
+from apps.books.services.midpoint import (
+    create_ending_prediction,
+    crossed_midpoint,
+    dismiss_midpoint_prompt,
+    should_ask_midpoint_prediction,
+)
 from apps.books.services.ratings import get_rating_for_shelf, serialize_rating, upsert_book_rating
+from apps.books.services.setup import serialize_setup_status
 
 
 def _media_url(request, field):
@@ -49,6 +60,8 @@ class ShelfBookSerializer(serializers.Serializer):
     entry_count = serializers.SerializerMethodField()
     overall_score = serializers.SerializerMethodField()
     has_rating = serializers.SerializerMethodField()
+    midpoint_prompt_done = serializers.BooleanField()
+    ask_midpoint_prediction = serializers.SerializerMethodField()
     updated_at = serializers.DateTimeField()
     created_at = serializers.DateTimeField()
 
@@ -66,6 +79,9 @@ class ShelfBookSerializer(serializers.Serializer):
 
     def get_has_rating(self, obj):
         return get_rating_for_shelf(obj) is not None
+
+    def get_ask_midpoint_prediction(self, obj):
+        return should_ask_midpoint_prediction(obj)
 
 
 class EntrySerializer(serializers.Serializer):
@@ -259,6 +275,20 @@ class EntryWriteSerializer(serializers.Serializer):
         return attrs
 
 
+class MidpointPredictionSerializer(serializers.Serializer):
+    text = serializers.CharField(required=False, allow_blank=True, default='')
+    dismiss = serializers.BooleanField(required=False, default=False)
+
+    def validate(self, attrs):
+        if attrs.get('dismiss'):
+            return attrs
+        text = (attrs.get('text') or '').strip()
+        if not text:
+            raise serializers.ValidationError({'text': 'پیش‌بینی‌ات را بنویس.'})
+        attrs['text'] = text
+        return attrs
+
+
 class RatingWriteSerializer(serializers.Serializer):
     writing = serializers.IntegerField(min_value=1, max_value=5)
     content = serializers.IntegerField(min_value=1, max_value=5)
@@ -342,7 +372,11 @@ class ShelfViewSet(ViewSet):
         user_book = self._get_shelf(request, pk)
         kind = request.query_params.get('kind') or None
         media = request.query_params.get('media') or None
-        entries = filter_entries(user_book, kind=kind, media_type=media)
+        is_finished = user_book.status == BookStatus.FINISHED
+        if is_finished:
+            entries = playlist_entries(user_book)
+        else:
+            entries = filter_entries(user_book, kind=kind, media_type=media)
         rating = get_rating_for_shelf(user_book)
         return Response(
             {
@@ -354,6 +388,8 @@ class ShelfViewSet(ViewSet):
                 ],
                 'active_kind': kind or '',
                 'active_media': media or '',
+                'ask_midpoint_prediction': should_ask_midpoint_prediction(user_book),
+                'view_mode': 'playlist' if is_finished else 'reading',
             }
         )
 
@@ -417,8 +453,14 @@ class ShelfViewSet(ViewSet):
                 cover=data.get('cover'),
             )
         user_book = get_shelf_queryset(request.user).get(pk=user_book.pk)
+        setup = serialize_setup_status(user_book, request)
+        payload = ShelfBookSerializer(user_book, context={'request': request}).data
         return Response(
-            ShelfBookSerializer(user_book, context={'request': request}).data,
+            {
+                **payload,
+                'setup': setup,
+                'await_setup': bool(created) and not setup['ready'],
+            },
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
@@ -472,6 +514,12 @@ class ShelfViewSet(ViewSet):
         user_book.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=True, methods=['get'], url_path='setup-status')
+    def setup_status(self, request, pk=None):
+        """وضعیت آماده‌سازی جلد و گراف شخصیت بعد از افزودن کتاب."""
+        user_book = self._get_shelf(request, pk)
+        return Response(serialize_setup_status(user_book, request))
+
     @action(detail=True, methods=['post'])
     def progress(self, request, pk=None):
         user_book = self._get_shelf(request, pk)
@@ -480,11 +528,62 @@ class ShelfViewSet(ViewSet):
             context={'user_book': user_book},
         )
         serializer.is_valid(raise_exception=True)
-        user_book.current_page = serializer.validated_data['current_page']
+        old_page = user_book.current_page
+        new_page = serializer.validated_data['current_page']
+        user_book.current_page = new_page
         user_book.status = serializer.validated_data['status']
         user_book.save()
         user_book = get_shelf_queryset(request.user).get(pk=user_book.pk)
-        return Response(ShelfBookSerializer(user_book, context={'request': request}).data)
+        ask = (
+            not user_book.midpoint_prompt_done
+            and user_book.status != BookStatus.FINISHED
+            and (
+                crossed_midpoint(old_page, new_page, user_book.total_pages)
+                or should_ask_midpoint_prediction(user_book)
+            )
+        )
+        payload = ShelfBookSerializer(user_book, context={'request': request}).data
+        return Response({**payload, 'ask_midpoint_prediction': ask})
+
+    @action(detail=True, methods=['post'], url_path='midpoint-prediction')
+    def midpoint_prediction(self, request, pk=None):
+        user_book = self._get_shelf(request, pk)
+        serializer = MidpointPredictionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        if data.get('dismiss'):
+            dismiss_midpoint_prompt(user_book)
+            user_book = get_shelf_queryset(request.user).get(pk=user_book.pk)
+            return Response(
+                {
+                    'book': ShelfBookSerializer(user_book, context={'request': request}).data,
+                    'entry': None,
+                    'ask_midpoint_prediction': False,
+                }
+            )
+
+        if user_book.status == BookStatus.FINISHED:
+            return Response(
+                {'detail': 'کتاب تمام شده؛ پیش‌بینی نیمه‌راه دیگر لازم نیست.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            entry = create_ending_prediction(user_book, data['text'])
+        except ValueError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_book = get_shelf_queryset(request.user).get(pk=user_book.pk)
+        entry._content_locked = is_entry_content_locked(entry, user_book)
+        return Response(
+            {
+                'book': ShelfBookSerializer(user_book, context={'request': request}).data,
+                'entry': EntrySerializer(entry, context={'request': request}).data,
+                'ask_midpoint_prediction': False,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
     @action(detail=True, methods=['post'])
     def finish(self, request, pk=None):
@@ -501,6 +600,7 @@ class ShelfViewSet(ViewSet):
                 'rating_factors': [
                     {'key': key, 'label': label} for key, label in RATING_FACTORS
                 ],
+                'view_mode': 'playlist',
             }
         )
 
@@ -546,8 +646,14 @@ class CatalogAddView(APIView):
         book = get_object_or_404(Book, pk=pk)
         user_book, created = add_book_to_shelf(request.user, book)
         user_book = get_shelf_queryset(request.user).get(pk=user_book.pk)
+        setup = serialize_setup_status(user_book, request)
+        payload = ShelfBookSerializer(user_book, context={'request': request}).data
         return Response(
-            ShelfBookSerializer(user_book, context={'request': request}).data,
+            {
+                **payload,
+                'setup': setup,
+                'await_setup': bool(created) and not setup['ready'],
+            },
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
@@ -582,6 +688,7 @@ class EntryViewSet(ViewSet):
         data = serializer.validated_data
         from django.utils import timezone
 
+        old_page = user_book.current_page
         entry = Entry(
             user_book=user_book,
             kind=data['kind'],
@@ -602,10 +709,17 @@ class EntryViewSet(ViewSet):
             user_book.current_page = entry.page_number
             user_book.save(update_fields=['current_page', 'updated_at'])
 
-        return Response(
-            self._entry_response(entry, user_book, request),
-            status=status.HTTP_201_CREATED,
+        ask = (
+            not user_book.midpoint_prompt_done
+            and user_book.status != BookStatus.FINISHED
+            and (
+                crossed_midpoint(old_page, user_book.current_page, user_book.total_pages)
+                or should_ask_midpoint_prediction(user_book)
+            )
         )
+        payload = self._entry_response(entry, user_book, request)
+        payload['ask_midpoint_prediction'] = ask
+        return Response(payload, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, book_pk=None, pk=None):
         user_book = self._get_shelf(request, book_pk)

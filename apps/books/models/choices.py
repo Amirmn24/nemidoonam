@@ -9,6 +9,15 @@ class BookStatus(models.TextChoices):
     ABANDONED = 'abandoned', 'رها شده'
 
 
+class SetupStepStatus(models.TextChoices):
+    IDLE = 'idle', 'بدون نیاز'
+    PENDING = 'pending', 'در صف'
+    RUNNING = 'running', 'در حال اجرا'
+    DONE = 'done', 'انجام شد'
+    SKIPPED = 'skipped', 'رد شد'
+    FAILED = 'failed', 'ناموفق'
+
+
 class EntryMediaType(models.TextChoices):
     TEXT = 'text', 'متن'
     VOICE = 'voice', 'ویس'
@@ -19,6 +28,7 @@ class EntryKind(models.TextChoices):
     VIEWPOINT = 'viewpoint', 'دیدگاه'
     FEELING = 'feeling', 'حس'
     BOOK_TEXT = 'book_text', 'متن کتاب'
+    ENDING_PREDICTION = 'ending_prediction', 'پیش‌بینی پایان'
 
 
 # فاکتورهای امتیازدهی چندبُعدی (۱ تا ۵) — میانگین‌شان نمره کلی می‌شود
