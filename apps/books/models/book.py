@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from .choices import BookStatus
+from .choices import BookStatus, SetupStepStatus
 
 
 class Book(models.Model):
@@ -99,6 +99,20 @@ class UserBook(models.Model):
         'پاپ‌آپ نیمه‌راه انجام شده',
         default=False,
         help_text='اولین عبور از نیمهٔ کتاب برای پیش‌بینی پایان پرسیده شده است.',
+    )
+    cover_setup_status = models.CharField(
+        'وضعیت آماده‌سازی جلد',
+        max_length=20,
+        choices=SetupStepStatus.choices,
+        default=SetupStepStatus.IDLE,
+        db_index=True,
+    )
+    vibe_setup_status = models.CharField(
+        'وضعیت آماده‌سازی وایب',
+        max_length=20,
+        choices=SetupStepStatus.choices,
+        default=SetupStepStatus.IDLE,
+        db_index=True,
     )
     created_at = models.DateTimeField('تاریخ ایجاد', auto_now_add=True)
     updated_at = models.DateTimeField('آخرین به‌روزرسانی', auto_now=True)

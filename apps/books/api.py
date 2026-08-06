@@ -35,6 +35,7 @@ from apps.books.services.midpoint import (
     should_ask_midpoint_prediction,
 )
 from apps.books.services.ratings import get_rating_for_shelf, serialize_rating, upsert_book_rating
+from apps.books.services.setup import serialize_setup_status
 
 
 def _media_url(request, field):
@@ -452,8 +453,14 @@ class ShelfViewSet(ViewSet):
                 cover=data.get('cover'),
             )
         user_book = get_shelf_queryset(request.user).get(pk=user_book.pk)
+        setup = serialize_setup_status(user_book, request)
+        payload = ShelfBookSerializer(user_book, context={'request': request}).data
         return Response(
-            ShelfBookSerializer(user_book, context={'request': request}).data,
+            {
+                **payload,
+                'setup': setup,
+                'await_setup': bool(created) and not setup['ready'],
+            },
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
@@ -506,6 +513,12 @@ class ShelfViewSet(ViewSet):
         user_book = self._get_shelf(request, pk)
         user_book.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get'], url_path='setup-status')
+    def setup_status(self, request, pk=None):
+        """وضعیت آماده‌سازی جلد و گراف شخصیت بعد از افزودن کتاب."""
+        user_book = self._get_shelf(request, pk)
+        return Response(serialize_setup_status(user_book, request))
 
     @action(detail=True, methods=['post'])
     def progress(self, request, pk=None):
@@ -633,8 +646,14 @@ class CatalogAddView(APIView):
         book = get_object_or_404(Book, pk=pk)
         user_book, created = add_book_to_shelf(request.user, book)
         user_book = get_shelf_queryset(request.user).get(pk=user_book.pk)
+        setup = serialize_setup_status(user_book, request)
+        payload = ShelfBookSerializer(user_book, context={'request': request}).data
         return Response(
-            ShelfBookSerializer(user_book, context={'request': request}).data,
+            {
+                **payload,
+                'setup': setup,
+                'await_setup': bool(created) and not setup['ready'],
+            },
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 

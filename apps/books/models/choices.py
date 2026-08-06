@@ -9,6 +9,15 @@ class BookStatus(models.TextChoices):
     ABANDONED = 'abandoned', 'رها شده'
 
 
+class SetupStepStatus(models.TextChoices):
+    IDLE = 'idle', 'بدون نیاز'
+    PENDING = 'pending', 'در صف'
+    RUNNING = 'running', 'در حال اجرا'
+    DONE = 'done', 'انجام شد'
+    SKIPPED = 'skipped', 'رد شد'
+    FAILED = 'failed', 'ناموفق'
+
+
 class EntryMediaType(models.TextChoices):
     TEXT = 'text', 'متن'
     VOICE = 'voice', 'ویس'
