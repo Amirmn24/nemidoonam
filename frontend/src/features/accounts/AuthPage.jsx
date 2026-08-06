@@ -73,7 +73,7 @@ export default function AuthPage({ mode: initialMode = 'login' }) {
       <div className="auth-accent">
         <div className={`auth-accent-panel auth-accent-login${mode === 'login' ? ' is-active' : ''}`}>
           <h2>سلام دوباره</h2>
-          <p>به دفتر حس‌ها و ورق‌ها خوش آمدی.</p>
+          <p>به ویرونا خوش آمدی.</p>
           <button type="button" className="auth-accent-btn" onClick={() => switchMode('signup')}>
             ثبت‌نام
           </button>

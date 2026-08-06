@@ -7,6 +7,10 @@ function getCookie(name) {
 
 let csrfReady = false
 
+export function resetCsrf() {
+  csrfReady = false
+}
+
 export async function ensureCsrf() {
   if (csrfReady && getCookie('csrftoken')) return getCookie('csrftoken')
   const res = await fetch(`${API_BASE}/auth/csrf/`, {
@@ -79,7 +83,22 @@ export const authApi = {
   me: () => api('/auth/me/'),
   login: (body) => api('/auth/login/', { method: 'POST', body }),
   signup: (body) => api('/auth/signup/', { method: 'POST', body }),
-  logout: () => api('/auth/logout/', { method: 'POST' }),
+  logout: async () => {
+    const res = await fetch(`${API_BASE}/auth/logout/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
+    if (!res.ok && res.status !== 204) {
+      const data = await parseBody(res)
+      throw new ApiError(data?.detail || 'خروج ناموفق بود.', {
+        status: res.status,
+        errors: data?.errors || {},
+        payload: data,
+      })
+    }
+    return null
+  },
   updateProfile: (body) =>
     api('/auth/me/', {
       method: 'PATCH',

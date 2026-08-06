@@ -200,6 +200,11 @@ class SignupView(APIView):
 
 
 class LogoutView(APIView):
+    """خروج از نشست — مثل login بدون SessionAuthentication تا CSRF مانع نشود."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
     def post(self, request):
         logout(request)
         return Response(status=status.HTTP_204_NO_CONTENT)

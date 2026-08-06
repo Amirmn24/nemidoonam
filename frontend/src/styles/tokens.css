@@ -1,53 +1,56 @@
-/* Vyrvona design tokens — single source of truth for theme colors */
+/* Vyrvona design tokens — Indigo brand + Emerald CTA */
 
 :root,
 [data-theme="light"] {
-  /* Backgrounds */
+  /* Backgrounds — Slate 50 family */
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
   --bg-tertiary: #f1f5f9;
   --bg-elevated: #ffffff;
 
-  /* Text */
-  --text-primary: #0f172a;
+  /* Text — long-form reading */
+  --text-primary: #1e293b;
   --text-secondary: #475569;
   --text-tertiary: #94a3b8;
   --text-inverse: #ffffff;
 
-  /* Brand */
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-light: #dbeafe;
+  /* Brand — Indigo (vibrant) */
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-bright: #6366f1;
+  --primary-light: #eef2ff;
 
-  --secondary: #0f766e;
-  --secondary-hover: #0d9488;
-  --secondary-light: #ccfbf1;
+  /* Accent / CTA — Emerald */
+  --secondary: #10b981;
+  --secondary-hover: #059669;
+  --secondary-light: #d1fae5;
 
-  --accent: #f59e0b;
-  --accent-hover: #d97706;
-  --accent-light: #fef3c7;
+  /* Soft violet companion (tags, highlights, gradient spice) */
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-light: #f3e8ff;
 
   /* Semantic */
-  --success: #059669;
+  --success: #10b981;
   --success-light: #d1fae5;
-  --warning: #d97706;
-  --warning-light: #ffedd5;
+  --warning: #f59e0b;
+  --warning-light: #fef3c7;
   --danger: #dc2626;
   --danger-light: #fee2e2;
 
   /* Borders & focus */
   --border: #e2e8f0;
   --border-strong: #cbd5e1;
-  --ring: #2563eb;
+  --ring: #6366f1;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --shadow-lg: 0 12px 28px -8px rgb(15 23 42 / 0.18);
+  /* Shadows — indigo-tinted */
+  --shadow-sm: 0 1px 2px 0 rgb(79 70 229 / 0.06);
+  --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(79 70 229 / 0.08);
+  --shadow-lg: 0 12px 28px -8px rgb(79 70 229 / 0.22);
 
-  /* Surfaces derived for chrome (header/sidebar/dock) */
-  --chrome: #0f172a;
-  --chrome-mid: #1e293b;
+  /* Chrome — indigo night gradient base */
+  --chrome: #1e1b4b;
+  --chrome-mid: #312e81;
   --on-chrome: #f8fafc;
   --on-chrome-muted: color-mix(in srgb, var(--on-chrome) 72%, transparent);
 
@@ -56,10 +59,11 @@
   --pattern-books-burgundy: url("/img/pattern-books-burgundy.svg");
   --pattern-books-light: url("/img/pattern-books-light.svg");
   --pattern-size: 320px;
-  --pattern-opacity: 0.35;
+  --pattern-opacity: 0.32;
 }
 
 [data-theme="dark"] {
+  /* Backgrounds — Slate 900 family */
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
   --bg-tertiary: #334155;
@@ -70,17 +74,21 @@
   --text-tertiary: #64748b;
   --text-inverse: #0f172a;
 
-  --primary: #3b82f6;
-  --primary-hover: #60a5fa;
-  --primary-light: #1e3a8a;
+  /* Brand — brighter Indigo on dark */
+  --primary: #6366f1;
+  --primary-hover: #818cf8;
+  --primary-bright: #818cf8;
+  --primary-light: #312e81;
 
-  --secondary: #14b8a6;
-  --secondary-hover: #2dd4bf;
-  --secondary-light: #134e4a;
+  /* Accent / CTA — Emerald */
+  --secondary: #10b981;
+  --secondary-hover: #34d399;
+  --secondary-light: #064e3b;
 
-  --accent: #fbbf24;
-  --accent-hover: #fcd34d;
-  --accent-light: #78350f;
+  /* Violet companion */
+  --accent: #a78bfa;
+  --accent-hover: #c4b5fd;
+  --accent-light: #4c1d95;
 
   --success: #10b981;
   --success-light: #064e3b;
@@ -91,18 +99,18 @@
 
   --border: #334155;
   --border-strong: #475569;
-  --ring: #3b82f6;
+  --ring: #818cf8;
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
-  --shadow-lg: 0 16px 36px -10px rgb(0 0 0 / 0.55);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.45), 0 0 24px -8px rgb(99 102 241 / 0.25);
+  --shadow-lg: 0 16px 36px -10px rgb(0 0 0 / 0.55), 0 0 40px -12px rgb(99 102 241 / 0.3);
 
-  --chrome: #020617;
-  --chrome-mid: #0f172a;
+  --chrome: #0f172a;
+  --chrome-mid: #1e1b4b;
   --on-chrome: #f1f5f9;
   --on-chrome-muted: color-mix(in srgb, var(--on-chrome) 68%, transparent);
 
-  --pattern-opacity: 0.12;
+  --pattern-opacity: 0.14;
   --pattern-books: url("/img/pattern-books-light.svg");
 }
 
@@ -118,7 +126,7 @@
 
   --brand: var(--primary);
   --brand-deep: var(--primary-hover);
-  --brand-mid: var(--primary);
+  --brand-mid: var(--primary-bright);
   --brand-soft: var(--primary-light);
 
   /* sky/navy historically meant "ink navy" for text — keep theme-aware */
@@ -143,7 +151,6 @@
   --font: "Vazirmatn", system-ui, sans-serif;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* Warm parchment stand-ins → slate neutrals */
   --cream: var(--bg-secondary);
   --cream-muted: var(--bg-tertiary);
 }

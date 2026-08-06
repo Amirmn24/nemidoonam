@@ -68,7 +68,9 @@ img {
   left: auto;
   width: min(420px, 55vw);
   height: min(420px, 55vw);
-  background: radial-gradient(circle, color-mix(in srgb, var(--primary) 18%, transparent), transparent 68%);
+  background:
+    radial-gradient(circle at 30% 40%, color-mix(in srgb, var(--primary) 28%, transparent), transparent 62%),
+    radial-gradient(circle at 70% 60%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 68%);
   pointer-events: none;
   z-index: 0;
   animation: glow-drift 12s ease-in-out infinite alternate;
@@ -93,7 +95,7 @@ img {
   max-width: 100%;
   overflow-x: clip;
   background-color: var(--chrome);
-  background-image: var(--pattern-books-light), linear-gradient(120deg, var(--chrome) 0%, var(--chrome-mid) 100%);
+  background-image: var(--pattern-books-light), linear-gradient(125deg, var(--chrome) 0%, var(--chrome-mid) 55%, color-mix(in srgb, var(--primary) 70%, var(--chrome-mid)) 100%);
   background-repeat: repeat, no-repeat;
   background-size: var(--pattern-size), 100% 100%;
   box-shadow: var(--shadow-md);
@@ -185,10 +187,10 @@ img {
   height: 44px;
   border-radius: 15px;
   background:
-    linear-gradient(145deg, var(--brand-mid), var(--brand) 50%, var(--sky));
+    linear-gradient(145deg, var(--brand-mid), var(--brand) 48%, var(--accent));
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--text-inverse) 28%, transparent),
-    0 10px 22px color-mix(in srgb, var(--text-primary) 28%, transparent);
+    0 10px 22px color-mix(in srgb, var(--primary) 35%, transparent);
   position: relative;
   overflow: hidden;
 }
@@ -307,7 +309,7 @@ img {
 
 .site-footer {
   background-color: var(--primary);
-  background-image: var(--pattern-books-light), linear-gradient(120deg, var(--primary) 0%, var(--primary-hover) 100%);
+  background-image: var(--pattern-books-light), linear-gradient(125deg, var(--primary) 0%, var(--brand-mid) 48%, var(--accent-hover) 100%);
   background-repeat: repeat, no-repeat;
   background-size: var(--pattern-size), 100% 100%;
   border-top: none;
@@ -664,23 +666,25 @@ img {
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--brand-mid) 0%, var(--primary) 55%, var(--primary-hover) 100%);
   color: var(--text-inverse);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 28%, transparent);
 }
 
 .btn-primary:hover {
-  background: var(--primary-hover);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+  filter: brightness(1.04);
 }
 
 .btn-secondary {
-  background: var(--secondary);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--secondary) 88%, white) 0%, var(--secondary) 55%, var(--secondary-hover) 100%);
   color: var(--text-inverse);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--secondary) 26%, transparent);
 }
 
 .btn-secondary:hover {
-  background: var(--secondary-hover);
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-hover) 100%);
+  filter: brightness(1.04);
 }
 
 .btn-ghost,
@@ -1993,18 +1997,24 @@ body.page-auth .main-content.container {
   display: grid;
   place-items: center;
   background-color: var(--primary);
-  background-image: var(--pattern-books-light);
-  background-repeat: repeat;
-  background-size: var(--pattern-size);
+  background-image:
+    var(--pattern-books-light),
+    linear-gradient(160deg, var(--brand-mid) 0%, var(--primary) 45%, var(--accent-hover) 100%);
+  background-repeat: repeat, no-repeat;
+  background-size: var(--pattern-size), 100% 100%;
   color: var(--text-inverse);
   transition:
     transform var(--auth-move),
-    background-color 0.65s ease;
+    background-color 0.65s ease,
+    background-image 0.65s ease;
 }
 
 .auth-stage[data-mode="signup"] .auth-accent {
   transform: translateX(-100%);
   background-color: var(--secondary);
+  background-image:
+    var(--pattern-books-light),
+    linear-gradient(160deg, color-mix(in srgb, var(--secondary) 80%, white) 0%, var(--secondary) 50%, var(--secondary-hover) 100%);
 }
 
 .auth-accent-panel,
@@ -3463,9 +3473,16 @@ body.vocab-modal-open {
   }
 
   body.sidebar-open .site-sidebar {
+    z-index: 60;
     transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
+    bottom: calc(var(--dock-height) + 0.35rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.sidebar-open .mobile-dock {
+    pointer-events: none;
+    opacity: 0.35;
   }
 
   .sidebar-sheet {

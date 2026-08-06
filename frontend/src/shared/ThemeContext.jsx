@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-const STORAGE_KEY = 'nemidoonam.theme'
+const STORAGE_KEY = 'vyrvona.theme'
 const ThemeContext = createContext(null)
 
 function readStoredTheme() {

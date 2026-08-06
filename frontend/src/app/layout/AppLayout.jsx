@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../shared/AuthContext'
 import ThemeToggle from '../../shared/ThemeToggle'
 import ToastHost from '../../shared/ToastHost'
 
-const STORAGE_KEY = 'nemidoonam.sidebarCollapsed'
+const STORAGE_KEY = 'vyrvona.sidebarCollapsed'
 
 function navClass({ isActive }) {
   return `sidebar-link${isActive ? ' is-active' : ''}`
@@ -69,6 +69,7 @@ const IconMenu = () => (
 export default function AppLayout() {
   const { user, logout } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem(STORAGE_KEY) === '1'
@@ -77,6 +78,18 @@ export default function AppLayout() {
     }
   })
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  async function handleLogout() {
+    if (loggingOut) return
+    setLoggingOut(true)
+    try {
+      await logout()
+      navigate('/login', { replace: true })
+    } finally {
+      setLoggingOut(false)
+    }
+  }
 
   useEffect(() => {
     setMobileOpen(false)
@@ -136,8 +149,8 @@ export default function AppLayout() {
             <Link className="brand" to="/">
               <span className="brand-mark" aria-hidden="true" />
               <span className="brand-text">
-                <strong>نمی‌دونم</strong>
-                <small>دفتر حس‌ها و ورق‌ها</small>
+                <strong>ویرونا</strong>
+                <small>Vyrvona</small>
               </span>
             </Link>
           </div>
@@ -165,7 +178,7 @@ export default function AppLayout() {
           <div className="sidebar-handle" aria-hidden="true" />
           <div className="sidebar-head">
             <div className="sidebar-head-copy">
-              <span className="sidebar-kicker">نمی‌دونم</span>
+              <span className="sidebar-kicker">ویرونا</span>
               <strong className="sidebar-title">منوی اصلی</strong>
             </div>
             <button
@@ -232,12 +245,18 @@ export default function AppLayout() {
             </NavLink>
           </nav>
           <div className="sidebar-foot">
-            <button type="button" className="sidebar-link sidebar-logout" onClick={() => logout()}>
+            <button
+              type="button"
+              className="sidebar-link sidebar-logout"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              aria-busy={loggingOut}
+            >
               <span className="sidebar-icon" aria-hidden="true">
                 <IconLogout />
               </span>
               <span className="sidebar-label">
-                <span className="sidebar-label-title">خروج</span>
+                <span className="sidebar-label-title">{loggingOut ? 'در حال خروج…' : 'خروج'}</span>
                 <span className="sidebar-label-sub">پایان نشست</span>
               </span>
             </button>
@@ -260,8 +279,8 @@ export default function AppLayout() {
         </div>
         <footer className="site-footer">
           <div className="container footer-inner">
-            <p className="footer-brand">نمی‌دونم</p>
-            <p className="footer-note">جایی برای حس‌ها، دیدگاه‌ها و ورق‌های کتاب</p>
+            <p className="footer-brand">ویرونا</p>
+            <p className="footer-note">Vyrvona · جایی برای حس‌ها، دیدگاه‌ها و ورق‌های کتاب</p>
           </div>
         </footer>
       </div>

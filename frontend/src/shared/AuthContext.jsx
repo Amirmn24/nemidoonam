@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { authApi, ensureCsrf } from './api'
+import { authApi, ensureCsrf, resetCsrf } from './api'
 
 const AuthContext = createContext(null)
 
@@ -40,9 +40,15 @@ export function AuthProvider({ children }) {
   }, [showToast])
 
   const logout = useCallback(async () => {
-    await authApi.logout()
-    setUser(null)
-    showToast('خارج شدی.')
+    try {
+      await authApi.logout()
+    } catch {
+      /* حتی اگر API خطا بدهد، نشست محلی را پاک می‌کنیم */
+    } finally {
+      resetCsrf()
+      setUser(null)
+      showToast('خارج شدی.')
+    }
   }, [showToast])
 
   const value = useMemo(
