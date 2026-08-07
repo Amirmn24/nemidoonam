@@ -6,8 +6,8 @@ import BookRatingPanel, { RatingBadge } from './components/BookRatingPanel'
 import EntryTimelineItem from './components/EntryTimelineItem'
 import FinishConfirmModal from './components/FinishConfirmModal'
 import FinalViewpointModal from './components/FinalViewpointModal'
+import FinalViewpointThanksModal from './components/FinalViewpointThanksModal'
 import FinishedBookPlaylist from './components/FinishedBookPlaylist'
-import FirstFinalViewpointModal from './components/FirstFinalViewpointModal'
 import MidpointPredictionModal from './components/MidpointPredictionModal'
 import PeerViewpointModal from './components/PeerViewpointModal'
 
@@ -194,6 +194,8 @@ function FinishedDetail({
   onAskFinalViewpoint,
 }) {
   const hasFinal = Boolean(social?.has_final_viewpoint)
+  const peerRevealed = Boolean(social?.peer_revealed)
+  const peerAvailable = Boolean(social?.peer_available)
 
   return (
     <>
@@ -209,7 +211,7 @@ function FinishedDetail({
           <h1>{book.title}</h1>
           <p className="meta-pill">{book.author}</p>
           <p className="finished-lead">
-            کتاب تمام شد؛ امتیاز بده، دیدگاه پایانی بنویس و اگر خواستی تحلیل دیگران را ببین.
+            کتاب تمام شد؛ امتیاز بده و با دیدگاه پایانی، یک نگاه از دیگران را باز کن.
           </p>
           <div className="cluster">
             <Link to={`/books/${id}/edit`} className="btn btn-ghost">
@@ -227,14 +229,14 @@ function FinishedDetail({
           <div className="social-final-copy">
             <p className="eyebrow">اجتماعی</p>
             <h2>دیدگاه پایانی</h2>
-            {hasFinal ? (
-              <p>
-                دیدگاه پایانی‌ات ثبت شده. می‌توانی یک دیدگاه تصادفی از کسانی که این کتاب را تمام کرده‌اند ببینی.
-              </p>
+            {!hasFinal ? (
+              <p>با ثبت دیدگاه پایانی، یک دیدگاه تصادفی از دیگران برای این کتاب (فقط یک‌بار) بهت نشان داده می‌شود.</p>
+            ) : peerAvailable ? (
+              <p>دیدگاه پایانی‌ات ثبت شده؛ یک نگاه از دیگران برای این کتاب آماده‌ست.</p>
+            ) : peerRevealed || hasFinal ? (
+              <p>دیدگاه پایانی‌ات ثبت شده{peerRevealed ? ' و نگاه دیگران را هم دیدی' : ''}.</p>
             ) : (
-              <p>
-                با ثبت یک دیدگاه پایانی، قفل دیدن تحلیل دیگران برای این کتاب باز می‌شود.
-              </p>
+              <p>دیدگاه پایانی‌ات ثبت شده.</p>
             )}
           </div>
           <div className="cluster social-final-actions">
@@ -242,16 +244,12 @@ function FinishedDetail({
               <button type="button" className="btn btn-primary" disabled={busy} onClick={onAskFinalViewpoint}>
                 ثبت دیدگاه پایانی
               </button>
-            ) : (
-              <>
-                <button type="button" className="btn btn-primary" disabled={busy} onClick={onRevealPeer}>
-                  دیدگاه دیگران
-                </button>
-                <button type="button" className="btn btn-ghost" disabled={busy} onClick={onAskFinalViewpoint}>
-                  دیدگاه دیگر از خودم
-                </button>
-              </>
-            )}
+            ) : null}
+            {peerAvailable ? (
+              <button type="button" className="btn btn-primary" disabled={busy} onClick={onRevealPeer}>
+                ببین دیدگاه دیگران
+              </button>
+            ) : null}
           </div>
         </div>
       </section>
@@ -284,7 +282,8 @@ export default function BookDetailPage() {
   const [showMidpoint, setShowMidpoint] = useState(false)
   const [showFinishConfirm, setShowFinishConfirm] = useState(false)
   const [showFinalModal, setShowFinalModal] = useState(false)
-  const [showFirstFinal, setShowFirstFinal] = useState(false)
+  const [showThanks, setShowThanks] = useState(false)
+  const [thanksIsFirst, setThanksIsFirst] = useState(false)
   const [peerOpen, setPeerOpen] = useState(false)
   const [peerBusy, setPeerBusy] = useState(false)
   const [peerView, setPeerView] = useState(null)
@@ -351,6 +350,42 @@ export default function BookDetailPage() {
     }
   }
 
+  const fetchPeerViewpoint = useCallback(async () => {
+    setPeerBusy(true)
+    setPeerError('')
+    try {
+      const res = await booksApi.peerFinalViewpoint(id)
+      if (res.empty || !res.viewpoint) {
+        setPeerView(null)
+        setPeerEmpty(true)
+      } else {
+        setPeerEmpty(false)
+        setPeerView(res.viewpoint)
+      }
+      if (res.social) {
+        setData((prev) => (prev ? { ...prev, social: res.social } : prev))
+      }
+      return res
+    } catch (err) {
+      setPeerError(err instanceof ApiError ? err.message : 'بارگذاری ناموفق بود.')
+      setPeerView(null)
+      if (err instanceof ApiError && err.payload?.social) {
+        setData((prev) => (prev ? { ...prev, social: err.payload.social } : prev))
+      }
+      return null
+    } finally {
+      setPeerBusy(false)
+    }
+  }, [id])
+
+  const onRevealPeer = async () => {
+    setPeerOpen(true)
+    setPeerView(null)
+    setPeerEmpty(false)
+    setPeerError('')
+    await fetchPeerViewpoint()
+  }
+
   const onSubmitFinalViewpoint = async ({ media_type, text_content, audioBlob }) => {
     setBusy(true)
     try {
@@ -368,7 +403,8 @@ export default function BookDetailPage() {
       showToast('دیدگاه پایانی ثبت شد.', 'success')
       setShowFinalModal(false)
       await load()
-      if (saved?.is_first_final_for_book) setShowFirstFinal(true)
+      setThanksIsFirst(Boolean(saved?.is_first_final_for_book))
+      setShowThanks(true)
     } catch (err) {
       showToast(err instanceof ApiError ? err.message : 'ثبت دیدگاه ناموفق بود.', 'error')
     } finally {
@@ -376,35 +412,13 @@ export default function BookDetailPage() {
     }
   }
 
-  const fetchPeerViewpoint = useCallback(async () => {
-    setPeerBusy(true)
-    setPeerError('')
-    try {
-      const res = await booksApi.peerFinalViewpoint(id)
-      if (res.empty || !res.viewpoint) {
-        setPeerView(null)
-        setPeerEmpty(true)
-      } else {
-        setPeerEmpty(false)
-        setPeerView(res.viewpoint)
-      }
-      if (res.social) {
-        setData((prev) => (prev ? { ...prev, social: res.social } : prev))
-      }
-    } catch (err) {
-      setPeerError(err instanceof ApiError ? err.message : 'بارگذاری ناموفق بود.')
-      setPeerView(null)
-    } finally {
-      setPeerBusy(false)
-    }
-  }, [id])
+  const onThanksSeePeer = async () => {
+    setShowThanks(false)
+    await onRevealPeer()
+  }
 
-  const onRevealPeer = async () => {
-    setPeerOpen(true)
-    setPeerView(null)
-    setPeerEmpty(false)
-    setPeerError('')
-    await fetchPeerViewpoint()
+  const onThanksLater = () => {
+    setShowThanks(false)
   }
 
   const onSaveRating = async (payload) => {
@@ -521,11 +535,14 @@ export default function BookDetailPage() {
         onClose={() => setShowFinalModal(false)}
       />
 
-      <FirstFinalViewpointModal
-        open={showFirstFinal}
+      <FinalViewpointThanksModal
+        open={showThanks}
         bookTitle={book.title}
-        bookId={id}
-        onClose={() => setShowFirstFinal(false)}
+        isFirst={thanksIsFirst}
+        canSeePeer={Boolean(social?.peer_available)}
+        busy={peerBusy}
+        onSeePeer={onThanksSeePeer}
+        onLater={onThanksLater}
       />
 
       <PeerViewpointModal
@@ -534,7 +551,6 @@ export default function BookDetailPage() {
         viewpoint={peerView}
         empty={peerEmpty}
         error={peerError}
-        onRefresh={fetchPeerViewpoint}
         onClose={() => setPeerOpen(false)}
       />
     </div>

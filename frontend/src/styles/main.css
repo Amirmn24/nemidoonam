@@ -4975,8 +4975,11 @@ body.vocab-modal-open {
   margin-top: 0.65rem;
 }
 
-.peer-viewpoint-card .peer-viewpoint-audio {
-  margin-bottom: 0.75rem;
+.final-thanks-copy {
+  margin: 0 0 1.1rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.7;
 }
 
 .peer-viewpoint-sheet .book-modal-head {

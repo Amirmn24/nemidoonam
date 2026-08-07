@@ -39,10 +39,9 @@ from apps.books.services.ratings import get_rating_for_shelf, serialize_rating, 
 from apps.books.services.setup import serialize_setup_status
 from apps.books.services.social import (
     FINAL_VIEWPOINT_MAX_LEN,
-    can_reveal_peer_viewpoint,
     get_social_status,
     is_first_final_for_catalog,
-    pick_random_peer_final_viewpoint,
+    reveal_peer_final_viewpoint,
     sanitize_public_text,
     serialize_peer_viewpoint,
 )
@@ -685,27 +684,42 @@ class ShelfViewSet(ViewSet):
             }
         )
 
-    @action(detail=True, methods=['get'], url_path='peer-final-viewpoint')
+    @action(detail=True, methods=['post'], url_path='peer-final-viewpoint')
     def peer_final_viewpoint(self, request, pk=None):
         """
-        یک دیدگاه پایانی تصادفی از دیگران برای همین کتاب کاتالوگ.
-        فقط وقتی کتاب تمام شده و خود کاربر دیدگاه پایانی ثبت کرده باشد.
+        یک‌بار یک دیدگاه پایانی تصادفی از دیگران را نشان می‌دهد و فرصت را مصرف می‌کند.
         """
         user_book = self._get_shelf(request, pk)
-        if not can_reveal_peer_viewpoint(user_book):
-            detail = (
-                'اول کتاب را تمام کن و دیدگاه پایانی خودت را ثبت کن.'
-                if user_book.status != BookStatus.FINISHED
-                else 'برای دیدن دیدگاه دیگران، اول دیدگاه پایانی خودت را ثبت کن.'
-            )
+        peer, code = reveal_peer_final_viewpoint(user_book)
+        social = get_social_status(user_book)
+
+        if code == 'forbidden_not_finished':
             return Response(
-                {'detail': detail, 'social': get_social_status(user_book)},
+                {
+                    'detail': 'اول کتاب را تمام کن و دیدگاه پایانی خودت را ثبت کن.',
+                    'social': social,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if code == 'forbidden_no_final':
+            return Response(
+                {
+                    'detail': 'برای دیدن دیدگاه دیگران، اول دیدگاه پایانی خودت را ثبت کن.',
+                    'social': social,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if code == 'already_revealed':
+            return Response(
+                {
+                    'detail': 'دیدگاه دیگران برای این کتاب قبلاً یک‌بار نشان داده شده است.',
+                    'social': social,
+                    'already_revealed': True,
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        peer = pick_random_peer_final_viewpoint(user_book)
-        social = get_social_status(user_book)
-        if not peer:
+        if code == 'empty' or not peer:
             return Response(
                 {
                     'viewpoint': None,
@@ -843,9 +857,14 @@ class EntryViewSet(ViewSet):
         )
         payload = self._entry_response(entry, user_book, request)
         payload['ask_midpoint_prediction'] = ask
-        payload['is_first_final_for_book'] = bool(
+        is_first_final = bool(
             data.get('_is_first_final') and entry.kind == EntryKind.FINAL_VIEWPOINT
         )
+        if is_first_final:
+            # کسی برای نشان دادن نیست؛ فرصت یک‌باره را مصرف‌شده علامت بزن
+            UserBook.objects.filter(pk=user_book.pk).update(peer_viewpoint_revealed=True)
+            user_book.peer_viewpoint_revealed = True
+        payload['is_first_final_for_book'] = is_first_final
         payload['social'] = get_social_status(user_book)
         return Response(payload, status=status.HTTP_201_CREATED)
 

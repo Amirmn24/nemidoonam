@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
-/** نمایش یک دیدگاه پایانی تصادفی از دیگران (متن یا ویس) */
-export default function PeerViewpointModal({ open, busy, viewpoint, empty, error, onRefresh, onClose }) {
+/** یک‌بار نمایش دیدگاه پایانی تصادفی دیگران — بدون تکرار */
+export default function PeerViewpointModal({ open, busy, viewpoint, empty, error, onClose }) {
   useEffect(() => {
     if (!open) return undefined
     const prev = document.body.style.overflow
@@ -27,11 +27,8 @@ export default function PeerViewpointModal({ open, busy, viewpoint, empty, error
         <div className="book-modal-head">
           <div>
             <p className="eyebrow">دیدگاه دیگران</p>
-            <h2 id="peer-viewpoint-title">یک تحلیل تصادفی</h2>
+            <h2 id="peer-viewpoint-title">یک نگاه از بقیه</h2>
           </div>
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose} aria-label="بستن">
-            بستن
-          </button>
         </div>
 
         {error ? <p className="form-errors">{error}</p> : null}
@@ -63,12 +60,11 @@ export default function PeerViewpointModal({ open, busy, viewpoint, empty, error
           </figure>
         ) : null}
 
+        <p className="peer-viewpoint-once-hint">این فقط یک‌بار برای این کتاب نشان داده می‌شود.</p>
+
         <div className="form-actions">
-          <button type="button" className="btn btn-secondary" disabled={busy || empty} onClick={onRefresh}>
-            {busy ? '…' : 'یکی دیگر'}
-          </button>
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
-            بستن
+          <button type="button" className="btn btn-primary" disabled={busy} onClick={onClose}>
+            دیدم
           </button>
         </div>
       </div>

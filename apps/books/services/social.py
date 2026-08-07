@@ -1,4 +1,4 @@
-"""ویژگی‌های اجتماعی کتاب: دیدگاه پایانی و آشکارسازی امن دیدگاه دیگران."""
+"""ویژگی‌های اجتماعی کتاب: دیدگاه پایانی و آشکارسازی یک‌بارهٔ دیدگاه دیگران."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ import random
 import re
 from typing import Any
 
+from django.db import transaction
 from django.db.models import QuerySet
 
 from apps.books.models import BookStatus, Entry, EntryKind, EntryMediaType, UserBook
 
-# سقف متن برای جلوگیری از payload سنگین / XSS حجیم
 FINAL_VIEWPOINT_MAX_LEN = 4000
 PEER_POOL_LIMIT = 250
 
@@ -18,7 +18,6 @@ _CONTROL_CHARS = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]')
 
 
 def sanitize_public_text(text: str, *, max_len: int = FINAL_VIEWPOINT_MAX_LEN) -> str:
-    """متن عمومی را تمیز و کوتاه می‌کند (React هم escape می‌کند؛ این لایهٔ دفاعی سرور است)."""
     cleaned = _CONTROL_CHARS.sub('', (text or '')).replace('\r\n', '\n').replace('\r', '\n')
     cleaned = cleaned.strip()
     if len(cleaned) > max_len:
@@ -52,7 +51,6 @@ def count_peer_final_viewpoints(user_book: UserBook) -> int:
 
 
 def is_first_final_for_catalog(catalog_book_id: int, *, before_entry_id: int | None = None) -> bool:
-    """آیا این اولین دیدگاه پایانی عمومی برای کتاب کاتالوگ است؟"""
     qs = public_final_queryset(catalog_book_id)
     if before_entry_id is not None:
         qs = qs.exclude(pk=before_entry_id)
@@ -60,9 +58,11 @@ def is_first_final_for_catalog(catalog_book_id: int, *, before_entry_id: int | N
 
 
 def can_reveal_peer_viewpoint(user_book: UserBook) -> bool:
+    """فقط یک‌بار، بعد از اتمام + ثبت دیدگاه پایانی خود کاربر."""
     return (
         user_book.status == BookStatus.FINISHED
         and user_has_final_viewpoint(user_book)
+        and not user_book.peer_viewpoint_revealed
     )
 
 
@@ -90,7 +90,6 @@ def serialize_peer_viewpoint(entry: Entry, request=None) -> dict[str, Any]:
 
 
 def pick_random_peer_final_viewpoint(user_book: UserBook) -> Entry | None:
-    """یک دیدگاه پایانی عمومی تصادفی از دیگران برای همان کتاب کاتالوگ."""
     ids = list(
         peer_final_queryset(user_book)
         .order_by('-created_at')
@@ -106,14 +105,37 @@ def pick_random_peer_final_viewpoint(user_book: UserBook) -> Entry | None:
     )
 
 
+@transaction.atomic
+def reveal_peer_final_viewpoint(user_book: UserBook) -> tuple[Entry | None, str]:
+    """
+    یک‌بار دیدگاه تصادفی دیگران را برمی‌گرداند و پرچم revealed را می‌زند.
+    حتی اگر خالی باشد، فرصت یک‌باره مصرف می‌شود.
+    """
+    locked = UserBook.objects.select_for_update().get(pk=user_book.pk)
+    if locked.status != BookStatus.FINISHED:
+        return None, 'forbidden_not_finished'
+    if not user_has_final_viewpoint(locked):
+        return None, 'forbidden_no_final'
+    if locked.peer_viewpoint_revealed:
+        return None, 'already_revealed'
+
+    peer = pick_random_peer_final_viewpoint(locked)
+    locked.peer_viewpoint_revealed = True
+    locked.save(update_fields=['peer_viewpoint_revealed', 'updated_at'])
+    # همگام با نمونهٔ در حافظه
+    user_book.peer_viewpoint_revealed = True
+    return peer, 'ok' if peer else 'empty'
+
+
 def get_social_status(user_book: UserBook) -> dict[str, Any]:
     finished = user_book.status == BookStatus.FINISHED
     has_final = user_has_final_viewpoint(user_book) if finished else False
-    can_reveal = finished and has_final
+    revealed = bool(user_book.peer_viewpoint_revealed)
+    can_reveal = finished and has_final and not revealed
     peer_count = count_peer_final_viewpoints(user_book) if can_reveal else 0
     return {
         'has_final_viewpoint': has_final,
+        'peer_revealed': revealed,
         'can_reveal_peer': can_reveal,
         'peer_available': can_reveal and peer_count > 0,
-        'peer_count': peer_count if can_reveal else None,
     }
