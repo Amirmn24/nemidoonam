@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 function entryPreview(entry) {
   if (entry.kind === 'ending_prediction') return 'پیش‌بینی نیمه‌راه'
+  if (entry.kind === 'final_viewpoint') return 'دیدگاه پایانی'
   if (entry.text_content) {
     const t = entry.text_content.trim()
     return t.length > 48 ? `${t.slice(0, 48)}…` : t

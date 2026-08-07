@@ -1,11 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { booksApi, ApiError } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
 import BookRatingPanel, { RatingBadge } from './components/BookRatingPanel'
 import EntryTimelineItem from './components/EntryTimelineItem'
+import FinishConfirmModal from './components/FinishConfirmModal'
+import FinalViewpointModal from './components/FinalViewpointModal'
 import FinishedBookPlaylist from './components/FinishedBookPlaylist'
+import FirstFinalViewpointModal from './components/FirstFinalViewpointModal'
 import MidpointPredictionModal from './components/MidpointPredictionModal'
+import PeerViewpointModal from './components/PeerViewpointModal'
 
 function ReadingDetail({
   id,
@@ -15,7 +19,7 @@ function ReadingDetail({
   media,
   busy,
   onProgress,
-  onFinish,
+  onAskFinish,
   onDelete,
   onDeleteEntry,
   setFilter,
@@ -46,7 +50,7 @@ function ReadingDetail({
             <Link to={`/books/${id}/entries/new`} className="btn btn-primary">
               یادداشت جدید
             </Link>
-            <button type="button" className="btn btn-secondary" onClick={onFinish} disabled={busy}>
+            <button type="button" className="btn btn-secondary" onClick={onAskFinish} disabled={busy}>
               تیک پایان
             </button>
             <Link to={`/books/${id}/edit`} className="btn btn-ghost">
@@ -178,7 +182,19 @@ function ReadingDetail({
   )
 }
 
-function FinishedDetail({ id, book, data, busy, onSaveRating, onDelete }) {
+function FinishedDetail({
+  id,
+  book,
+  data,
+  social,
+  busy,
+  onSaveRating,
+  onDelete,
+  onRevealPeer,
+  onAskFinalViewpoint,
+}) {
+  const hasFinal = Boolean(social?.has_final_viewpoint)
+
   return (
     <>
       <section className="detail-hero detail-hero-finished">
@@ -193,7 +209,7 @@ function FinishedDetail({ id, book, data, busy, onSaveRating, onDelete }) {
           <h1>{book.title}</h1>
           <p className="meta-pill">{book.author}</p>
           <p className="finished-lead">
-            کتاب تمام شد؛ حالا می‌توانی امتیاز بدهی و یادداشت‌هایت را مثل پلی‌لیست مرور کنی.
+            کتاب تمام شد؛ امتیاز بده، دیدگاه پایانی بنویس و اگر خواستی تحلیل دیگران را ببین.
           </p>
           <div className="cluster">
             <Link to={`/books/${id}/edit`} className="btn btn-ghost">
@@ -202,6 +218,40 @@ function FinishedDetail({ id, book, data, busy, onSaveRating, onDelete }) {
             <button type="button" className="btn btn-danger-ghost" onClick={onDelete}>
               حذف از قفسه
             </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="section" id="social-final">
+        <div className="surface social-final-panel">
+          <div className="social-final-copy">
+            <p className="eyebrow">اجتماعی</p>
+            <h2>دیدگاه پایانی</h2>
+            {hasFinal ? (
+              <p>
+                دیدگاه پایانی‌ات ثبت شده. می‌توانی یک دیدگاه تصادفی از کسانی که این کتاب را تمام کرده‌اند ببینی.
+              </p>
+            ) : (
+              <p>
+                با ثبت یک دیدگاه پایانی، قفل دیدن تحلیل دیگران برای این کتاب باز می‌شود.
+              </p>
+            )}
+          </div>
+          <div className="cluster social-final-actions">
+            {!hasFinal ? (
+              <button type="button" className="btn btn-primary" disabled={busy} onClick={onAskFinalViewpoint}>
+                ثبت دیدگاه پایانی
+              </button>
+            ) : (
+              <>
+                <button type="button" className="btn btn-primary" disabled={busy} onClick={onRevealPeer}>
+                  دیدگاه دیگران
+                </button>
+                <button type="button" className="btn btn-ghost" disabled={busy} onClick={onAskFinalViewpoint}>
+                  دیدگاه دیگر از خودم
+                </button>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -232,6 +282,14 @@ export default function BookDetailPage() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [showMidpoint, setShowMidpoint] = useState(false)
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false)
+  const [showFinalModal, setShowFinalModal] = useState(false)
+  const [showFirstFinal, setShowFirstFinal] = useState(false)
+  const [peerOpen, setPeerOpen] = useState(false)
+  const [peerBusy, setPeerBusy] = useState(false)
+  const [peerView, setPeerView] = useState(null)
+  const [peerEmpty, setPeerEmpty] = useState(false)
+  const [peerError, setPeerError] = useState('')
 
   const kind = params.get('kind') || ''
   const media = params.get('media') || ''
@@ -277,19 +335,76 @@ export default function BookDetailPage() {
     }
   }
 
-  const onFinish = async () => {
-    if (!window.confirm('کتاب را به‌عنوان تمام‌شده علامت بزنم؟ یادداشت‌های مهروموم باز می‌شوند.')) return
+  const onFinishConfirm = async () => {
     setBusy(true)
     try {
       await booksApi.finish(id)
-      showToast('کتاب تمام شد. حالا می‌توانی امتیاز بدهی.', 'success')
+      showToast('کتاب تمام شد. حالا می‌توانی دیدگاه پایانی ثبت کنی.', 'success')
       setShowMidpoint(false)
+      setShowFinishConfirm(false)
       await load()
+      setShowFinalModal(true)
     } catch (err) {
       showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
     } finally {
       setBusy(false)
     }
+  }
+
+  const onSubmitFinalViewpoint = async ({ media_type, text_content, audioBlob }) => {
+    setBusy(true)
+    try {
+      const fd = new FormData()
+      fd.set('kind', 'final_viewpoint')
+      fd.set('media_type', media_type)
+      fd.set('text_content', text_content || '')
+      fd.set('is_public', 'true')
+      fd.set('is_sealed', 'false')
+      fd.set('entry_date', new Date().toISOString().slice(0, 10))
+      if (media_type === 'voice' && audioBlob) {
+        fd.set('audio', audioBlob, 'final-viewpoint.webm')
+      }
+      const saved = await booksApi.createEntry(id, fd)
+      showToast('دیدگاه پایانی ثبت شد.', 'success')
+      setShowFinalModal(false)
+      await load()
+      if (saved?.is_first_final_for_book) setShowFirstFinal(true)
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'ثبت دیدگاه ناموفق بود.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const fetchPeerViewpoint = useCallback(async () => {
+    setPeerBusy(true)
+    setPeerError('')
+    try {
+      const res = await booksApi.peerFinalViewpoint(id)
+      if (res.empty || !res.viewpoint) {
+        setPeerView(null)
+        setPeerEmpty(true)
+      } else {
+        setPeerEmpty(false)
+        setPeerView(res.viewpoint)
+      }
+      if (res.social) {
+        setData((prev) => (prev ? { ...prev, social: res.social } : prev))
+      }
+    } catch (err) {
+      setPeerError(err instanceof ApiError ? err.message : 'بارگذاری ناموفق بود.')
+      setPeerView(null)
+    } finally {
+      setPeerBusy(false)
+    }
+  }, [id])
+
+  const onRevealPeer = async () => {
+    setPeerOpen(true)
+    setPeerView(null)
+    setPeerEmpty(false)
+    setPeerError('')
+    await fetchPeerViewpoint()
   }
 
   const onSaveRating = async (payload) => {
@@ -351,6 +466,7 @@ export default function BookDetailPage() {
 
   const book = data.book
   const isFinished = book.status === 'finished' || data.view_mode === 'playlist'
+  const social = data.social || {}
 
   return (
     <div className={`page-detail${isFinished ? ' is-finished' : ''}`}>
@@ -359,9 +475,12 @@ export default function BookDetailPage() {
           id={id}
           book={book}
           data={data}
+          social={social}
           busy={busy}
           onSaveRating={onSaveRating}
           onDelete={onDelete}
+          onRevealPeer={onRevealPeer}
+          onAskFinalViewpoint={() => setShowFinalModal(true)}
         />
       ) : (
         <ReadingDetail
@@ -372,7 +491,7 @@ export default function BookDetailPage() {
           media={media}
           busy={busy}
           onProgress={onProgress}
-          onFinish={onFinish}
+          onAskFinish={() => setShowFinishConfirm(true)}
           onDelete={onDelete}
           onDeleteEntry={onDeleteEntry}
           setFilter={setFilter}
@@ -384,6 +503,39 @@ export default function BookDetailPage() {
         busy={busy}
         onSubmit={onSubmitMidpoint}
         onDismiss={onDismissMidpoint}
+      />
+
+      <FinishConfirmModal
+        open={showFinishConfirm && !isFinished}
+        busy={busy}
+        bookTitle={book.title}
+        onConfirm={onFinishConfirm}
+        onCancel={() => setShowFinishConfirm(false)}
+      />
+
+      <FinalViewpointModal
+        open={showFinalModal && isFinished}
+        busy={busy}
+        bookTitle={book.title}
+        onSubmit={onSubmitFinalViewpoint}
+        onClose={() => setShowFinalModal(false)}
+      />
+
+      <FirstFinalViewpointModal
+        open={showFirstFinal}
+        bookTitle={book.title}
+        bookId={id}
+        onClose={() => setShowFirstFinal(false)}
+      />
+
+      <PeerViewpointModal
+        open={peerOpen}
+        busy={peerBusy}
+        viewpoint={peerView}
+        empty={peerEmpty}
+        error={peerError}
+        onRefresh={fetchPeerViewpoint}
+        onClose={() => setPeerOpen(false)}
       />
     </div>
   )

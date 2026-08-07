@@ -4919,6 +4919,109 @@ body.vocab-modal-open {
   color: var(--sky);
 }
 
+.finish-confirm-copy,
+.first-final-copy {
+  margin: 0 0 1.1rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.social-final-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.25rem;
+}
+
+.social-final-copy {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.social-final-copy h2 {
+  margin: 0.15rem 0 0.35rem;
+}
+
+.social-final-copy p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.65;
+  max-width: 36rem;
+}
+
+.social-final-actions {
+  flex: 0 0 auto;
+}
+
+.final-viewpoint-hint {
+  margin: 0 0 0.85rem;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.final-media-choices {
+  margin-bottom: 0.9rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.final-viewpoint-audio,
+.peer-viewpoint-audio {
+  display: block;
+  width: 100%;
+  margin-top: 0.65rem;
+}
+
+.peer-viewpoint-card .peer-viewpoint-audio {
+  margin-bottom: 0.75rem;
+}
+
+.peer-viewpoint-sheet .book-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.peer-viewpoint-loading,
+.peer-viewpoint-empty {
+  margin: 0.5rem 0 1rem;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.peer-viewpoint-card {
+  margin: 0 0 1.1rem;
+  padding: 0;
+}
+
+.peer-viewpoint-card blockquote {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.peer-viewpoint-card p {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.75;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.peer-viewpoint-card figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
 .midpoint-hint {
   margin: 0 0 1rem;
   color: var(--ink-soft);

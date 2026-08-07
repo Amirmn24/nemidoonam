@@ -4,6 +4,7 @@ from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
@@ -36,7 +37,15 @@ from apps.books.services.midpoint import (
 )
 from apps.books.services.ratings import get_rating_for_shelf, serialize_rating, upsert_book_rating
 from apps.books.services.setup import serialize_setup_status
-
+from apps.books.services.social import (
+    FINAL_VIEWPOINT_MAX_LEN,
+    can_reveal_peer_viewpoint,
+    get_social_status,
+    is_first_final_for_catalog,
+    pick_random_peer_final_viewpoint,
+    sanitize_public_text,
+    serialize_peer_viewpoint,
+)
 
 def _media_url(request, field):
     if not field:
@@ -235,9 +244,14 @@ class ProgressSerializer(serializers.Serializer):
 class EntryWriteSerializer(serializers.Serializer):
     kind = serializers.ChoiceField(choices=EntryKind.choices, default=EntryKind.VIEWPOINT)
     media_type = serializers.ChoiceField(choices=EntryMediaType.choices, default=EntryMediaType.TEXT)
-    page_number = serializers.IntegerField(min_value=1)
+    page_number = serializers.IntegerField(min_value=1, required=False)
     entry_date = serializers.DateField(required=False)
-    text_content = serializers.CharField(required=False, allow_blank=True, default='')
+    text_content = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default='',
+        max_length=FINAL_VIEWPOINT_MAX_LEN,
+    )
     image = serializers.ImageField(required=False, allow_null=True)
     audio = serializers.FileField(required=False, allow_null=True)
     is_public = serializers.BooleanField(required=False, default=False)
@@ -247,15 +261,54 @@ class EntryWriteSerializer(serializers.Serializer):
         user_book = self.context['user_book']
         instance = self.context.get('instance')
         page_number = attrs.get('page_number')
-        if page_number and page_number > user_book.total_pages:
+        if page_number is not None and page_number > user_book.total_pages:
             raise serializers.ValidationError(
                 {'page_number': 'شماره صفحه نمی‌تواند بیشتر از تعداد صفحات کتاب باشد.'}
             )
 
+        kind = attrs.get('kind') or (instance.kind if instance else EntryKind.VIEWPOINT)
         media_type = attrs.get('media_type') or (instance.media_type if instance else EntryMediaType.TEXT)
-        text_content = (attrs.get('text_content') or '').strip()
+        text_content = sanitize_public_text(attrs.get('text_content') or '')
         image = attrs.get('image')
         audio = attrs.get('audio')
+
+        # دیدگاه پایانی: بعد از اتمام، متن یا ویس، عمومی، بدون مهروموم؛ صفحه = آخر کتاب
+        if kind == EntryKind.FINAL_VIEWPOINT:
+            if user_book.status != BookStatus.FINISHED:
+                raise serializers.ValidationError(
+                    {'kind': 'دیدگاه پایانی فقط بعد از اتمام کتاب ثبت می‌شود.'}
+                )
+            if media_type not in {EntryMediaType.TEXT, EntryMediaType.VOICE}:
+                raise serializers.ValidationError(
+                    {'media_type': 'دیدگاه پایانی فقط متن یا ویس است.'}
+                )
+            if media_type == EntryMediaType.TEXT and not text_content:
+                raise serializers.ValidationError(
+                    {'text_content': 'متن دیدگاه پایانی الزامی است.'}
+                )
+            if media_type == EntryMediaType.VOICE and not audio and not (instance and instance.audio):
+                raise serializers.ValidationError(
+                    {'audio': 'برای دیدگاه پایانی صوتی، ضبط ویس الزامی است.'}
+                )
+            attrs['is_public'] = True
+            attrs['is_sealed'] = False
+            attrs['media_type'] = media_type
+            attrs['page_number'] = user_book.total_pages
+            attrs['text_content'] = text_content if media_type == EntryMediaType.TEXT else text_content
+            attrs['_content_locked'] = False
+            attrs['_is_first_final'] = is_first_final_for_catalog(user_book.book_id)
+            return attrs
+
+        if page_number is None and not instance:
+            raise serializers.ValidationError({'page_number': 'شماره صفحه الزامی است.'})
+        if page_number is None and instance:
+            attrs['page_number'] = instance.page_number
+
+        if kind == EntryKind.ENDING_PREDICTION and not instance:
+            raise serializers.ValidationError(
+                {'kind': 'پیش‌بینی پایان فقط از مسیر نیمه‌راه ساخته می‌شود.'}
+            )
+
         content_locked = bool(
             instance
             and is_entry_content_locked(instance, user_book)
@@ -272,6 +325,7 @@ class EntryWriteSerializer(serializers.Serializer):
 
         attrs['text_content'] = text_content
         attrs['_content_locked'] = content_locked
+        attrs['_is_first_final'] = False
         return attrs
 
 
@@ -346,6 +400,17 @@ class SuggestView(APIView):
 
 class ShelfViewSet(ViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+    throttle_scope = None
+
+    def get_throttles(self):
+        action = getattr(self, 'action', None)
+        if action == 'finish':
+            self.throttle_scope = 'finish_book'
+            return [ScopedRateThrottle()]
+        if action == 'peer_final_viewpoint':
+            self.throttle_scope = 'peer_viewpoint'
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
 
     def _get_shelf(self, request, pk):
         return get_object_or_404(get_shelf_queryset(request.user), pk=pk)
@@ -390,6 +455,7 @@ class ShelfViewSet(ViewSet):
                 'active_media': media or '',
                 'ask_midpoint_prediction': should_ask_midpoint_prediction(user_book),
                 'view_mode': 'playlist' if is_finished else 'reading',
+                'social': get_social_status(user_book),
             }
         )
 
@@ -589,6 +655,19 @@ class ShelfViewSet(ViewSet):
     def finish(self, request, pk=None):
         """تیک پایان کتاب — صفحه را کامل و وضعیت را finished می‌کند."""
         user_book = self._get_shelf(request, pk)
+        if user_book.status == BookStatus.FINISHED:
+            return Response(
+                {
+                    'book': ShelfBookSerializer(user_book, context={'request': request}).data,
+                    'rating': serialize_rating(get_rating_for_shelf(user_book)),
+                    'rating_factors': [
+                        {'key': key, 'label': label} for key, label in RATING_FACTORS
+                    ],
+                    'view_mode': 'playlist',
+                    'social': get_social_status(user_book),
+                    'already_finished': True,
+                }
+            )
         user_book.current_page = user_book.total_pages
         user_book.status = BookStatus.FINISHED
         user_book.save(update_fields=['current_page', 'status', 'updated_at'])
@@ -601,6 +680,45 @@ class ShelfViewSet(ViewSet):
                     {'key': key, 'label': label} for key, label in RATING_FACTORS
                 ],
                 'view_mode': 'playlist',
+                'social': get_social_status(user_book),
+                'already_finished': False,
+            }
+        )
+
+    @action(detail=True, methods=['get'], url_path='peer-final-viewpoint')
+    def peer_final_viewpoint(self, request, pk=None):
+        """
+        یک دیدگاه پایانی تصادفی از دیگران برای همین کتاب کاتالوگ.
+        فقط وقتی کتاب تمام شده و خود کاربر دیدگاه پایانی ثبت کرده باشد.
+        """
+        user_book = self._get_shelf(request, pk)
+        if not can_reveal_peer_viewpoint(user_book):
+            detail = (
+                'اول کتاب را تمام کن و دیدگاه پایانی خودت را ثبت کن.'
+                if user_book.status != BookStatus.FINISHED
+                else 'برای دیدن دیدگاه دیگران، اول دیدگاه پایانی خودت را ثبت کن.'
+            )
+            return Response(
+                {'detail': detail, 'social': get_social_status(user_book)},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        peer = pick_random_peer_final_viewpoint(user_book)
+        social = get_social_status(user_book)
+        if not peer:
+            return Response(
+                {
+                    'viewpoint': None,
+                    'empty': True,
+                    'detail': 'هنوز دیدگاه پایانی عمومی از دیگران برای این کتاب نیست.',
+                    'social': social,
+                }
+            )
+        return Response(
+            {
+                'viewpoint': serialize_peer_viewpoint(peer, request),
+                'empty': False,
+                'social': social,
             }
         )
 
@@ -660,6 +778,12 @@ class CatalogAddView(APIView):
 
 class EntryViewSet(ViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+    throttle_scope = 'entry_write'
+
+    def get_throttles(self):
+        if getattr(self, 'action', None) in {'create', 'partial_update', 'destroy'}:
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
 
     def _get_shelf(self, request, book_pk):
         return get_object_or_404(get_shelf_queryset(request.user), pk=book_pk)
@@ -719,6 +843,10 @@ class EntryViewSet(ViewSet):
         )
         payload = self._entry_response(entry, user_book, request)
         payload['ask_midpoint_prediction'] = ask
+        payload['is_first_final_for_book'] = bool(
+            data.get('_is_first_final') and entry.kind == EntryKind.FINAL_VIEWPOINT
+        )
+        payload['social'] = get_social_status(user_book)
         return Response(payload, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, book_pk=None, pk=None):

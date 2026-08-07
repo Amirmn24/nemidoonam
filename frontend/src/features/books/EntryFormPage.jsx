@@ -42,7 +42,7 @@ export default function EntryFormPage() {
     if (isEdit) {
       booksApi.getEntry(bookId, entryId).then((data) => {
         setEntry(data)
-        setKind(data.kind)
+        setKind(data.kind === 'final_viewpoint' ? 'viewpoint' : data.kind)
         setMedia(data.media_type)
         setIsPublic(Boolean(data.is_public))
         setIsSealed(Boolean(data.is_sealed))

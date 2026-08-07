@@ -29,6 +29,7 @@ class EntryKind(models.TextChoices):
     FEELING = 'feeling', 'حس'
     BOOK_TEXT = 'book_text', 'متن کتاب'
     ENDING_PREDICTION = 'ending_prediction', 'پیش‌بینی پایان'
+    FINAL_VIEWPOINT = 'final_viewpoint', 'دیدگاه پایانی'
 
 
 # فاکتورهای امتیازدهی چندبُعدی (۱ تا ۵) — میانگین‌شان نمره کلی می‌شود
