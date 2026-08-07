@@ -114,6 +114,11 @@ class UserBook(models.Model):
         default=SetupStepStatus.IDLE,
         db_index=True,
     )
+    peer_viewpoint_revealed = models.BooleanField(
+        'دیدگاه دیگران دیده شده',
+        default=False,
+        help_text='یک‌بار دیدگاه پایانی تصادفی دیگران برای این کتاب نشان داده شده است.',
+    )
     created_at = models.DateTimeField('تاریخ ایجاد', auto_now_add=True)
     updated_at = models.DateTimeField('آخرین به‌روزرسانی', auto_now=True)
 
