@@ -182,6 +182,16 @@ img {
   transform: translateY(-1px);
 }
 
+.brand-logo {
+  display: block;
+  height: 2.35rem;
+  width: auto;
+  max-width: min(11.5rem, 42vw);
+  object-fit: contain;
+  object-position: right center;
+  filter: drop-shadow(0 6px 14px color-mix(in srgb, #000 22%, transparent));
+}
+
 .brand-mark {
   width: 44px;
   height: 44px;
@@ -1621,6 +1631,11 @@ a.book-suggest-item {
     display: none;
   }
 
+  .brand-logo {
+    height: 1.95rem;
+    max-width: min(9rem, 40vw);
+  }
+
   .form-panel {
     padding: 1rem 0.85rem;
     border-radius: 18px;
@@ -1696,7 +1711,16 @@ a.book-suggest-item {
 .footer-inner {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.45rem;
+}
+
+.footer-logo {
+  display: block;
+  height: 1.85rem;
+  width: auto;
+  max-width: 10.5rem;
+  object-fit: contain;
+  object-position: right center;
 }
 
 .footer-brand {
@@ -2120,6 +2144,28 @@ body.page-auth .main-content.container {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-md);
+}
+
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1.15rem;
+}
+
+.auth-brand-mark {
+  width: 2.6rem;
+  height: 2.6rem;
+  object-fit: contain;
+}
+
+.auth-brand-logo {
+  display: block;
+  height: 1.65rem;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .auth-messages {
@@ -2761,6 +2807,13 @@ body.sidebar-collapsed .sidebar-sheet {
   min-height: 2.6rem;
 }
 
+.sidebar-brand-mark {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .sidebar-head-copy {
   display: flex;
   flex-direction: column;
@@ -2825,10 +2878,17 @@ body.sidebar-collapsed .sidebar-head {
   justify-content: center;
   padding-inline: 0;
   border-bottom-color: var(--border);
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 body.sidebar-collapsed .sidebar-head-copy {
   display: none;
+}
+
+body.sidebar-collapsed .sidebar-brand-mark {
+  width: 1.85rem;
+  height: 1.85rem;
 }
 
 .sidebar-nav {
@@ -3640,6 +3700,11 @@ body.vocab-modal-open {
 
   .brand-text small {
     display: none;
+  }
+
+  .brand-logo {
+    height: 1.85rem;
+    max-width: min(8.5rem, 38vw);
   }
 
   .brand-mark {

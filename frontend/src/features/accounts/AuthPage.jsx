@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { vMarkIndigo, vyrvonaIndigo } from '../../assets/brand'
 import { ApiError } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
 import ThemeToggle from '../../shared/ThemeToggle'
@@ -89,6 +90,10 @@ export default function AuthPage({ mode: initialMode = 'login' }) {
 
       <div className="auth-forms" dir="rtl">
         <div className="auth-forms-inner">
+          <div className="auth-brand">
+            <img className="auth-brand-mark" src={vMarkIndigo} alt="" aria-hidden="true" />
+            <img className="auth-brand-logo" src={vyrvonaIndigo} alt="Vyrvona" />
+          </div>
           <ToastHost />
           {error ? (
             <div className="auth-messages">

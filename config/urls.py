@@ -26,6 +26,22 @@ if frontend_dist.exists():
             serve,
             {'document_root': frontend_dist / 'img'},
         ),
+        # Root SPA assets from Vite public/ (favicon, etc.)
+        path(
+            'favicon.ico',
+            serve,
+            {'document_root': frontend_dist, 'path': 'favicon.ico'},
+        ),
+        path(
+            'favicon.svg',
+            serve,
+            {'document_root': frontend_dist, 'path': 'favicon.svg'},
+        ),
+        path(
+            'icons.svg',
+            serve,
+            {'document_root': frontend_dist, 'path': 'icons.svg'},
+        ),
     ]
 
 if settings.DEBUG:
@@ -33,5 +49,9 @@ if settings.DEBUG:
 
 # SPA catch-all — must be last (keeps /api and /admin above)
 urlpatterns += [
-    re_path(r'^(?!api/|admin/|static/|media/|assets/|img/).*$', SpaView.as_view(), name='spa'),
+    re_path(
+        r'^(?!api/|admin/|static/|media/|assets/|img/|favicon\.ico|favicon\.svg|icons\.svg).*$',
+        SpaView.as_view(),
+        name='spa',
+    ),
 ]

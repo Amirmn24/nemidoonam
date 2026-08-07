@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { vMarkIndigo, vyrvonaWhite } from '../../assets/brand'
 import { useAuth } from '../../shared/AuthContext'
 import ThemeToggle from '../../shared/ThemeToggle'
 import ToastHost from '../../shared/ToastHost'
@@ -146,12 +147,8 @@ export default function AppLayout() {
       <header className="site-header" data-site-header>
         <div className="container header-inner">
           <div className="header-start">
-            <Link className="brand" to="/">
-              <span className="brand-mark" aria-hidden="true" />
-              <span className="brand-text">
-                <strong>ویرونا</strong>
-                <small>Vyrvona</small>
-              </span>
+            <Link className="brand" to="/" aria-label="ویرونا · Vyrvona">
+              <img className="brand-logo" src={vyrvonaWhite} alt="" />
             </Link>
           </div>
           <div className="header-end">
@@ -177,6 +174,7 @@ export default function AppLayout() {
         <div className="sidebar-sheet">
           <div className="sidebar-handle" aria-hidden="true" />
           <div className="sidebar-head">
+            <img className="sidebar-brand-mark" src={vMarkIndigo} alt="" aria-hidden="true" />
             <div className="sidebar-head-copy">
               <span className="sidebar-kicker">ویرونا</span>
               <strong className="sidebar-title">منوی اصلی</strong>
@@ -279,8 +277,8 @@ export default function AppLayout() {
         </div>
         <footer className="site-footer">
           <div className="container footer-inner">
-            <p className="footer-brand">ویرونا</p>
-            <p className="footer-note">Vyrvona · جایی برای حس‌ها، دیدگاه‌ها و ورق‌های کتاب</p>
+            <img className="footer-logo" src={vyrvonaWhite} alt="Vyrvona" />
+            <p className="footer-note">جایی برای حس‌ها، دیدگاه‌ها و ورق‌های کتاب</p>
           </div>
         </footer>
       </div>
