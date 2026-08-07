@@ -1,4 +1,4 @@
-"""آماده‌سازی پس از افزودن کتاب: جلد → وایب، بدون بلاک کردن پاسخ HTTP."""
+"""آماده‌سازی پس از افزودن کتاب: جلد سریع؛ وایب در پس‌زمینه و غیرمسدودکننده."""
 
 from __future__ import annotations
 
@@ -12,6 +12,11 @@ from apps.books.models import SetupStepStatus, UserBook
 logger = logging.getLogger(__name__)
 
 _ACTIVE = {SetupStepStatus.PENDING, SetupStepStatus.RUNNING}
+_SETTLED = {
+    SetupStepStatus.DONE,
+    SetupStepStatus.SKIPPED,
+    SetupStepStatus.FAILED,
+}
 
 
 def mark_setup_queued(user_book: UserBook) -> UserBook:
@@ -45,23 +50,12 @@ def serialize_setup_status(user_book: UserBook, request=None) -> dict:
 
     cover = user_book.cover_setup_status
     vibe = user_book.vibe_setup_status
-    cover_done = cover in {
-        SetupStepStatus.DONE,
-        SetupStepStatus.SKIPPED,
-        SetupStepStatus.FAILED,
-    }
-    vibe_done = vibe in {
-        SetupStepStatus.DONE,
-        SetupStepStatus.SKIPPED,
-        SetupStepStatus.FAILED,
-    }
-    ready = cover_done and vibe_done
+    cover_done = cover in _SETTLED
+    # وایب عمداً مسیر افزودن کتاب را بلاک نمی‌کند؛ در پس‌زمینه تمام می‌شود
+    ready = cover_done
 
-    # مرحلهٔ فعلی برای UI
-    if user_book.cover_setup_status in _ACTIVE:
+    if cover in _ACTIVE:
         current_step = 'cover'
-    elif user_book.vibe_setup_status in _ACTIVE:
-        current_step = 'vibe'
     elif ready:
         current_step = 'done'
     else:
@@ -76,6 +70,7 @@ def serialize_setup_status(user_book: UserBook, request=None) -> dict:
         'cover_url': cover_url,
         'current_step': current_step,
         'ready': ready,
+        'vibe_background': vibe in _ACTIVE,
         'steps': [
             {
                 'key': 'shelf',
@@ -88,11 +83,6 @@ def serialize_setup_status(user_book: UserBook, request=None) -> dict:
                 'status': cover,
             },
             {
-                'key': 'vibe',
-                'label': 'به‌روزرسانی گراف شخصیت',
-                'status': vibe,
-            },
-            {
                 'key': 'done',
                 'label': 'آماده‌سازی تمام',
                 'status': 'done' if ready else 'pending',
@@ -102,7 +92,7 @@ def serialize_setup_status(user_book: UserBook, request=None) -> dict:
 
 
 def run_shelf_setup(user_book_id: int) -> bool:
-    """جلد را (در صورت نیاز) می‌گیرد، بعد وایب را آپدیت می‌کند."""
+    """جلد را می‌گیرد؛ وایب جدا و بعد از ثبت کتاب در پس‌زمینه اجرا می‌شود."""
     close_old_connections()
     try:
         try:
@@ -128,7 +118,7 @@ def run_shelf_setup(user_book_id: int) -> bool:
                 logger.exception('setup جلد برای UserBook %s شکست خورد.', user_book_id)
                 _set_status(user_book_id, cover_setup_status=SetupStepStatus.FAILED)
 
-        # —— وایب ——
+        # —— وایب (پس‌زمینه؛ UI منتظر نمی‌ماند) ——
         _set_status(user_book_id, vibe_setup_status=SetupStepStatus.RUNNING)
         try:
             from apps.books.services.vibe import update_user_vibe_from_user_book

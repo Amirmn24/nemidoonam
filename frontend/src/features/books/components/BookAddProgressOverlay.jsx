@@ -9,13 +9,9 @@ const STAGE_META = {
     title: 'پیدا کردن جلد',
     copy: 'داریم بین جلدهای ایرانی می‌گردیم تا روی کتاب بنشیند.',
   },
-  vibe: {
-    title: 'گراف شخصیت',
-    copy: 'حس و حال مطالعه‌ات با این کتاب تازه می‌شود…',
-  },
   done: {
     title: 'آماده شد',
-    copy: 'همه‌چیز سر جایش است؛ بزن بریم سراغ کتاب.',
+    copy: 'گراف شخصیت در پس‌زمینه به‌روز می‌شود؛ بزن بریم سراغ کتاب.',
   },
 }
 
@@ -27,7 +23,6 @@ function stageState(key, setup, saving) {
   if (!setup) return 'pending'
   const map = {
     cover: setup.cover_status,
-    vibe: setup.vibe_status,
     done: setup.ready ? 'done' : 'pending',
   }
   const raw = map[key] || 'pending'
@@ -35,7 +30,7 @@ function stageState(key, setup, saving) {
   return raw
 }
 
-/** لودینگ مرحله‌ای افزودن کتاب: قفسه → جلد → وایب */
+/** لودینگ مرحله‌ای افزودن کتاب: قفسه → جلد (وایب در پس‌زمینه) */
 export default function BookAddProgressOverlay({ open, saving, setup, bookTitle }) {
   const [pulse, setPulse] = useState(0)
 
@@ -64,7 +59,7 @@ export default function BookAddProgressOverlay({ open, saving, setup, bookTitle 
 
   if (!open) return null
 
-  const steps = ['shelf', 'cover', 'vibe', 'done']
+  const steps = ['shelf', 'cover', 'done']
 
   return (
     <div className="book-journey" role="dialog" aria-modal="true" aria-labelledby="journey-title">
@@ -83,7 +78,7 @@ export default function BookAddProgressOverlay({ open, saving, setup, bookTitle 
               </div>
             )}
           </div>
-          {current === 'vibe' || current === 'done' ? (
+          {current === 'done' ? (
             <div className="book-journey-radar" data-pulse={pulse % 3}>
               <span />
               <span />

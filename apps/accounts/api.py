@@ -12,9 +12,7 @@ from rest_framework.views import APIView
 from apps.accounts.models import User
 from apps.accounts.services.auth import authenticate_user, login_user, register_user
 from apps.accounts.services.dashboard import get_dashboard_payload
-from apps.books.models import UserBook
 from apps.books.services.vibe import (
-    enqueue_vibe_update,
     get_vibe_dashboard_payload,
     update_user_vibe_from_user_book,
 )

@@ -1,4 +1,4 @@
-"""تحلیل وایب مطالعاتی با OpenAI — رادار شخصیت + نقل‌قول + لاگ تغییر."""
+"""تحلیل وایب مطالعاتی با OpenAI — رادار شخصیت + ژانر + نقل‌قول + لاگ تغییر."""
 
 from __future__ import annotations
 
@@ -10,17 +10,20 @@ from typing import Any
 from django.conf import settings
 from django.db import transaction
 
-from apps.books.models import ReadingVibeLog, ReadingVibeProfile, UserBook
+from apps.books.models import BookStatus, ReadingVibeLog, ReadingVibeProfile, UserBook
 
 logger = logging.getLogger(__name__)
 
+# محورهای شخصیت مطالعاتی — حس‌وحال + گرایش سبکی
 VIBE_AXES: tuple[dict[str, str], ...] = (
-    {'key': 'melancholy', 'label': 'غمگین'},
-    {'key': 'wonder', 'label': 'شگفت‌زده'},
-    {'key': 'intensity', 'label': 'پرتنش'},
-    {'key': 'warmth', 'label': 'گرم'},
-    {'key': 'intellect', 'label': 'اندیشه‌ورز'},
-    {'key': 'escapism', 'label': 'خیال‌پرداز'},
+    {'key': 'melancholy', 'label': 'ملانکولیک'},
+    {'key': 'wonder', 'label': 'شگفت'},
+    {'key': 'intensity', 'label': 'هیجان'},
+    {'key': 'warmth', 'label': 'صمیمیت'},
+    {'key': 'intellect', 'label': 'تفکر'},
+    {'key': 'escapism', 'label': 'گریز'},
+    {'key': 'realism', 'label': 'واقع‌گرا'},
+    {'key': 'plot_drive', 'label': 'داستان‌محور'},
 )
 
 AXIS_KEYS = tuple(item['key'] for item in VIBE_AXES)
@@ -65,17 +68,45 @@ def top_moods(axes: dict[str, int] | None, *, limit: int = 3) -> list[dict[str, 
     ]
 
 
+def normalize_genre_mix(raw: Any, *, limit: int = 4) -> list[dict[str, Any]]:
+    if not isinstance(raw, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for row in raw[:limit]:
+        if not isinstance(row, dict):
+            continue
+        label = str(row.get('label') or row.get('name') or '').strip()
+        if not label:
+            continue
+        key = str(row.get('key') or label).strip()[:64]
+        try:
+            value = int(round(float(row.get('value', 0))))
+        except (TypeError, ValueError):
+            value = 0
+        items.append(
+            {
+                'key': key,
+                'label': label[:80],
+                'value': max(0, min(100, value)),
+            }
+        )
+    items.sort(key=lambda item: item['value'], reverse=True)
+    return items
+
+
 def axis_deltas(
     previous: dict[str, int] | None,
     new: dict[str, int] | None,
+    *,
+    limit: int = 3,
 ) -> list[dict[str, Any]]:
-    """تغییر هر محور نسبت به وایب قبلی (همهٔ لاگ‌ها در DB می‌مانند)."""
+    """تغییر هر محور نسبت به وایب قبلی (فقط مهم‌ترین‌ها برای UI)."""
     prev = normalize_axes(previous or {})
     nxt = normalize_axes(new or {})
     deltas: list[dict[str, Any]] = []
     for key in AXIS_KEYS:
         delta = nxt[key] - prev[key]
-        if delta == 0:
+        if abs(delta) < 4:
             continue
         deltas.append(
             {
@@ -87,7 +118,7 @@ def axis_deltas(
             }
         )
     deltas.sort(key=lambda item: abs(item['delta']), reverse=True)
-    return deltas
+    return deltas[:limit]
 
 
 def _extract_json(text: str) -> dict[str, Any]:
@@ -109,21 +140,31 @@ def _extract_json(text: str) -> dict[str, Any]:
     return payload
 
 
-def _shelf_snapshot(user, *, limit: int = 18) -> list[dict[str, Any]]:
+def _shelf_snapshot(user, *, limit: int = 20) -> list[dict[str, Any]]:
     rows = (
         UserBook.objects.filter(user=user)
         .select_related('book')
-        .order_by('-created_at')[:limit]
+        .order_by('-updated_at')[:limit]
     )
     return [
         {
             'title': row.book.title,
             'author': row.book.author,
-            'status': row.get_status_display(),
-            'notes': (row.notes or '')[:240],
+            'status': row.status,
+            'status_label': row.get_status_display(),
+            'notes': (row.notes or '')[:200],
         }
         for row in rows
     ]
+
+
+def _current_reading_titles(user, *, limit: int = 5) -> list[str]:
+    rows = (
+        UserBook.objects.filter(user=user, status=BookStatus.READING)
+        .select_related('book')
+        .order_by('-updated_at')[:limit]
+    )
+    return [row.book.title for row in rows]
 
 
 def _call_openai(prompt_user: str) -> dict[str, Any]:
@@ -136,10 +177,12 @@ def _call_openai(prompt_user: str) -> dict[str, Any]:
     client = OpenAI(api_key=api_key)
     model = getattr(settings, 'OPENAI_VIBE_MODEL', 'gpt-4o-mini')
     system = (
-        'تو تحلیل‌گر وایب مطالعاتی هستی، شبیه Spotify Wrapped برای کتاب‌خوان‌ها. '
+        'تو تحلیل‌گر تخصصی وایب مطالعاتی هستی؛ مثل Spotify Wrapped برای کتاب‌خوان‌ها، '
+        'با تمرکز روی شخصیت مطالعاتی و ژانر. '
         'همیشه فقط JSON معتبر برگردان. زبان خروجی فارسی روان و صمیمی است. '
-        'محورها باید عدد صحیح ۰ تا ۱۰۰ باشند و مجموع‌شان لزوماً ۱۰۰ نیست '
-        '(هر محور مستقل است مثل درصد شدت مود).'
+        'محورها عدد صحیح ۰ تا ۱۰۰ و مستقل‌اند. '
+        'ژانر فعلی را از کتاب‌های در حال خواندن (و اگر نبود از تازه‌ترین‌ها) استنباط کن؛ '
+        'ژانر محبوب را از کل قفسه.'
     )
     response = client.chat.completions.create(
         model=model,
@@ -163,6 +206,8 @@ def _heuristic_axes(title: str, author: str, previous: dict[str, int]) -> dict[s
         'warmth': 35,
         'intellect': 48,
         'escapism': 40,
+        'realism': 38,
+        'plot_drive': 44,
     }
     seed = sum(ord(ch) for ch in f'{title}:{author}') or 1
     bumps = {
@@ -172,8 +217,39 @@ def _heuristic_axes(title: str, author: str, previous: dict[str, int]) -> dict[s
         'warmth': ((seed // 7) % 13) - 3,
         'intellect': ((seed // 11) % 21) - 7,
         'escapism': ((seed // 13) % 17) - 5,
+        'realism': ((seed // 17) % 15) - 4,
+        'plot_drive': ((seed // 19) % 19) - 6,
     }
     return normalize_axes({key: base[key] + bumps[key] for key in AXIS_KEYS})
+
+
+def _heuristic_genres(title: str, shelf: list[dict[str, Any]], reading: list[str]) -> dict[str, Any]:
+    text = f'{title} {" ".join(reading)}'.lower()
+    guesses = [
+        ('رازآلود', ('قتل', 'جنایت', 'راز', 'کارآگاه', 'mystery', 'crime')),
+        ('علمی‌تخیلی', ('فضا', 'ربات', 'آینده', 'sci-fi', 'science')),
+        ('فانتزی', ('جادو', 'اژدها', 'فانتزی', 'fantasy', 'افسانه')),
+        ('رمان عاشقانه', ('عشق', 'عاشق', 'romance')),
+        ('ادبیات داستانی', ('رمان', 'داستان', 'novel')),
+        ('ناداستان', ('تاریخ', 'زندگی‌نامه', 'memoir', 'essay')),
+    ]
+    picked = 'ادبیات داستانی'
+    for label, keys in guesses:
+        if any(k in text for k in keys):
+            picked = label
+            break
+    current = picked if reading else picked
+    favorite = picked
+    if len(shelf) >= 3:
+        favorite = picked
+    return {
+        'current_genre': current,
+        'favorite_genre': favorite,
+        'genre_mix': [
+            {'key': 'primary', 'label': picked, 'value': 62},
+            {'key': 'secondary', 'label': 'ادبیات داستانی', 'value': 38},
+        ],
+    }
 
 
 def analyze_vibe_with_ai(
@@ -182,23 +258,35 @@ def analyze_vibe_with_ai(
     new_book_author: str,
     previous_axes: dict[str, int],
     previous_quote: str,
+    previous_current_genre: str,
+    previous_favorite_genre: str,
     shelf: list[dict[str, Any]],
+    currently_reading: list[str],
 ) -> dict[str, Any]:
     axis_help = ', '.join(f'{item["key"]} ({item["label"]})' for item in VIBE_AXES)
+    reading_line = '، '.join(currently_reading) if currently_reading else '—'
     prompt = (
-        'بر اساس قفسهٔ کاربر و کتاب تازه‌اضافه‌شده، وایب مطالعاتی جدید بساز.\n\n'
+        'بر اساس قفسهٔ کاربر و کتاب تازه‌اضافه‌شده، وایب مطالعاتی تخصصی بساز.\n\n'
         f'کتاب جدید: «{new_book_title}» اثر {new_book_author}\n'
+        f'در حال خواندن الان: {reading_line}\n'
         f'وایـب قبلی (axes): {json.dumps(normalize_axes(previous_axes), ensure_ascii=False)}\n'
         f'نقل‌قول قبلی: {previous_quote or "—"}\n'
+        f'ژانر فعلی قبلی: {previous_current_genre or "—"}\n'
+        f'ژانر محبوب قبلی: {previous_favorite_genre or "—"}\n'
         f'قفسهٔ اخیر: {json.dumps(shelf, ensure_ascii=False)}\n\n'
         f'محورها: {axis_help}\n\n'
         'خروجی دقیقاً این شکل JSON:\n'
         '{\n'
-        '  "axes": {"melancholy":0,"wonder":0,"intensity":0,"warmth":0,"intellect":0,"escapism":0},\n'
-        '  "quote": "یک جملهٔ کوتاه وایب مثل اسپاتیفای",\n'
-        '  "mood_label": "برچسب کوتاه مود مثل غمگینِ اندیشه‌ورز",\n'
-        '  "change_summary": "۲–۳ جمله که بگوید نسبت به قبل چه تغییری کرده و کتاب جدید چه اثری داشته"\n'
+        '  "axes": {"melancholy":0,"wonder":0,"intensity":0,"warmth":0,'
+        '"intellect":0,"escapism":0,"realism":0,"plot_drive":0},\n'
+        '  "quote": "یک جملهٔ کوتاه وایب",\n'
+        '  "mood_label": "برچسب کوتاه مود مثل تفکرِ ملانکولیک",\n'
+        '  "current_genre": "ژانری که الان بیشتر در آنی (از کتاب‌های در حال خواندن)",\n'
+        '  "favorite_genre": "ژانر غالب کل قفسه",\n'
+        '  "genre_mix": [{"key":"literary","label":"ادبی","value":55}],\n'
+        '  "change_summary": "۱–۲ جمله کوتاه دربارهٔ تغییر وایب و ژانر"\n'
         '}\n'
+        'genre_mix حداکثر ۴ ژانر با value ۰–۱۰۰. '
         'اگر وایب قبلی صفر بود، change_summary را به‌صورت شروع مسیر بنویس.'
     )
     try:
@@ -206,6 +294,9 @@ def analyze_vibe_with_ai(
         axes = normalize_axes(raw.get('axes'))
         quote = str(raw.get('quote') or '').strip()
         mood_label = str(raw.get('mood_label') or '').strip()
+        current_genre = str(raw.get('current_genre') or '').strip()[:120]
+        favorite_genre = str(raw.get('favorite_genre') or '').strip()[:120]
+        genre_mix = normalize_genre_mix(raw.get('genre_mix'))
         change_summary = str(raw.get('change_summary') or '').strip()
         if not quote:
             tops = top_moods(axes, limit=2)
@@ -214,24 +305,29 @@ def analyze_vibe_with_ai(
         if not mood_label:
             tops = top_moods(axes, limit=2)
             mood_label = ' · '.join(m['label'] for m in tops) or 'در حال شکل‌گیری'
+        if not current_genre:
+            current_genre = previous_current_genre or (genre_mix[0]['label'] if genre_mix else '')
+        if not favorite_genre:
+            favorite_genre = previous_favorite_genre or current_genre
         if not change_summary:
-            change_summary = (
-                f'با افزودن «{new_book_title}» وایب مطالعاتی‌ات تازه شد.'
-            )
+            change_summary = f'با «{new_book_title}» وایب و ژانرت تازه شد.'
         return {
             'axes': axes,
             'quote': quote,
             'mood_label': mood_label,
+            'current_genre': current_genre,
+            'favorite_genre': favorite_genre,
+            'genre_mix': genre_mix,
             'change_summary': change_summary,
             'source': 'openai',
         }
     except Exception as exc:
-        # کمبود اعتبار / خطای شبکه طبیعی است؛ traceback کامل لازم نیست
         logger.warning(
             'تحلیل OpenAI برای وایب ناموفق بود (%s)؛ از heuristic استفاده می‌شود.',
             exc.__class__.__name__,
         )
         axes = _heuristic_axes(new_book_title, new_book_author, previous_axes)
+        genres = _heuristic_genres(new_book_title, shelf, currently_reading)
         tops = top_moods(axes, limit=2)
         mood_bits = ' و '.join(f'{m["value"]}٪ {m["label"]}' for m in tops)
         had_previous = any(normalize_axes(previous_axes).values())
@@ -244,6 +340,9 @@ def analyze_vibe_with_ai(
             'axes': axes,
             'quote': f'الان فضای مطالعه‌ات بیشتر {mood_bits} به نظر می‌رسد.',
             'mood_label': ' · '.join(m['label'] for m in tops) or 'در حال شکل‌گیری',
+            'current_genre': genres['current_genre'],
+            'favorite_genre': genres['favorite_genre'],
+            'genre_mix': genres['genre_mix'],
             'change_summary': change_summary,
             'source': 'heuristic',
         }
@@ -261,13 +360,29 @@ def update_user_vibe_from_user_book(user_book: UserBook) -> ReadingVibeProfile:
         new_book_author=user_book.book.author,
         previous_axes=previous_axes,
         previous_quote=previous_quote,
+        previous_current_genre=profile.current_genre or '',
+        previous_favorite_genre=profile.favorite_genre or '',
         shelf=_shelf_snapshot(user),
+        currently_reading=_current_reading_titles(user),
     )
 
     profile.axes = analysis['axes']
     profile.quote = analysis['quote']
     profile.mood_label = analysis['mood_label']
-    profile.save(update_fields=['axes', 'quote', 'mood_label', 'updated_at'])
+    profile.current_genre = analysis['current_genre']
+    profile.favorite_genre = analysis['favorite_genre']
+    profile.genre_mix = analysis['genre_mix']
+    profile.save(
+        update_fields=[
+            'axes',
+            'quote',
+            'mood_label',
+            'current_genre',
+            'favorite_genre',
+            'genre_mix',
+            'updated_at',
+        ]
+    )
 
     ReadingVibeLog.objects.create(
         user=user,
@@ -278,6 +393,8 @@ def update_user_vibe_from_user_book(user_book: UserBook) -> ReadingVibeProfile:
         new_axes=analysis['axes'],
         quote=analysis['quote'],
         mood_label=analysis['mood_label'],
+        current_genre=analysis['current_genre'],
+        favorite_genre=analysis['favorite_genre'],
         change_summary=analysis['change_summary'],
     )
     return profile
@@ -285,11 +402,18 @@ def update_user_vibe_from_user_book(user_book: UserBook) -> ReadingVibeProfile:
 
 def get_vibe_dashboard_payload(user) -> dict[str, Any]:
     profile = (
-        ReadingVibeProfile.objects.filter(user=user).only(
-            'axes', 'quote', 'mood_label', 'updated_at'
-        ).first()
+        ReadingVibeProfile.objects.filter(user=user)
+        .only(
+            'axes',
+            'quote',
+            'mood_label',
+            'current_genre',
+            'favorite_genre',
+            'genre_mix',
+            'updated_at',
+        )
+        .first()
     )
-    # همهٔ لاگ‌ها در DB می‌مانند؛ فقط ۵تای آخر برای UI
     logs = (
         ReadingVibeLog.objects.filter(user=user)
         .only(
@@ -299,6 +423,8 @@ def get_vibe_dashboard_payload(user) -> dict[str, Any]:
             'new_axes',
             'quote',
             'mood_label',
+            'current_genre',
+            'favorite_genre',
             'change_summary',
             'created_at',
         )[:5]
@@ -311,6 +437,9 @@ def get_vibe_dashboard_payload(user) -> dict[str, Any]:
             'axes': axes_for_chart(empty_axes()),
             'quote': '',
             'mood_label': '',
+            'current_genre': '',
+            'favorite_genre': '',
+            'genre_mix': [],
             'top_moods': [],
             'updated_at': None,
             'changelog': [],
@@ -323,6 +452,9 @@ def get_vibe_dashboard_payload(user) -> dict[str, Any]:
         'axes': axes_for_chart(axes),
         'quote': profile.quote,
         'mood_label': profile.mood_label,
+        'current_genre': profile.current_genre or '',
+        'favorite_genre': profile.favorite_genre or '',
+        'genre_mix': normalize_genre_mix(profile.genre_mix),
         'top_moods': top_moods(axes),
         'updated_at': profile.updated_at.isoformat() if profile.updated_at else None,
         'changelog': [
@@ -330,12 +462,10 @@ def get_vibe_dashboard_payload(user) -> dict[str, Any]:
                 'id': log.id,
                 'book_title': log.book_title,
                 'book_author': log.book_author,
-                'quote': log.quote,
                 'mood_label': log.mood_label,
+                'current_genre': log.current_genre,
                 'change_summary': log.change_summary,
-                'deltas': axis_deltas(log.previous_axes, log.new_axes),
-                'previous_axes': axes_for_chart(log.previous_axes),
-                'new_axes': axes_for_chart(log.new_axes),
+                'deltas': axis_deltas(log.previous_axes, log.new_axes, limit=2),
                 'created_at': log.created_at.isoformat(),
             }
             for log in logs

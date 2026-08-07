@@ -105,14 +105,14 @@ class BookRatingAdmin(admin.ModelAdmin):
 
 @admin.register(ReadingVibeProfile)
 class ReadingVibeProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'mood_label', 'updated_at')
-    search_fields = ('user__username', 'mood_label', 'quote')
+    list_display = ('user', 'mood_label', 'current_genre', 'favorite_genre', 'updated_at')
+    search_fields = ('user__username', 'mood_label', 'quote', 'current_genre', 'favorite_genre')
     readonly_fields = ('created_at', 'updated_at')
 
 
 @admin.register(ReadingVibeLog)
 class ReadingVibeLogAdmin(admin.ModelAdmin):
-    list_display = ('user', 'book_title', 'mood_label', 'created_at')
-    search_fields = ('user__username', 'book_title', 'book_author', 'change_summary')
+    list_display = ('user', 'book_title', 'mood_label', 'current_genre', 'created_at')
+    search_fields = ('user__username', 'book_title', 'book_author', 'change_summary', 'current_genre')
     autocomplete_fields = ('user', 'user_book')
     readonly_fields = ('created_at',)

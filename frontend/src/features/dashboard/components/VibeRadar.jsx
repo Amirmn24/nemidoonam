@@ -2,10 +2,10 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { dashboardApi } from '../../../shared/api'
 
-const SIZE = 280
+const SIZE = 260
 const CX = SIZE / 2
 const CY = SIZE / 2
-const RADIUS = 96
+const RADIUS = 78
 
 function polar(angleDeg, r) {
   const rad = ((angleDeg - 90) * Math.PI) / 180
@@ -30,8 +30,6 @@ function formatFaDate(iso) {
     return new Intl.DateTimeFormat('fa-IR', {
       month: 'short',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     }).format(new Date(iso))
   } catch {
     return iso
@@ -39,8 +37,8 @@ function formatFaDate(iso) {
 }
 
 function RadarSvg({ axes }) {
-  const rings = [0.25, 0.5, 0.75, 1]
-  const n = axes?.length || 6
+  const rings = [0.33, 0.66, 1]
+  const n = axes?.length || 8
   const step = 360 / n
   const grid = rings.map((ratio) => {
     const pts = Array.from({ length: n }, (_, i) => {
@@ -56,7 +54,7 @@ function RadarSvg({ axes }) {
   const shape = polygonPoints(axes)
 
   return (
-    <svg className="dash-vibe-svg" viewBox="-8 -8 296 296" role="img" aria-label="گراف شخصیت مطالعاتی">
+    <svg className="dash-vibe-svg" viewBox="-28 -28 316 316" role="img" aria-label="گراف شخصیت مطالعاتی">
       {grid.map((pts, i) => (
         <polygon key={`ring-${i}`} points={pts} className="dash-vibe-ring" />
       ))}
@@ -65,17 +63,31 @@ function RadarSvg({ axes }) {
       ))}
       <polygon points={shape} className="dash-vibe-shape" />
       {spokes.map((spoke, i) => {
-        const [lx, ly] = polar(i * step, RADIUS + 22)
+        const [lx, ly] = polar(i * step, RADIUS + 26)
         return (
           <text key={`lbl-${i}`} x={lx} y={ly} className="dash-vibe-axis-label" textAnchor="middle" dominantBaseline="middle">
             {spoke.label}
-            <tspan x={lx} dy="1.15em" className="dash-vibe-axis-value">
-              {spoke.value}٪
-            </tspan>
           </text>
         )
       })}
     </svg>
+  )
+}
+
+function DeltaInline({ deltas }) {
+  if (!deltas?.length) return null
+  return (
+    <span className="dash-vibe-deltas">
+      {deltas.map((d) => (
+        <span key={d.key} className={`dash-vibe-delta ${d.delta > 0 ? 'is-up' : 'is-down'}`}>
+          {d.label}
+          <b>
+            {d.delta > 0 ? '+' : ''}
+            {d.delta}
+          </b>
+        </span>
+      ))}
+    </span>
   )
 }
 
@@ -85,9 +97,9 @@ export default function VibeRadar({ vibe: initialVibe }) {
   const [err, setErr] = useState('')
 
   const axes = vibe?.axes || []
-  const moods = vibe?.top_moods || []
   const logs = vibe?.changelog || []
   const status = vibe?.status || 'empty'
+  const genreMix = vibe?.genre_mix || []
 
   const headline = useMemo(() => {
     if (status === 'ready' && vibe?.mood_label) return vibe.mood_label
@@ -112,12 +124,10 @@ export default function VibeRadar({ vibe: initialVibe }) {
     <section className="dash-vibe section" aria-label="گراف شخصیت و وایب مطالعاتی">
       <div className="dash-vibe-head">
         <div className="section-head">
-          <h2>گراف شخصیت و وایب</h2>
-          <p>مثل اسپاتیفای؛ هر کتاب جدید مود مطالعاتی‌ات را جابه‌جا می‌کند.</p>
+          <h2>گراف شخصیت</h2>
+          <p>مود و ژانر مطالعاتی‌ات با هر کتاب جابه‌جا می‌شود.</p>
         </div>
-        {status === 'ready' ? (
-          <span className="dash-vibe-badge">{headline}</span>
-        ) : null}
+        {status === 'ready' && headline ? <span className="dash-vibe-badge">{headline}</span> : null}
       </div>
 
       <div className="dash-vibe-panel">
@@ -134,9 +144,9 @@ export default function VibeRadar({ vibe: initialVibe }) {
 
         {status === 'pending' ? (
           <div className="dash-vibe-empty">
-            <p>کتاب روی قفسه‌ات هست؛ با یک کلیک وایب را با GPT بساز.</p>
+            <p>کتاب روی قفسه‌ات هست؛ با یک کلیک وایب را بساز.</p>
             <button type="button" className="btn btn-primary" disabled={busy} onClick={handleRefresh}>
-              {busy ? 'در حال تحلیل…' : 'تحلیل وایب الان'}
+              {busy ? 'در حال تحلیل…' : 'تحلیل وایب'}
             </button>
           </div>
         ) : null}
@@ -148,23 +158,38 @@ export default function VibeRadar({ vibe: initialVibe }) {
             </div>
 
             <div className="dash-vibe-side">
-              <blockquote className="dash-vibe-quote">
-                <p>{vibe.quote || '—'}</p>
-              </blockquote>
+              {(vibe.current_genre || vibe.favorite_genre) && (
+                <dl className="dash-vibe-genres">
+                  {vibe.current_genre ? (
+                    <div>
+                      <dt>الان</dt>
+                      <dd>{vibe.current_genre}</dd>
+                    </div>
+                  ) : null}
+                  {vibe.favorite_genre ? (
+                    <div>
+                      <dt>محبوب</dt>
+                      <dd>{vibe.favorite_genre}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+              )}
 
-              {moods.length ? (
-                <div className="dash-vibe-moods" aria-label="مودهای غالب">
-                  {moods.map((mood) => (
-                    <span key={mood.key} className="dash-vibe-mood-chip">
-                      <b>{mood.value}٪</b> {mood.label}
-                    </span>
+              {genreMix.length > 0 ? (
+                <ul className="dash-vibe-mix" aria-label="ترکیب ژانر">
+                  {genreMix.slice(0, 3).map((g) => (
+                    <li key={g.key}>
+                      <span>{g.label}</span>
+                      <b>{g.value}٪</b>
+                    </li>
                   ))}
-                </div>
+                </ul>
               ) : null}
 
+              {vibe.quote ? <p className="dash-vibe-quote">{vibe.quote}</p> : null}
+
               <div className="dash-vibe-log">
-                <h3>لاگ تغییر وایب</h3>
-                <p className="dash-vibe-log-hint">۵ تغییر اخیر · همهٔ تاریخچه ذخیره می‌شود</p>
+                <h3>تغییرات اخیر</h3>
                 {logs.length === 0 ? (
                   <p className="dash-vibe-log-empty">هنوز لاگی نیست.</p>
                 ) : (
@@ -176,24 +201,7 @@ export default function VibeRadar({ vibe: initialVibe }) {
                           <time dateTime={log.created_at}>{formatFaDate(log.created_at)}</time>
                         </div>
                         <p>{log.change_summary}</p>
-                        {log.deltas?.length ? (
-                          <div className="dash-vibe-deltas" aria-label="جزئیات تغییر مود">
-                            {log.deltas.map((d) => (
-                              <span
-                                key={d.key}
-                                className={`dash-vibe-delta ${d.delta > 0 ? 'is-up' : 'is-down'}`}
-                              >
-                                {d.label} {d.from}→{d.to}{' '}
-                                <b>
-                                  {d.delta > 0 ? '+' : ''}
-                                  {d.delta}
-                                </b>
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="dash-vibe-log-empty">تغییر عددی محسوسی نبود.</p>
-                        )}
+                        <DeltaInline deltas={log.deltas} />
                       </li>
                     ))}
                   </ul>

@@ -14,6 +14,9 @@ class ReadingVibeProfile(models.Model):
     axes = models.JSONField('محورهای شخصیت', default=dict, blank=True)
     quote = models.TextField('نقل‌قول وایب', blank=True, default='')
     mood_label = models.CharField('برچسب مود', max_length=120, blank=True, default='')
+    current_genre = models.CharField('ژانر فعلی', max_length=120, blank=True, default='')
+    favorite_genre = models.CharField('ژانر محبوب', max_length=120, blank=True, default='')
+    genre_mix = models.JSONField('ترکیب ژانر', default=list, blank=True)
     updated_at = models.DateTimeField('آخرین به‌روزرسانی', auto_now=True)
     created_at = models.DateTimeField('تاریخ ایجاد', auto_now_add=True)
 
@@ -48,6 +51,8 @@ class ReadingVibeLog(models.Model):
     new_axes = models.JSONField('محورهای جدید', default=dict, blank=True)
     quote = models.TextField('نقل‌قول', blank=True, default='')
     mood_label = models.CharField('برچسب مود', max_length=120, blank=True, default='')
+    current_genre = models.CharField('ژانر فعلی', max_length=120, blank=True, default='')
+    favorite_genre = models.CharField('ژانر محبوب', max_length=120, blank=True, default='')
     change_summary = models.TextField('خلاصه تغییر', blank=True, default='')
     created_at = models.DateTimeField('زمان ثبت', auto_now_add=True)
 
