@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { vMarkIndigo, vyrvonaWhite } from '../../assets/brand'
 import { useAuth } from '../../shared/AuthContext'
+import LocaleToggle from '../../shared/LocaleToggle'
 import ThemeToggle from '../../shared/ThemeToggle'
 import ToastHost from '../../shared/ToastHost'
 
@@ -69,6 +71,7 @@ const IconMenu = () => (
 
 export default function AppLayout() {
   const { user, logout } = useAuth()
+  const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(() => {
@@ -147,16 +150,17 @@ export default function AppLayout() {
       <header className="site-header" data-site-header>
         <div className="container header-inner">
           <div className="header-start">
-            <Link className="brand" to="/" aria-label="ویرونا · Vyrvona">
+            <Link className="brand" to="/" aria-label={t('nav.brandAria')}>
               <img className="brand-logo" src={vyrvonaWhite} alt="" />
             </Link>
           </div>
           <div className="header-end">
+            <LocaleToggle />
             <ThemeToggle />
             <Link to="/books/new" className="btn btn-primary header-cta">
-              کتاب جدید
+              {t('nav.newBook')}
             </Link>
-            <Link to="/profile" className="header-user" title={`پروفایل ${user?.username}`}>
+            <Link to="/profile" className="header-user" title={t('nav.profileOf', { username: user?.username })}>
               <div className="user-avatar" aria-hidden="true">
                 {user?.avatar_url ? (
                   <img src={user.avatar_url} alt="" />
@@ -170,26 +174,26 @@ export default function AppLayout() {
         </div>
       </header>
 
-      <aside className="site-sidebar" id="site-sidebar" data-sidebar aria-label="منوی اصلی">
+      <aside className="site-sidebar" id="site-sidebar" data-sidebar aria-label={t('nav.mainMenu')}>
         <div className="sidebar-sheet">
           <div className="sidebar-handle" aria-hidden="true" />
           <div className="sidebar-head">
             <img className="sidebar-brand-mark" src={vMarkIndigo} alt="" aria-hidden="true" />
             <div className="sidebar-head-copy">
-              <span className="sidebar-kicker">ویرونا</span>
-              <strong className="sidebar-title">منوی اصلی</strong>
+              <span className="sidebar-kicker">{t('nav.brand')}</span>
+              <strong className="sidebar-title">{t('nav.mainMenu')}</strong>
             </div>
             <button
               type="button"
               className="sidebar-collapse"
-              aria-label="جمع‌کردن سایدبار"
+              aria-label={t('nav.collapseSidebar')}
               onClick={() => setCollapsed((v) => !v)}
             >
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 6l6 6-6 6" />
               </svg>
             </button>
-            <button type="button" className="sidebar-close" aria-label="بستن منو" onClick={() => setMobileOpen(false)}>
+            <button type="button" className="sidebar-close" aria-label={t('nav.closeMenu')} onClick={() => setMobileOpen(false)}>
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
@@ -201,8 +205,8 @@ export default function AppLayout() {
                 <IconHome />
               </span>
               <span className="sidebar-label">
-                <span className="sidebar-label-title">داشبورد</span>
-                <span className="sidebar-label-sub">نبض فعالیت</span>
+                <span className="sidebar-label-title">{t('nav.dashboard')}</span>
+                <span className="sidebar-label-sub">{t('nav.dashboardSub')}</span>
               </span>
             </NavLink>
             <NavLink to="/books" className={navClass}>
@@ -210,8 +214,8 @@ export default function AppLayout() {
                 <IconBook />
               </span>
               <span className="sidebar-label">
-                <span className="sidebar-label-title">کتاب‌ها</span>
-                <span className="sidebar-label-sub">قفسه شخصی</span>
+                <span className="sidebar-label-title">{t('nav.books')}</span>
+                <span className="sidebar-label-sub">{t('nav.booksSub')}</span>
               </span>
             </NavLink>
             <NavLink to="/challenges" className={navClass}>
@@ -219,8 +223,8 @@ export default function AppLayout() {
                 <IconStar />
               </span>
               <span className="sidebar-label">
-                <span className="sidebar-label-title">چالش‌ها</span>
-                <span className="sidebar-label-sub">هدف‌های مطالعه</span>
+                <span className="sidebar-label-title">{t('nav.challenges')}</span>
+                <span className="sidebar-label-sub">{t('nav.challengesSub')}</span>
               </span>
             </NavLink>
             <NavLink to="/vocabulary" className={navClass}>
@@ -228,8 +232,8 @@ export default function AppLayout() {
                 <IconCards />
               </span>
               <span className="sidebar-label">
-                <span className="sidebar-label-title">واژه‌نامه</span>
-                <span className="sidebar-label-sub">فلش‌کارت واژه</span>
+                <span className="sidebar-label-title">{t('nav.vocabulary')}</span>
+                <span className="sidebar-label-sub">{t('nav.vocabularySub')}</span>
               </span>
             </NavLink>
             <NavLink to="/profile" className={navClass}>
@@ -237,8 +241,8 @@ export default function AppLayout() {
                 <IconUser />
               </span>
               <span className="sidebar-label">
-                <span className="sidebar-label-title">پروفایل</span>
-                <span className="sidebar-label-sub">اطلاعات حساب</span>
+                <span className="sidebar-label-title">{t('nav.profile')}</span>
+                <span className="sidebar-label-sub">{t('nav.profileSub')}</span>
               </span>
             </NavLink>
           </nav>
@@ -254,8 +258,8 @@ export default function AppLayout() {
                 <IconLogout />
               </span>
               <span className="sidebar-label">
-                <span className="sidebar-label-title">{loggingOut ? 'در حال خروج…' : 'خروج'}</span>
-                <span className="sidebar-label-sub">پایان نشست</span>
+                <span className="sidebar-label-title">{loggingOut ? t('nav.loggingOut') : t('nav.logout')}</span>
+                <span className="sidebar-label-sub">{t('nav.logoutSub')}</span>
               </span>
             </button>
           </div>
@@ -278,23 +282,23 @@ export default function AppLayout() {
         <footer className="site-footer">
           <div className="container footer-inner">
             <img className="footer-logo" src={vyrvonaWhite} alt="Vyrvona" />
-            <p className="footer-note">جایی برای حس‌ها، دیدگاه‌ها و ورق‌های کتاب</p>
+            <p className="footer-note">{t('app.footerNote')}</p>
           </div>
         </footer>
       </div>
 
-      <nav className="mobile-dock" aria-label="ناوبری سریع">
+      <nav className="mobile-dock" aria-label={t('nav.quickNav')}>
         <Link to="/" className={dockClass(path === '/')}>
           <IconHome />
-          <span>خانه</span>
+          <span>{t('nav.home')}</span>
         </Link>
         <Link to="/books" className={dockClass(path.startsWith('/books'))}>
           <IconBook />
-          <span>کتاب‌ها</span>
+          <span>{t('nav.books')}</span>
         </Link>
         <Link to="/challenges" className={dockClass(path.startsWith('/challenges'))}>
           <IconStar />
-          <span>چالش‌ها</span>
+          <span>{t('nav.challenges')}</span>
         </Link>
         <button
           type="button"
@@ -302,14 +306,14 @@ export default function AppLayout() {
           onClick={() => setMobileOpen(true)}
           aria-controls="site-sidebar"
           aria-expanded={mobileOpen}
-          aria-label="باز کردن منو"
+          aria-label={t('nav.openMenu')}
         >
           <IconMenu />
-          <span>منو</span>
+          <span>{t('nav.menu')}</span>
         </button>
         <Link to="/profile" className={dockClass(path.startsWith('/profile'))}>
           <IconUser />
-          <span>پروفایل</span>
+          <span>{t('nav.profile')}</span>
         </Link>
       </nav>
     </>

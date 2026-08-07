@@ -1,21 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { booksApi, ApiError } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
 import EntryFlagToggles from './components/EntryFlagToggles'
 
-const KINDS = [
-  { value: 'viewpoint', label: 'دیدگاه' },
-  { value: 'feeling', label: 'حس' },
-  { value: 'book_text', label: 'متن کتاب' },
-]
-const MEDIAS = [
-  { value: 'text', label: 'متن' },
-  { value: 'voice', label: 'ویس' },
-  { value: 'image', label: 'تصویر' },
-]
+const KINDS = ['viewpoint', 'feeling', 'book_text']
+const MEDIAS = ['text', 'voice', 'image']
 
 export default function EntryFormPage() {
+  const { t } = useTranslation()
   const { id: bookId, entryId } = useParams()
   const isEdit = Boolean(entryId)
   const navigate = useNavigate()
@@ -71,15 +65,15 @@ export default function EntryFormPage() {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
         setAudioBlob(blob)
         setAudioUrl(URL.createObjectURL(blob))
-        stream.getTracks().forEach((t) => t.stop())
+        stream.getTracks().forEach((track) => track.stop())
       }
       mediaRecorderRef.current = recorder
       recorder.start()
       setRecording(true)
       setTimer(0)
-      timerRef.current = setInterval(() => setTimer((t) => t + 1), 1000)
+      timerRef.current = setInterval(() => setTimer((n) => n + 1), 1000)
     } catch {
-      setError('دسترسی به میکروفون ممکن نشد.')
+      setError(t('api.micDenied'))
     }
   }
 
@@ -110,10 +104,10 @@ export default function EntryFormPage() {
     try {
       if (isEdit) await booksApi.updateEntry(bookId, entryId, fd)
       else await booksApi.createEntry(bookId, fd)
-      showToast('یادداشت ذخیره شد.', 'success')
+      showToast(t('books.entry.savedToast'), 'success')
       navigate(`/books/${bookId}`)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'ذخیره ناموفق بود.')
+      setError(err instanceof ApiError ? err.message : t('app.saveFailed'))
     } finally {
       setBusy(false)
     }
@@ -126,47 +120,47 @@ export default function EntryFormPage() {
     <div className="page-entry-form">
       <section className="section form-page">
         <div className="page-toolbar">
-          <h1>{isEdit ? 'ویرایش یادداشت' : 'یادداشت جدید'}</h1>
+          <h1>{isEdit ? t('books.entry.editTitle') : t('books.entry.newTitle')}</h1>
           {book ? <p>{book.title}</p> : null}
         </div>
         {error ? <div className="form-errors">{error}</div> : null}
         <form className="form-panel" id="entry-form" onSubmit={onSubmit}>
           <div className="form-step">
-            <div className="form-step-label">نوع محتوا</div>
+            <div className="form-step-label">{t('books.entry.contentType')}</div>
             <div className="choice-grid" id="kind-choices">
-              {KINDS.map((item) => (
+              {KINDS.map((value) => (
                 <button
-                  key={item.value}
+                  key={value}
                   type="button"
-                  className={`choice-card${kind === item.value ? ' is-active' : ''}`}
+                  className={`choice-card${kind === value ? ' is-active' : ''}`}
                   onClick={() => {
-                    setKind(item.value)
-                    if (item.value !== 'viewpoint') setIsPublic(false)
+                    setKind(value)
+                    if (value !== 'viewpoint') setIsPublic(false)
                   }}
                 >
-                  {item.label}
+                  {t(`books.kind.${value}`)}
                 </button>
               ))}
             </div>
           </div>
           <div className="form-step">
-            <div className="form-step-label">رسانه</div>
+            <div className="form-step-label">{t('books.entry.mediaType')}</div>
             <div className="choice-grid" id="media-choices">
-              {MEDIAS.map((item) => (
+              {MEDIAS.map((value) => (
                 <button
-                  key={item.value}
+                  key={value}
                   type="button"
-                  className={`choice-card${media === item.value ? ' is-active' : ''}`}
-                  onClick={() => setMedia(item.value)}
+                  className={`choice-card${media === value ? ' is-active' : ''}`}
+                  onClick={() => setMedia(value)}
                 >
-                  {item.label}
+                  {t(`books.media.${value}`)}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="form-step">
-            <div className="form-step-label">پرچم‌ها</div>
+            <div className="form-step-label">{t('books.entry.flags')}</div>
             <EntryFlagToggles
               isPublic={isPublic}
               isSealed={isSealed}
@@ -177,7 +171,7 @@ export default function EntryFormPage() {
           </div>
 
           <div className="field media-field">
-            <label>{media === 'text' ? 'متن' : 'توضیح (اختیاری)'}</label>
+            <label>{media === 'text' ? t('books.entry.text') : t('books.entry.captionOptional')}</label>
             <textarea
               name="text_content"
               className="field-textarea"
@@ -205,7 +199,7 @@ export default function EntryFormPage() {
                 setImagePreview(URL.createObjectURL(file))
               }}
             >
-              <label>تصویر</label>
+              <label>{t('books.entry.image')}</label>
               <input
                 name="image"
                 type="file"
@@ -232,20 +226,20 @@ export default function EntryFormPage() {
                   className={`btn btn-record${recording ? ' is-recording' : ''}`}
                   onClick={recording ? stopRecording : startRecording}
                 >
-                  {recording ? 'توقف' : 'ضبط'}
+                  {recording ? t('app.stop') : t('app.record')}
                 </button>
                 <span>{`${String(Math.floor(timer / 60)).padStart(2, '0')}:${String(timer % 60).padStart(2, '0')}`}</span>
               </div>
               {audioUrl ? <audio controls src={audioUrl} className="is-visible" /> : null}
               {entry?.audio_url && !audioBlob ? (
-                <p className="field-hint">ویس قبلی نگه داشته می‌شود مگر دوباره ضبط کنی</p>
+                <p className="field-hint">{t('books.entry.keepPreviousVoice')}</p>
               ) : null}
             </div>
           ) : null}
 
           <div className="form-grid two">
             <div className="field">
-              <label>شماره صفحه</label>
+              <label>{t('books.entry.pageNumber')}</label>
               <input
                 name="page_number"
                 type="number"
@@ -256,7 +250,7 @@ export default function EntryFormPage() {
               />
             </div>
             <div className="field">
-              <label>تاریخ</label>
+              <label>{t('books.entry.date')}</label>
               <input
                 name="entry_date"
                 type="date"
@@ -269,10 +263,10 @@ export default function EntryFormPage() {
 
           <div className="form-actions">
             <button type="submit" className="btn btn-primary" disabled={busy}>
-              ذخیره
+              {t('app.save')}
             </button>
             <Link to={`/books/${bookId}`} className="btn btn-ghost">
-              انصراف
+              {t('app.cancel')}
             </Link>
           </div>
         </form>

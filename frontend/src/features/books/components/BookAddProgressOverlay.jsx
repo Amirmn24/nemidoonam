@@ -1,19 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-const STAGE_META = {
-  shelf: {
-    title: 'ثبت در قفسه',
-    copy: 'کتاب دارد جای خودش را در قفسه‌ات پیدا می‌کند…',
-  },
-  cover: {
-    title: 'پیدا کردن جلد',
-    copy: 'داریم بین جلدهای ایرانی می‌گردیم تا روی کتاب بنشیند.',
-  },
-  done: {
-    title: 'آماده شد',
-    copy: 'گراف شخصیت در پس‌زمینه به‌روز می‌شود؛ بزن بریم سراغ کتاب.',
-  },
-}
+const STAGE_KEYS = ['shelf', 'cover', 'done']
 
 function stageState(key, setup, saving) {
   if (key === 'shelf') {
@@ -32,12 +20,13 @@ function stageState(key, setup, saving) {
 
 /** لودینگ مرحله‌ای افزودن کتاب: قفسه → جلد (وایب در پس‌زمینه) */
 export default function BookAddProgressOverlay({ open, saving, setup, bookTitle }) {
+  const { t } = useTranslation()
   const [pulse, setPulse] = useState(0)
 
   useEffect(() => {
     if (!open) return undefined
-    const t = setInterval(() => setPulse((n) => n + 1), 900)
-    return () => clearInterval(t)
+    const id = setInterval(() => setPulse((n) => n + 1), 900)
+    return () => clearInterval(id)
   }, [open])
 
   useEffect(() => {
@@ -54,12 +43,10 @@ export default function BookAddProgressOverlay({ open, saving, setup, bookTitle 
     return setup.current_step || 'cover'
   }, [saving, setup])
 
-  const meta = STAGE_META[current] || STAGE_META.shelf
+  const metaKey = STAGE_KEYS.includes(current) ? current : 'shelf'
   const coverUrl = setup?.cover_url
 
   if (!open) return null
-
-  const steps = ['shelf', 'cover', 'done']
 
   return (
     <div className="book-journey" role="dialog" aria-modal="true" aria-labelledby="journey-title">
@@ -87,15 +74,15 @@ export default function BookAddProgressOverlay({ open, saving, setup, bookTitle 
           ) : null}
         </div>
 
-        <p className="eyebrow">آماده‌سازی کتاب</p>
-        <h2 id="journey-title">{meta.title}</h2>
-        <p className="book-journey-copy">{meta.copy}</p>
+        <p className="eyebrow">{t('books.setup.eyebrow')}</p>
+        <h2 id="journey-title">{t(`books.setup.${metaKey}.title`)}</h2>
+        <p className="book-journey-copy">{t(`books.setup.${metaKey}.copy`)}</p>
         {bookTitle ? <p className="book-journey-title">{bookTitle}</p> : null}
 
         <ol className="book-journey-steps">
-          {steps.map((key) => {
+          {STAGE_KEYS.map((key) => {
             const state = stageState(key, setup, saving)
-            const label = STAGE_META[key].title
+            const label = t(`books.setup.${key}.title`)
             return (
               <li key={key} className={`book-journey-step is-${state}${current === key ? ' is-current' : ''}`}>
                 <span className="book-journey-step-dot" />

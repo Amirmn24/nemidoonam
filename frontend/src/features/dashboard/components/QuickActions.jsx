@@ -1,41 +1,50 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
-const ACTIONS = [
+const ACTION_DEFS = [
   {
     to: '/vocabulary',
-    title: 'فلش‌کارت‌ها',
-    subtitle: 'مرور واژه‌ها',
+    i18nKey: 'vocabulary',
     countKey: 'vocabulary_count',
-    countLabel: 'واژه',
     tone: 'sky',
   },
   {
     to: '/challenges',
-    title: 'چالش‌ها',
-    subtitle: 'هدف‌های مطالعه',
+    i18nKey: 'challenges',
     countKey: 'challenges_active',
-    countLabel: 'فعال',
     tone: 'brand',
   },
   {
     to: '/books?status=reading',
-    title: 'در حال خواندن',
-    subtitle: 'ادامه از قفسه',
+    i18nKey: 'reading',
     countKey: 'reading_count',
-    countLabel: 'کتاب',
     tone: 'ok',
   },
 ]
 
 export default function QuickActions({ quick }) {
+  const { t } = useTranslation()
+
+  const actions = useMemo(
+    () =>
+      ACTION_DEFS.map((action) => ({
+        ...action,
+        title: t(`dashboard.quick.${action.i18nKey}.title`),
+        subtitle: t(`dashboard.quick.${action.i18nKey}.subtitle`),
+        countLabel: t(`dashboard.quick.${action.i18nKey}.countLabel`),
+      })),
+    [t],
+  )
+
   return (
-    <section className="dash-quick section" aria-label="دسترسی سریع">
+    <section className="dash-quick section" aria-label={t('dashboard.quick.aria')}>
       <div className="section-head">
-        <h2>دسترسی سریع</h2>
-        <p>میان‌بر به بخش‌هایی که بیشتر به کار می‌آیند.</p>
+        <h2>{t('dashboard.quick.title')}</h2>
+        <p>{t('dashboard.quick.subtitle')}</p>
       </div>
       <div className="dash-quick-grid">
-        {ACTIONS.map((action) => (
+        {actions.map((action) => (
           <Link key={action.to} to={action.to} className={`dash-quick-card tone-${action.tone}`}>
             <div className="dash-quick-copy">
               <strong>{action.title}</strong>

@@ -63,9 +63,9 @@ img {
 .page-glow {
   position: fixed;
   top: auto;
-  right: 0;
+  inset-inline-end: 0;
   bottom: -18%;
-  left: auto;
+  inset-inline-start: auto;
   width: min(420px, 55vw);
   height: min(420px, 55vw);
   background:
@@ -128,11 +128,50 @@ img {
   outline-offset: 2px;
 }
 
+.locale-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.2rem;
+  border: 1px solid color-mix(in srgb, var(--on-chrome) 22%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--on-chrome) 10%, transparent);
+}
+
+.locale-toggle-btn {
+  min-width: 2.1rem;
+  height: 2.1rem;
+  padding: 0 0.45rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: color-mix(in srgb, var(--on-chrome) 78%, transparent);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.locale-toggle-btn.is-active {
+  background: color-mix(in srgb, var(--on-chrome) 22%, transparent);
+  color: var(--on-chrome);
+}
+
+.locale-toggle-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
 .auth-theme-slot {
   position: absolute;
   top: 1rem;
   inset-inline-end: 1rem;
   z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .auth-theme-slot .theme-toggle {
@@ -145,6 +184,21 @@ img {
 .auth-theme-slot .theme-toggle:hover {
   background: var(--bg-secondary);
   border-color: var(--border-strong);
+}
+
+.auth-theme-slot .locale-toggle {
+  border-color: color-mix(in srgb, var(--text-inverse) 35%, transparent);
+  background: color-mix(in srgb, var(--bg-secondary) 92%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-theme-slot .locale-toggle-btn {
+  color: var(--text-muted);
+}
+
+.auth-theme-slot .locale-toggle-btn.is-active {
+  background: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  color: var(--text-primary);
 }
 
 .header-inner {
@@ -748,9 +802,9 @@ img {
 .notes {
   color: var(--ink-soft);
   background: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
-  border-right: 3px solid var(--sky);
+  border-inline-start: 3px solid var(--sky);
   padding: 0.85rem 1.05rem;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-radius: var(--radius-sm);
 }
 
 .progress-form,
@@ -1391,7 +1445,7 @@ a.book-suggest-item {
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
   border: 1px solid var(--line);
-  border-right: 4px solid var(--sky);
+  border-inline-start: 4px solid var(--sky);
   box-shadow: var(--shadow-sm);
   animation: rise 0.5s var(--ease) both;
   transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
@@ -1403,11 +1457,11 @@ a.book-suggest-item {
 }
 
 .entry-item.kind-feeling {
-  border-right-color: var(--feeling);
+  border-inline-start-color: var(--feeling);
 }
 
 .entry-item.kind-book_text {
-  border-right-color: var(--book-text);
+  border-inline-start-color: var(--book-text);
 }
 
 .entry-head {
@@ -4701,7 +4755,7 @@ body.vocab-modal-open {
 }
 
 .entry-item.is-sealed {
-  border-right-color: var(--sky-mid);
+  border-inline-start-color: var(--sky-mid);
   background:
     radial-gradient(280px 120px at 100% 0%, color-mix(in srgb, var(--text-primary) 8%, transparent), transparent 70%),
     color-mix(in srgb, var(--bg-secondary) 80%, transparent);
@@ -4874,7 +4928,7 @@ body.vocab-modal-open {
   .sealed-entry {
     flex-direction: column;
     align-items: flex-start;
-    text-align: right;
+    text-align: start;
   }
 }
 
@@ -5157,7 +5211,7 @@ body.vocab-modal-open {
   grid-template-columns: auto 1fr auto;
   gap: 0.65rem;
   align-items: center;
-  text-align: right;
+  text-align: start;
   padding: 0.7rem 0.75rem;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
@@ -5226,7 +5280,7 @@ body.vocab-modal-open {
 }
 
 .entry-item.kind-ending_prediction {
-  border-right-color: var(--brand);
+  border-inline-start-color: var(--brand);
 }
 
 @media (max-width: 900px) {
@@ -5418,7 +5472,7 @@ body.vocab-modal-open {
   padding: 0;
   display: grid;
   gap: 0.45rem;
-  text-align: right;
+  text-align: start;
 }
 
 .book-journey-step {

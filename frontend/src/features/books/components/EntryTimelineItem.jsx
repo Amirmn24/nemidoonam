@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { labelFromCode } from '../../../i18n/labels'
 import SealedEntryCard from './SealedEntryCard'
 
 /** یک آیتم تایم‌لاین یادداشت با پشتیبانی مهروموم و پرچم‌ها */
 export default function EntryTimelineItem({ entry, bookId, onDelete }) {
+  const { t } = useTranslation()
   const locked = entry.is_content_locked
 
   return (
@@ -10,12 +13,12 @@ export default function EntryTimelineItem({ entry, bookId, onDelete }) {
       className={`entry-item kind-${entry.kind}${entry.is_sealed ? ' is-sealed' : ''}${entry.is_public ? ' is-public' : ''}`}
     >
       <div className="cluster">
-        <span className="tag">{entry.kind_display}</span>
-        <span className="tag">{entry.media_type_display}</span>
-        <span className="meta-pill">صفحه {entry.page_number}</span>
+        <span className="tag">{labelFromCode('books.kind', entry.kind, entry.kind_display)}</span>
+        <span className="tag">{labelFromCode('books.media', entry.media_type, entry.media_type_display)}</span>
+        <span className="meta-pill">{t('books.entry.pagePill', { page: entry.page_number })}</span>
         <span className="meta-pill">{entry.entry_date}</span>
-        {entry.is_public ? <span className="tag tag-public">عمومی</span> : null}
-        {entry.is_sealed ? <span className="tag tag-sealed">مهروموم</span> : null}
+        {entry.is_public ? <span className="tag tag-public">{t('books.entry.public')}</span> : null}
+        {entry.is_sealed ? <span className="tag tag-sealed">{t('books.entry.sealed')}</span> : null}
       </div>
 
       {locked ? (
@@ -34,10 +37,10 @@ export default function EntryTimelineItem({ entry, bookId, onDelete }) {
 
       <div className="cluster">
         <Link className="text-link" to={`/books/${bookId}/entries/${entry.id}/edit`}>
-          ویرایش
+          {t('app.edit')}
         </Link>
         <button type="button" className="text-link" onClick={() => onDelete(entry.id)}>
-          حذف
+          {t('app.delete')}
         </button>
       </div>
     </article>

@@ -1,0 +1,510 @@
+{
+  "app": {
+    "title": "Vyrvona",
+    "loading": "Loading…",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "close": "Close",
+    "back": "Back",
+    "edit": "Edit",
+    "new": "New",
+    "yes": "Yes",
+    "no": "No",
+    "submitting": "Saving…",
+    "deleted": "Deleted.",
+    "saveFailed": "Could not save.",
+    "loadFailed": "Could not load.",
+    "all": "All",
+    "later": "Later",
+    "stop": "Stop",
+    "record": "Record",
+    "footerNote": "A place for feelings, viewpoints, and pages of books",
+    "readerFallback": "Reader"
+  },
+  "nav": {
+    "mainMenu": "Main menu",
+    "brand": "Vyrvona",
+    "brandAria": "Vyrvona",
+    "collapseSidebar": "Collapse sidebar",
+    "closeMenu": "Close menu",
+    "openMenu": "Open menu",
+    "quickNav": "Quick navigation",
+    "newBook": "New book",
+    "profileOf": "Profile {{username}}",
+    "dashboard": "Dashboard",
+    "dashboardSub": "Activity pulse",
+    "books": "Books",
+    "booksSub": "Personal shelf",
+    "challenges": "Challenges",
+    "challengesSub": "Reading goals",
+    "vocabulary": "Vocabulary",
+    "vocabularySub": "Word flashcards",
+    "profile": "Profile",
+    "profileSub": "Account details",
+    "logout": "Log out",
+    "loggingOut": "Logging out…",
+    "logoutSub": "End session",
+    "home": "Home",
+    "menu": "Menu"
+  },
+  "theme": {
+    "light": "Light mode",
+    "dark": "Dark mode"
+  },
+  "locale": {
+    "fa": "FA",
+    "en": "EN",
+    "switchTo": "Language: {{label}}",
+    "group": "Language"
+  },
+  "auth": {
+    "login": "Log in",
+    "signup": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "passwordConfirm": "Confirm password",
+    "username": "Username",
+    "createAccount": "Create account",
+    "helloAgain": "Welcome back",
+    "welcomeBack": "Welcome to Vyrvona.",
+    "newHere": "New here?",
+    "createAndStart": "Create an account and start your shelf.",
+    "noAccount": "No account?",
+    "alreadySignedUp": "Already signed up?",
+    "loginFailed": "Login failed.",
+    "signupFailed": "Sign-up failed.",
+    "welcomeToast": "Welcome!",
+    "signupToast": "Account created. Welcome!",
+    "logoutToast": "You are logged out."
+  },
+  "profile": {
+    "eyebrow": "Account",
+    "editTitle": "Edit profile",
+    "loginEmail": "Login email:",
+    "stepIdentity": "Identity",
+    "stepContact": "Contact",
+    "stepAvatar": "Avatar",
+    "username": "Username",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "telegramId": "Telegram ID",
+    "clearAvatar": "Remove current photo",
+    "savedToast": "Profile saved."
+  },
+  "api": {
+    "csrfFailed": "Could not fetch CSRF token.",
+    "genericError": "Something went wrong.",
+    "logoutFailed": "Logout failed.",
+    "micDenied": "Microphone access was denied."
+  },
+  "books": {
+    "status": {
+      "want_to_read": "Want to read",
+      "reading": "Reading",
+      "paused": "Paused",
+      "finished": "Finished",
+      "abandoned": "Abandoned"
+    },
+    "kind": {
+      "viewpoint": "Viewpoint",
+      "feeling": "Feeling",
+      "book_text": "Book text",
+      "ending_prediction": "Ending prediction",
+      "final_viewpoint": "Final viewpoint"
+    },
+    "media": {
+      "text": "Text",
+      "voice": "Voice",
+      "image": "Image"
+    },
+    "factors": {
+      "writing": "Prose & language",
+      "content": "Content & ideas",
+      "characters": "Characters",
+      "pacing": "Pacing",
+      "impact": "Emotional impact"
+    },
+    "list": {
+      "loading": "Loading shelf…",
+      "eyebrow": "Personal shelf",
+      "title": "Your books are here",
+      "subtitle": "Keep statuses, progress, and page notes in one place.",
+      "addBook": "Add book",
+      "statBooks": "Books",
+      "statReading": "Reading",
+      "statFinished": "Finished",
+      "shelf": "Shelf",
+      "emptyTitle": "No books with this status",
+      "emptyBody": "Change the filter or add a new book.",
+      "showAll": "Show all",
+      "progressLabel": "{{current}} / {{total}} · {{percent}}%"
+    },
+    "form": {
+      "addTitle": "Add book",
+      "editTitle": "Edit book",
+      "similarFound": "Similar books found:",
+      "goToShelf": "Go to shelf",
+      "pickFromLibrary": "Pick from library",
+      "stepIdentity": "Book identity",
+      "stepProgress": "Progress & cover",
+      "stepNotes": "General notes",
+      "title": "Title",
+      "author": "Author",
+      "registeredAuthor": "Saved author",
+      "matchHint": "Similar titles in the library:",
+      "totalPages": "Total pages",
+      "currentPage": "Current page",
+      "status": "Status",
+      "cover": "Cover",
+      "confirmSimilar": "I'm sure this is a new book and different from the suggestions",
+      "open": "Open",
+      "pick": "Select",
+      "addedToast": "Book added to shelf.",
+      "updatedToast": "Book updated."
+    },
+    "setup": {
+      "eyebrow": "Preparing book",
+      "shelf": {
+        "title": "Adding to shelf",
+        "copy": "Finding a place for this book on your shelf…"
+      },
+      "cover": {
+        "title": "Finding cover",
+        "copy": "Looking for a matching cover to sit on the book."
+      },
+      "done": {
+        "title": "Ready",
+        "copy": "Your reading vibe updates in the background — let's open the book."
+      }
+    },
+    "detail": {
+      "newEntry": "New note",
+      "finishTick": "Mark finished",
+      "progress": "Progress",
+      "saveProgress": "Save progress",
+      "pages": "Pages",
+      "entries": "Notes",
+      "allKinds": "All kinds",
+      "allMedia": "All media",
+      "emptyEntriesTitle": "No notes yet",
+      "emptyEntriesBody": "Log your first feeling or quote.",
+      "finishedLead": "Book finished — rate it, write a final viewpoint, and optionally peek at others.",
+      "editMeta": "Edit details",
+      "removeFromShelf": "Remove from shelf",
+      "socialEyebrow": "Social",
+      "finalViewpoint": "Final viewpoint",
+      "finalDone": "Your final viewpoint is saved. You can see a random one from others who finished this book.",
+      "finalLocked": "Submit a final viewpoint to unlock seeing others' takes on this book.",
+      "submitFinal": "Submit final viewpoint",
+      "peerViewpoints": "Others' viewpoints",
+      "anotherOfMine": "Another of mine",
+      "progressSaved": "Progress saved.",
+      "finishedToast": "Book finished. You can now submit a final viewpoint.",
+      "finalSaved": "Final viewpoint saved.",
+      "finalFailed": "Could not save viewpoint.",
+      "ratingSaved": "Rating saved.",
+      "predictionSealed": "Your prediction is sealed.",
+      "confirmDeleteBook": "Remove this book from your shelf?",
+      "confirmDeleteEntry": "Delete this note?",
+      "entryDeleted": "Note deleted."
+    },
+    "entry": {
+      "newTitle": "New note",
+      "editTitle": "Edit note",
+      "contentType": "Content type",
+      "mediaType": "Media",
+      "flags": "Flags",
+      "text": "Text",
+      "captionOptional": "Caption (optional)",
+      "image": "Image",
+      "pageNumber": "Page number",
+      "date": "Date",
+      "keepPreviousVoice": "Previous voice note is kept unless you record again",
+      "savedToast": "Note saved.",
+      "pagePill": "Page {{page}}",
+      "public": "Public",
+      "sealed": "Sealed",
+      "publicHint": "Mark for sharing later",
+      "sealedHint": "Hidden until you finish the book",
+      "sealedTitle": "Sealed",
+      "sealedBody": "This {{kind}} stays locked until you finish the book; then you can see or hear it.",
+      "kindFallback": "note"
+    },
+    "rating": {
+      "title": "Book rating",
+      "lockedHint": "You can rate the book after marking it finished.",
+      "outOf5": "of 5",
+      "starAria": "{{n}} of 5",
+      "hint": "Score a few factors separately; their average becomes the overall score.",
+      "reviewLabel": "Short note (optional)",
+      "reviewPlaceholder": "Sum up how the book felt…",
+      "submit": "Submit rating",
+      "update": "Update rating",
+      "badgeTitle": "Your overall score"
+    },
+    "finishConfirm": {
+      "eyebrow": "Finish book",
+      "title": "Really finished?",
+      "bodyWithTitle": "Mark «{{title}}» as finished? Sealed notes unlock and you can then submit a final viewpoint.",
+      "body": "Mark the book as finished? Sealed notes will unlock.",
+      "confirm": "Yes, finished",
+      "cancel": "Not yet"
+    },
+    "finalModal": {
+      "eyebrow": "Final viewpoint",
+      "title": "What's your final take on this book?",
+      "hintWithTitle": "Add a final viewpoint for «{{title}}»; it becomes public and unlocks seeing others.",
+      "hint": "Add a final viewpoint; it becomes public and unlocks seeing others.",
+      "mediaAria": "Content type",
+      "textLabel": "Viewpoint text",
+      "textPlaceholder": "Final feelings, analysis, or what stayed with you…",
+      "recordVoice": "Record voice",
+      "recordAgain": "Record again",
+      "submit": "Submit final viewpoint"
+    },
+    "midpoint": {
+      "eyebrow": "Halfway there",
+      "title": "How do you think it ends?",
+      "hint": "Write your guess; it stays sealed until you finish, then you see it again.",
+      "label": "Ending prediction",
+      "placeholder": "e.g. I think the hero…",
+      "seal": "Seal it",
+      "skip": "Not now"
+    },
+    "firstFinal": {
+      "eyebrow": "First footprint",
+      "title": "You're the first viewpoint on this book",
+      "bodyWithTitle": "You posted the first public viewpoint for «{{title}}». Others can see yours later.",
+      "body": "You posted the first public viewpoint for this book.",
+      "great": "Nice",
+      "goToBook": "Go to book"
+    },
+    "peer": {
+      "eyebrow": "Others' viewpoints",
+      "title": "A random take",
+      "loading": "Fetching a viewpoint…",
+      "empty": "No one else has posted a public final viewpoint for this book yet.",
+      "authorFallback": "Another reader",
+      "another": "Another one",
+      "busyEllipsis": "…"
+    },
+    "playlist": {
+      "eyebrow": "After finishing",
+      "title": "Notes playlist",
+      "emptyTitle": "No notes yet",
+      "emptyBody": "No viewpoints were logged for this book.",
+      "wasSealed": "Was sealed",
+      "predictionBanner": "Your halfway prediction",
+      "prev": "Previous",
+      "next": "Next",
+      "trackList": "Tracks",
+      "nothingToPlay": "Nothing to play.",
+      "pageShort": "p. {{page}}",
+      "previewMidpoint": "Halfway prediction",
+      "previewFinal": "Final viewpoint",
+      "previewVoice": "Voice note",
+      "previewImage": "Image note"
+    }
+  },
+  "challenges": {
+    "status": {
+      "planned": "Planned",
+      "active": "Active",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "periodUnit": {
+      "day": "day",
+      "week": "week",
+      "month": "month"
+    },
+    "periodLabel": "{{duration}} {{unit}}",
+    "dateRange": "{{start}} to {{end}}",
+    "list": {
+      "eyebrow": "Reading challenge",
+      "title": "Follow your goals",
+      "new": "New challenge",
+      "statTotal": "Total",
+      "statActive": "Active",
+      "statCompleted": "Completed",
+      "emptyTitle": "No challenges yet",
+      "create": "Create challenge",
+      "timePercent": "Time {{percent}}%",
+      "completionPercent": "Done {{percent}}%"
+    },
+    "form": {
+      "newTitle": "New challenge",
+      "editTitle": "Edit challenge",
+      "title": "Title",
+      "description": "Description",
+      "periodUnit": "Time unit",
+      "duration": "Duration",
+      "startsOn": "Starts on",
+      "shelfBooks": "Shelf books",
+      "emptyShelf": "Add a book to your shelf first.",
+      "addBook": "Add book",
+      "createdToast": "Challenge created.",
+      "updatedToast": "Challenge updated."
+    },
+    "detail": {
+      "dualProgress": "Dual progress",
+      "timeLeft": "Time {{percent}}% · {{days}} days left",
+      "booksDone": "Done {{percent}}% · {{done}}/{{total}} books",
+      "challengeBooks": "Challenge books",
+      "goToShelf": "Go to shelf",
+      "confirmDelete": "Delete this challenge?"
+    }
+  },
+  "vocabulary": {
+    "list": {
+      "eyebrow": "Vocabulary",
+      "title": "Your flashcards",
+      "newWord": "New word",
+      "statWords": "Words",
+      "statWithAudio": "With audio",
+      "searchPlaceholder": "Search word or meaning…",
+      "emptyTitle": "No words yet",
+      "add": "Add",
+      "termKicker": "Word",
+      "meaningKicker": "Meaning",
+      "tapForMeaning": "Tap for meaning",
+      "usage": "Usage",
+      "play": "Play",
+      "confirmDelete": "Delete this word?"
+    },
+    "form": {
+      "newTitle": "New word",
+      "editTitle": "Edit word",
+      "term": "Word",
+      "meaning": "Meaning",
+      "usage": "Usage",
+      "pronunciation": "Pronunciation",
+      "clearAudio": "Remove current audio",
+      "savedToast": "Word saved."
+    }
+  },
+  "dashboard": {
+    "loading": "Preparing dashboard…",
+    "loadFailed": "Could not load dashboard.",
+    "eyebrow": "Dashboard",
+    "greeting": "Hi, {{name}}",
+    "subtitle": "Your reading pulse — streak, daily activity, and quick shortcuts.",
+    "goToShelf": "Go to shelf",
+    "readerFallback": "Reader",
+    "stats": {
+      "aria": "Quick stats",
+      "streakCurrent": {
+        "label": "Current streak",
+        "short": "Streak",
+        "suffix": "days"
+      },
+      "streakLongest": {
+        "label": "Longest streak",
+        "short": "Best",
+        "suffix": "days"
+      },
+      "activeDays": {
+        "label": "Active days",
+        "short": "Active",
+        "suffix": "days"
+      },
+      "readingCount": {
+        "label": "Currently reading",
+        "short": "Reading",
+        "suffix": "books"
+      },
+      "entriesCount": {
+        "label": "Notes",
+        "short": "Notes",
+        "suffix": "items"
+      },
+      "challengesActive": {
+        "label": "Active challenges",
+        "short": "Challenges",
+        "suffix": "items"
+      }
+    },
+    "quick": {
+      "aria": "Quick access",
+      "title": "Quick access",
+      "subtitle": "Shortcuts to the sections you use most.",
+      "vocabulary": {
+        "title": "Flashcards",
+        "subtitle": "Review words",
+        "countLabel": "words"
+      },
+      "challenges": {
+        "title": "Challenges",
+        "subtitle": "Reading goals",
+        "countLabel": "active"
+      },
+      "reading": {
+        "title": "Currently reading",
+        "subtitle": "Continue from shelf",
+        "countLabel": "books"
+      }
+    },
+    "heatmap": {
+      "aria": "Activity map",
+      "filterAria": "Activity type filter",
+      "title": "Activity map",
+      "streakLine": "Each square is a day. Current streak:",
+      "days": "days",
+      "record": "Best",
+      "low": "Less",
+      "high": "More",
+      "noActivity": "No activity",
+      "activityCount": "{{count}} activities",
+      "activityWithParts": "{{count}} activities — {{parts}}",
+      "partEntries": "{{count}} notes",
+      "partChallenges": "{{count}} challenges",
+      "partReading": "{{count}} reading",
+      "cellAria": "{{date}}: {{count}} activities",
+      "placeholder": "Tap a day or hover over it",
+      "filters": {
+        "all": "All",
+        "entries": "Notes",
+        "challenges": "Challenges",
+        "reading": "Reading"
+      },
+      "types": {
+        "entries": "Notes",
+        "challenges": "Challenges",
+        "reading": "Reading"
+      },
+      "weekdays": {
+        "sat": "S",
+        "sun": "S",
+        "mon": "M",
+        "tue": "T",
+        "wed": "W",
+        "thu": "T",
+        "fri": "F"
+      }
+    },
+    "vibe": {
+      "aria": "Reading persona and vibe graph",
+      "chartAria": "Reading persona graph",
+      "title": "Persona graph",
+      "subtitle": "Your reading mood and genres shift with every book.",
+      "pendingHeadline": "Queued for analysis…",
+      "emptyHeadline": "Not shaped yet",
+      "emptyBody": "Add your first book to bring the persona radar to life.",
+      "pendingBody": "You have books on the shelf — build your vibe with one click.",
+      "analyze": "Analyze vibe",
+      "analyzing": "Analyzing…",
+      "analyzeFailed": "Vibe analysis failed.",
+      "addBook": "Add book",
+      "now": "Now",
+      "favorite": "Favorite",
+      "genreMixAria": "Genre mix",
+      "percent": "{{value}}%",
+      "recentChanges": "Recent changes",
+      "noLogs": "No logs yet.",
+      "bookFallback": "Book"
+    }
+  }
+}

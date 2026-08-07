@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { booksApi, ApiError } from '../../shared/api'
+import { labelFromCode } from '../../i18n/labels'
 import { useAuth } from '../../shared/AuthContext'
 import BookRatingPanel, { RatingBadge } from './components/BookRatingPanel'
 import EntryTimelineItem from './components/EntryTimelineItem'
@@ -10,6 +12,10 @@ import FinishedBookPlaylist from './components/FinishedBookPlaylist'
 import FirstFinalViewpointModal from './components/FirstFinalViewpointModal'
 import MidpointPredictionModal from './components/MidpointPredictionModal'
 import PeerViewpointModal from './components/PeerViewpointModal'
+
+const STATUS_VALUES = ['want_to_read', 'reading', 'paused', 'finished', 'abandoned']
+const KIND_FILTERS = ['viewpoint', 'feeling', 'book_text']
+const MEDIA_FILTERS = ['text', 'voice', 'image']
 
 function ReadingDetail({
   id,
@@ -24,13 +30,7 @@ function ReadingDetail({
   onDeleteEntry,
   setFilter,
 }) {
-  const statuses = [
-    ['want_to_read', 'می‌خواهم بخوانم'],
-    ['reading', 'در حال خواندن'],
-    ['paused', 'متوقف شده'],
-    ['finished', 'تمام شده'],
-    ['abandoned', 'رها شده'],
-  ]
+  const { t } = useTranslation()
 
   return (
     <>
@@ -40,7 +40,9 @@ function ReadingDetail({
         </div>
         <div className="detail-info">
           <div className="cluster">
-            <span className={`status status-${book.status}`}>{book.status_display}</span>
+            <span className={`status status-${book.status}`}>
+              {labelFromCode('books.status', book.status, book.status_display)}
+            </span>
             <RatingBadge score={book.overall_score} />
           </div>
           <h1>{book.title}</h1>
@@ -48,16 +50,16 @@ function ReadingDetail({
           {book.notes ? <p>{book.notes}</p> : null}
           <div className="cluster">
             <Link to={`/books/${id}/entries/new`} className="btn btn-primary">
-              یادداشت جدید
+              {t('books.detail.newEntry')}
             </Link>
             <button type="button" className="btn btn-secondary" onClick={onAskFinish} disabled={busy}>
-              تیک پایان
+              {t('books.detail.finishTick')}
             </button>
             <Link to={`/books/${id}/edit`} className="btn btn-ghost">
-              ویرایش
+              {t('app.edit')}
             </Link>
             <button type="button" className="btn btn-danger-ghost" onClick={onDelete}>
-              حذف
+              {t('app.delete')}
             </button>
           </div>
         </div>
@@ -65,16 +67,20 @@ function ReadingDetail({
 
       <section className="detail-layout">
         <div className="surface" id="progress">
-          <h2>پیشرفت</h2>
+          <h2>{t('books.detail.progress')}</h2>
           <div className="book-progress-label">
-            {book.current_page} / {book.total_pages} · {book.progress_percent}%
+            {t('books.list.progressLabel', {
+              current: book.current_page,
+              total: book.total_pages,
+              percent: book.progress_percent,
+            })}
           </div>
           <div className="progress large">
             <span style={{ width: `${book.progress_percent}%` }} />
           </div>
           <form onSubmit={onProgress} className="form-grid two" style={{ marginTop: '1rem' }}>
             <div className="field">
-              <label>صفحه فعلی</label>
+              <label>{t('books.form.currentPage')}</label>
               <input
                 name="current_page"
                 type="number"
@@ -85,18 +91,18 @@ function ReadingDetail({
               />
             </div>
             <div className="field">
-              <label>وضعیت</label>
+              <label>{t('books.form.status')}</label>
               <select name="status" className="field-select" defaultValue={book.status} key={`st-${book.status}`}>
-                {statuses.map(([v, l]) => (
+                {STATUS_VALUES.map((v) => (
                   <option key={v} value={v}>
-                    {l}
+                    {t(`books.status.${v}`)}
                   </option>
                 ))}
               </select>
             </div>
             <div className="form-actions full">
               <button type="submit" className="btn btn-primary" disabled={busy}>
-                ذخیره پیشرفت
+                {t('books.detail.saveProgress')}
               </button>
             </div>
           </form>
@@ -104,11 +110,11 @@ function ReadingDetail({
         <aside className="surface surface-muted detail-aside">
           <ul className="aside-list">
             <li>
-              <span>صفحات</span>
+              <span>{t('books.detail.pages')}</span>
               <strong>{book.total_pages}</strong>
             </li>
             <li>
-              <span>یادداشت‌ها</span>
+              <span>{t('books.detail.entries')}</span>
               <strong>{book.entry_count}</strong>
             </li>
           </ul>
@@ -117,53 +123,45 @@ function ReadingDetail({
 
       <section className="section" id="entries">
         <div className="page-toolbar">
-          <h2>یادداشت‌ها</h2>
+          <h2>{t('books.detail.entries')}</h2>
           <Link to={`/books/${id}/entries/new`} className="btn btn-secondary">
-            جدید
+            {t('app.new')}
           </Link>
         </div>
         <div className="filter-bar">
           <button type="button" className={`chip${!kind ? ' is-active' : ''}`} onClick={() => setFilter('kind', '')}>
-            همه انواع
+            {t('books.detail.allKinds')}
           </button>
-          {[
-            ['viewpoint', 'دیدگاه'],
-            ['feeling', 'حس'],
-            ['book_text', 'متن کتاب'],
-          ].map(([v, l]) => (
+          {KIND_FILTERS.map((v) => (
             <button
               key={v}
               type="button"
               className={`chip${kind === v ? ' is-active' : ''}`}
               onClick={() => setFilter('kind', v)}
             >
-              {l}
+              {t(`books.kind.${v}`)}
             </button>
           ))}
           <span className="filter-sep" />
           <button type="button" className={`chip${!media ? ' is-active' : ''}`} onClick={() => setFilter('media', '')}>
-            همه رسانه‌ها
+            {t('books.detail.allMedia')}
           </button>
-          {[
-            ['text', 'متن'],
-            ['voice', 'ویس'],
-            ['image', 'تصویر'],
-          ].map(([v, l]) => (
+          {MEDIA_FILTERS.map((v) => (
             <button
               key={v}
               type="button"
               className={`chip${media === v ? ' is-active' : ''}`}
               onClick={() => setFilter('media', v)}
             >
-              {l}
+              {t(`books.media.${v}`)}
             </button>
           ))}
         </div>
 
         {data.entries.length === 0 ? (
           <div className="empty-state compact">
-            <h3>یادداشتی نیست</h3>
-            <p>اولین حس یا نقل‌قول را ثبت کن.</p>
+            <h3>{t('books.detail.emptyEntriesTitle')}</h3>
+            <p>{t('books.detail.emptyEntriesBody')}</p>
           </div>
         ) : (
           <div className="entry-timeline">
@@ -193,6 +191,7 @@ function FinishedDetail({
   onRevealPeer,
   onAskFinalViewpoint,
 }) {
+  const { t } = useTranslation()
   const hasFinal = Boolean(social?.has_final_viewpoint)
 
   return (
@@ -203,20 +202,20 @@ function FinishedDetail({
         </div>
         <div className="detail-info">
           <div className="cluster">
-            <span className={`status status-${book.status}`}>{book.status_display}</span>
+            <span className={`status status-${book.status}`}>
+              {labelFromCode('books.status', book.status, book.status_display)}
+            </span>
             <RatingBadge score={book.overall_score} />
           </div>
           <h1>{book.title}</h1>
           <p className="meta-pill">{book.author}</p>
-          <p className="finished-lead">
-            کتاب تمام شد؛ امتیاز بده، دیدگاه پایانی بنویس و اگر خواستی تحلیل دیگران را ببین.
-          </p>
+          <p className="finished-lead">{t('books.detail.finishedLead')}</p>
           <div className="cluster">
             <Link to={`/books/${id}/edit`} className="btn btn-ghost">
-              ویرایش مشخصات
+              {t('books.detail.editMeta')}
             </Link>
             <button type="button" className="btn btn-danger-ghost" onClick={onDelete}>
-              حذف از قفسه
+              {t('books.detail.removeFromShelf')}
             </button>
           </div>
         </div>
@@ -225,30 +224,26 @@ function FinishedDetail({
       <section className="section" id="social-final">
         <div className="surface social-final-panel">
           <div className="social-final-copy">
-            <p className="eyebrow">اجتماعی</p>
-            <h2>دیدگاه پایانی</h2>
+            <p className="eyebrow">{t('books.detail.socialEyebrow')}</p>
+            <h2>{t('books.detail.finalViewpoint')}</h2>
             {hasFinal ? (
-              <p>
-                دیدگاه پایانی‌ات ثبت شده. می‌توانی یک دیدگاه تصادفی از کسانی که این کتاب را تمام کرده‌اند ببینی.
-              </p>
+              <p>{t('books.detail.finalDone')}</p>
             ) : (
-              <p>
-                با ثبت یک دیدگاه پایانی، قفل دیدن تحلیل دیگران برای این کتاب باز می‌شود.
-              </p>
+              <p>{t('books.detail.finalLocked')}</p>
             )}
           </div>
           <div className="cluster social-final-actions">
             {!hasFinal ? (
               <button type="button" className="btn btn-primary" disabled={busy} onClick={onAskFinalViewpoint}>
-                ثبت دیدگاه پایانی
+                {t('books.detail.submitFinal')}
               </button>
             ) : (
               <>
                 <button type="button" className="btn btn-primary" disabled={busy} onClick={onRevealPeer}>
-                  دیدگاه دیگران
+                  {t('books.detail.peerViewpoints')}
                 </button>
                 <button type="button" className="btn btn-ghost" disabled={busy} onClick={onAskFinalViewpoint}>
-                  دیدگاه دیگر از خودم
+                  {t('books.detail.anotherOfMine')}
                 </button>
               </>
             )}
@@ -274,6 +269,7 @@ function FinishedDetail({
 }
 
 export default function BookDetailPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const { showToast } = useAuth()
@@ -325,11 +321,11 @@ export default function BookDetailPage() {
         current_page: Number(fd.get('current_page')),
         status: fd.get('status'),
       })
-      showToast('پیشرفت ذخیره شد.', 'success')
+      showToast(t('books.detail.progressSaved'), 'success')
       if (result.ask_midpoint_prediction) setShowMidpoint(true)
       await load()
     } catch (err) {
-      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
+      showToast(err instanceof ApiError ? err.message : t('app.error'), 'error')
     } finally {
       setBusy(false)
     }
@@ -339,13 +335,13 @@ export default function BookDetailPage() {
     setBusy(true)
     try {
       await booksApi.finish(id)
-      showToast('کتاب تمام شد. حالا می‌توانی دیدگاه پایانی ثبت کنی.', 'success')
+      showToast(t('books.detail.finishedToast'), 'success')
       setShowMidpoint(false)
       setShowFinishConfirm(false)
       await load()
       setShowFinalModal(true)
     } catch (err) {
-      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
+      showToast(err instanceof ApiError ? err.message : t('app.error'), 'error')
     } finally {
       setBusy(false)
     }
@@ -365,12 +361,12 @@ export default function BookDetailPage() {
         fd.set('audio', audioBlob, 'final-viewpoint.webm')
       }
       const saved = await booksApi.createEntry(id, fd)
-      showToast('دیدگاه پایانی ثبت شد.', 'success')
+      showToast(t('books.detail.finalSaved'), 'success')
       setShowFinalModal(false)
       await load()
       if (saved?.is_first_final_for_book) setShowFirstFinal(true)
     } catch (err) {
-      showToast(err instanceof ApiError ? err.message : 'ثبت دیدگاه ناموفق بود.', 'error')
+      showToast(err instanceof ApiError ? err.message : t('books.detail.finalFailed'), 'error')
     } finally {
       setBusy(false)
     }
@@ -392,12 +388,12 @@ export default function BookDetailPage() {
         setData((prev) => (prev ? { ...prev, social: res.social } : prev))
       }
     } catch (err) {
-      setPeerError(err instanceof ApiError ? err.message : 'بارگذاری ناموفق بود.')
+      setPeerError(err instanceof ApiError ? err.message : t('app.loadFailed'))
       setPeerView(null)
     } finally {
       setPeerBusy(false)
     }
-  }, [id])
+  }, [id, t])
 
   const onRevealPeer = async () => {
     setPeerOpen(true)
@@ -411,10 +407,10 @@ export default function BookDetailPage() {
     setBusy(true)
     try {
       await booksApi.saveRating(id, payload)
-      showToast('امتیاز ذخیره شد.', 'success')
+      showToast(t('books.detail.ratingSaved'), 'success')
       await load()
     } catch (err) {
-      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
+      showToast(err instanceof ApiError ? err.message : t('app.error'), 'error')
     } finally {
       setBusy(false)
     }
@@ -424,11 +420,11 @@ export default function BookDetailPage() {
     setBusy(true)
     try {
       await booksApi.midpointPrediction(id, { text })
-      showToast('پیش‌بینی‌ات مهروموم شد.', 'success')
+      showToast(t('books.detail.predictionSealed'), 'success')
       setShowMidpoint(false)
       await load()
     } catch (err) {
-      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
+      showToast(err instanceof ApiError ? err.message : t('app.error'), 'error')
     } finally {
       setBusy(false)
     }
@@ -441,28 +437,28 @@ export default function BookDetailPage() {
       setShowMidpoint(false)
       await load()
     } catch (err) {
-      showToast(err instanceof ApiError ? err.message : 'خطا', 'error')
+      showToast(err instanceof ApiError ? err.message : t('app.error'), 'error')
     } finally {
       setBusy(false)
     }
   }
 
   const onDelete = async () => {
-    if (!window.confirm('این کتاب از قفسه حذف شود؟')) return
+    if (!window.confirm(t('books.detail.confirmDeleteBook'))) return
     await booksApi.remove(id)
-    showToast('حذف شد.')
+    showToast(t('app.deleted'))
     navigate('/books')
   }
 
   const onDeleteEntry = async (entryId) => {
-    if (!window.confirm('یادداشت حذف شود؟')) return
+    if (!window.confirm(t('books.detail.confirmDeleteEntry'))) return
     await booksApi.deleteEntry(id, entryId)
-    showToast('یادداشت حذف شد.')
+    showToast(t('books.detail.entryDeleted'))
     await load()
   }
 
   if (error) return <p className="form-errors">{error}</p>
-  if (!data) return <p>در حال بارگذاری…</p>
+  if (!data) return <p>{t('app.loading')}</p>
 
   const book = data.book
   const isFinished = book.status === 'finished' || data.view_mode === 'playlist'

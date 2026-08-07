@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { booksApi, challengesApi, ApiError } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
+import { labelFromCode } from '../../i18n/labels'
 
 export default function ChallengeFormPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
@@ -27,13 +30,13 @@ export default function ChallengeFormPage() {
           setSelected(data.books.map((b) => b.shelf_id).filter(Boolean))
         }
       } catch (err) {
-        setError(err.message || 'خطا')
+        setError(err.message || t('app.error'))
       } finally {
         setLoading(false)
       }
     }
     load()
-  }, [id, isEdit])
+  }, [id, isEdit, t])
 
   const toggle = (shelfId) => {
     setSelected((prev) =>
@@ -58,31 +61,34 @@ export default function ChallengeFormPage() {
       const saved = isEdit
         ? await challengesApi.update(id, body)
         : await challengesApi.create(body)
-      showToast(isEdit ? 'چالش به‌روز شد.' : 'چالش ساخته شد.', 'success')
+      showToast(
+        isEdit ? t('challenges.form.updatedToast') : t('challenges.form.createdToast'),
+        'success',
+      )
       navigate(`/challenges/${saved.id}`)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'ذخیره ناموفق بود.')
+      setError(err instanceof ApiError ? err.message : t('app.saveFailed'))
     } finally {
       setBusy(false)
     }
   }
 
-  if (loading) return <p>در حال بارگذاری…</p>
+  if (loading) return <p>{t('app.loading')}</p>
 
   return (
     <div className="page-challenge-form">
       <section className="section form-page">
         <div className="page-toolbar">
-          <h1>{isEdit ? 'ویرایش چالش' : 'چالش جدید'}</h1>
+          <h1>{isEdit ? t('challenges.form.editTitle') : t('challenges.form.newTitle')}</h1>
         </div>
         {error ? <div className="form-errors">{error}</div> : null}
         <form className="form-panel" onSubmit={onSubmit}>
           <div className="field">
-            <label>عنوان</label>
+            <label>{t('challenges.form.title')}</label>
             <input name="title" className="field-input" defaultValue={challenge?.title || ''} required />
           </div>
           <div className="field">
-            <label>توضیح</label>
+            <label>{t('challenges.form.description')}</label>
             <textarea
               name="description"
               className="field-textarea"
@@ -92,15 +98,15 @@ export default function ChallengeFormPage() {
           </div>
           <div className="form-grid two">
             <div className="field">
-              <label>واحد زمان</label>
+              <label>{t('challenges.form.periodUnit')}</label>
               <select name="period_unit" className="field-select" defaultValue={challenge?.period_unit || 'week'}>
-                <option value="day">روز</option>
-                <option value="week">هفته</option>
-                <option value="month">ماه</option>
+                <option value="day">{labelFromCode('challenges.periodUnit', 'day')}</option>
+                <option value="week">{labelFromCode('challenges.periodUnit', 'week')}</option>
+                <option value="month">{labelFromCode('challenges.periodUnit', 'month')}</option>
               </select>
             </div>
             <div className="field">
-              <label>مدت</label>
+              <label>{t('challenges.form.duration')}</label>
               <input
                 name="duration"
                 type="number"
@@ -111,7 +117,7 @@ export default function ChallengeFormPage() {
               />
             </div>
             <div className="field">
-              <label>شروع</label>
+              <label>{t('challenges.form.startsOn')}</label>
               <input
                 name="starts_on"
                 type="date"
@@ -123,12 +129,12 @@ export default function ChallengeFormPage() {
           </div>
 
           <div className="form-step">
-            <div className="form-step-label">کتاب‌های قفسه</div>
+            <div className="form-step-label">{t('challenges.form.shelfBooks')}</div>
             {shelf.length === 0 ? (
               <div className="empty-state compact">
-                <p>اول کتابی به قفسه اضافه کن.</p>
+                <p>{t('challenges.form.emptyShelf')}</p>
                 <Link to="/books/new" className="btn btn-secondary">
-                  افزودن کتاب
+                  {t('challenges.form.addBook')}
                 </Link>
               </div>
             ) : (
@@ -155,10 +161,10 @@ export default function ChallengeFormPage() {
               className="btn btn-primary"
               disabled={busy || selected.length === 0}
             >
-              ذخیره
+              {t('app.save')}
             </button>
             <Link to={isEdit ? `/challenges/${id}` : '/challenges'} className="btn btn-ghost">
-              انصراف
+              {t('app.cancel')}
             </Link>
           </div>
         </form>

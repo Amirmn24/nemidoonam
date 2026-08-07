@@ -1,16 +1,32 @@
-const STAT_ITEMS = [
-  { key: 'streak_current', label: 'Streak فعلی', short: 'Streak', suffix: 'روز', accent: 'brand' },
-  { key: 'streak_longest', label: 'بیشینهٔ Streak', short: 'رکورد', suffix: 'روز', accent: 'sky' },
-  { key: 'active_days', label: 'روز فعال', short: 'فعال', suffix: 'روز', accent: 'ok' },
-  { key: 'reading_count', label: 'در حال خواندن', short: 'خواندن', suffix: 'کتاب', accent: 'brand' },
-  { key: 'entries_count', label: 'یادداشت‌ها', short: 'یادداشت', suffix: 'مورد', accent: 'sky' },
-  { key: 'challenges_active', label: 'چالش فعال', short: 'چالش', suffix: 'مورد', accent: 'ok' },
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+
+const STAT_DEFS = [
+  { key: 'streak_current', i18nKey: 'streakCurrent', accent: 'brand' },
+  { key: 'streak_longest', i18nKey: 'streakLongest', accent: 'sky' },
+  { key: 'active_days', i18nKey: 'activeDays', accent: 'ok' },
+  { key: 'reading_count', i18nKey: 'readingCount', accent: 'brand' },
+  { key: 'entries_count', i18nKey: 'entriesCount', accent: 'sky' },
+  { key: 'challenges_active', i18nKey: 'challengesActive', accent: 'ok' },
 ]
 
 export default function HeroStatBar({ stats }) {
+  const { t } = useTranslation()
+
+  const items = useMemo(
+    () =>
+      STAT_DEFS.map((item) => ({
+        ...item,
+        label: t(`dashboard.stats.${item.i18nKey}.label`),
+        short: t(`dashboard.stats.${item.i18nKey}.short`),
+        suffix: t(`dashboard.stats.${item.i18nKey}.suffix`),
+      })),
+    [t],
+  )
+
   return (
-    <section className="dash-hero-stats" aria-label="وضعیت سریع">
-      {STAT_ITEMS.map((item) => (
+    <section className="dash-hero-stats" aria-label={t('dashboard.stats.aria')}>
+      {items.map((item) => (
         <article key={item.key} className={`dash-stat dash-stat-${item.accent}`}>
           <span className="dash-stat-label">
             <span className="dash-stat-label-full">{item.label}</span>

@@ -1,9 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState, createContext } from 'react'
+import { useTranslation } from 'react-i18next'
 import { authApi, ensureCsrf, resetCsrf } from './api'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
+  const { t } = useTranslation()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
@@ -28,28 +30,28 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (payload) => {
     const data = await authApi.login(payload)
     setUser(data.user)
-    showToast('خوش آمدی!')
+    showToast(t('auth.welcomeToast'))
     return data
-  }, [showToast])
+  }, [showToast, t])
 
   const signup = useCallback(async (payload) => {
     const data = await authApi.signup(payload)
     setUser(data.user)
-    showToast('حساب ساخته شد. خوش آمدی!')
+    showToast(t('auth.signupToast'))
     return data
-  }, [showToast])
+  }, [showToast, t])
 
   const logout = useCallback(async () => {
     try {
       await authApi.logout()
     } catch {
-      /* حتی اگر API خطا بدهد، نشست محلی را پاک می‌کنیم */
+      /* clear local session even if API fails */
     } finally {
       resetCsrf()
       setUser(null)
-      showToast('خارج شدی.')
+      showToast(t('auth.logoutToast'))
     }
-  }, [showToast])
+  }, [showToast, t])
 
   const value = useMemo(
     () => ({

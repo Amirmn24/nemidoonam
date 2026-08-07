@@ -1,0 +1,510 @@
+{
+  "app": {
+    "title": "ویرونا · Vyrvona",
+    "loading": "در حال بارگذاری…",
+    "error": "خطا",
+    "save": "ذخیره",
+    "cancel": "انصراف",
+    "delete": "حذف",
+    "close": "بستن",
+    "back": "بازگشت",
+    "edit": "ویرایش",
+    "new": "جدید",
+    "yes": "بله",
+    "no": "خیر",
+    "submitting": "در حال ثبت…",
+    "deleted": "حذف شد.",
+    "saveFailed": "ذخیره ناموفق بود.",
+    "loadFailed": "بارگذاری ناموفق بود.",
+    "all": "همه",
+    "later": "بعداً",
+    "stop": "توقف",
+    "record": "ضبط",
+    "footerNote": "جایی برای حس‌ها، دیدگاه‌ها و ورق‌های کتاب",
+    "readerFallback": "خواننده"
+  },
+  "nav": {
+    "mainMenu": "منوی اصلی",
+    "brand": "ویرونا",
+    "brandAria": "ویرونا · Vyrvona",
+    "collapseSidebar": "جمع‌کردن سایدبار",
+    "closeMenu": "بستن منو",
+    "openMenu": "باز کردن منو",
+    "quickNav": "ناوبری سریع",
+    "newBook": "کتاب جدید",
+    "profileOf": "پروفایل {{username}}",
+    "dashboard": "داشبورد",
+    "dashboardSub": "نبض فعالیت",
+    "books": "کتاب‌ها",
+    "booksSub": "قفسه شخصی",
+    "challenges": "چالش‌ها",
+    "challengesSub": "هدف‌های مطالعه",
+    "vocabulary": "واژه‌نامه",
+    "vocabularySub": "فلش‌کارت واژه",
+    "profile": "پروفایل",
+    "profileSub": "اطلاعات حساب",
+    "logout": "خروج",
+    "loggingOut": "در حال خروج…",
+    "logoutSub": "پایان نشست",
+    "home": "خانه",
+    "menu": "منو"
+  },
+  "theme": {
+    "light": "حالت روشن",
+    "dark": "حالت تاریک"
+  },
+  "locale": {
+    "fa": "FA",
+    "en": "EN",
+    "switchTo": "زبان: {{label}}",
+    "group": "انتخاب زبان"
+  },
+  "auth": {
+    "login": "ورود",
+    "signup": "ثبت‌نام",
+    "email": "ایمیل",
+    "password": "رمز عبور",
+    "passwordConfirm": "تکرار رمز",
+    "username": "نام کاربری",
+    "createAccount": "ساخت حساب",
+    "helloAgain": "سلام دوباره",
+    "welcomeBack": "به ویرونا خوش آمدی.",
+    "newHere": "تازه‌واردی؟",
+    "createAndStart": "یک حساب بساز و قفسه‌ات را شروع کن.",
+    "noAccount": "حساب نداری؟",
+    "alreadySignedUp": "قبلاً ثبت‌نام کردی؟",
+    "loginFailed": "ورود ناموفق بود.",
+    "signupFailed": "ثبت‌نام ناموفق بود.",
+    "welcomeToast": "خوش آمدی!",
+    "signupToast": "حساب ساخته شد. خوش آمدی!",
+    "logoutToast": "خارج شدی."
+  },
+  "profile": {
+    "eyebrow": "حساب کاربری",
+    "editTitle": "ویرایش پروفایل",
+    "loginEmail": "ایمیل ورود:",
+    "stepIdentity": "هویت",
+    "stepContact": "ارتباط",
+    "stepAvatar": "آواتار",
+    "username": "نام کاربری",
+    "firstName": "نام",
+    "lastName": "نام خانوادگی",
+    "telegramId": "آیدی تلگرام",
+    "clearAvatar": "حذف عکس فعلی",
+    "savedToast": "پروفایل ذخیره شد."
+  },
+  "api": {
+    "csrfFailed": "نتوانستیم CSRF را بگیریم.",
+    "genericError": "خطایی رخ داد.",
+    "logoutFailed": "خروج ناموفق بود.",
+    "micDenied": "دسترسی به میکروفون ممکن نشد."
+  },
+  "books": {
+    "status": {
+      "want_to_read": "می‌خواهم بخوانم",
+      "reading": "در حال خواندن",
+      "paused": "متوقف شده",
+      "finished": "تمام شده",
+      "abandoned": "رها شده"
+    },
+    "kind": {
+      "viewpoint": "دیدگاه",
+      "feeling": "حس",
+      "book_text": "متن کتاب",
+      "ending_prediction": "پیش‌بینی پایان",
+      "final_viewpoint": "دیدگاه پایانی"
+    },
+    "media": {
+      "text": "متن",
+      "voice": "ویس",
+      "image": "تصویر"
+    },
+    "factors": {
+      "writing": "نثر و زبان",
+      "content": "محتوا و ایده",
+      "characters": "شخصیت‌پردازی",
+      "pacing": "ریتم روایت",
+      "impact": "تأثیر عاطفی"
+    },
+    "list": {
+      "loading": "در حال بارگذاری قفسه…",
+      "eyebrow": "قفسه شخصی",
+      "title": "کتاب‌هایت اینجان",
+      "subtitle": "وضعیت‌ها، پیشرفت و یادداشت‌های هر ورق را همین‌جا نگه دار.",
+      "addBook": "افزودن کتاب",
+      "statBooks": "کتاب",
+      "statReading": "در حال خواندن",
+      "statFinished": "تمام‌شده",
+      "shelf": "قفسه",
+      "emptyTitle": "کتابی با این وضعیت نیست",
+      "emptyBody": "فیلتر را عوض کن یا کتاب جدیدی اضافه کن.",
+      "showAll": "نمایش همه",
+      "progressLabel": "{{current}} / {{total}} · {{percent}}%"
+    },
+    "form": {
+      "addTitle": "افزودن کتاب",
+      "editTitle": "ویرایش کتاب",
+      "similarFound": "کتاب‌های شبیه پیدا شد:",
+      "goToShelf": "برو به قفسه",
+      "pickFromLibrary": "انتخاب از کتابخانه",
+      "stepIdentity": "هویت کتاب",
+      "stepProgress": "پیشرفت و جلد",
+      "stepNotes": "یادداشت کلی",
+      "title": "عنوان",
+      "author": "نویسنده",
+      "registeredAuthor": "نویسنده ثبت‌شده",
+      "matchHint": "موارد شبیه در کتابخانه:",
+      "totalPages": "تعداد صفحات",
+      "currentPage": "صفحه فعلی",
+      "status": "وضعیت",
+      "cover": "جلد",
+      "confirmSimilar": "مطمئنم این کتاب جدید است و با موارد پیشنهادی فرق دارد",
+      "open": "باز کردن",
+      "pick": "انتخاب",
+      "addedToast": "کتاب به قفسه اضافه شد.",
+      "updatedToast": "کتاب به‌روز شد."
+    },
+    "setup": {
+      "eyebrow": "آماده‌سازی کتاب",
+      "shelf": {
+        "title": "ثبت در قفسه",
+        "copy": "کتاب دارد جای خودش را در قفسه‌ات پیدا می‌کند…"
+      },
+      "cover": {
+        "title": "پیدا کردن جلد",
+        "copy": "داریم بین جلدهای ایرانی می‌گردیم تا روی کتاب بنشیند."
+      },
+      "done": {
+        "title": "آماده شد",
+        "copy": "گراف شخصیت در پس‌زمینه به‌روز می‌شود؛ بزن بریم سراغ کتاب."
+      }
+    },
+    "detail": {
+      "newEntry": "یادداشت جدید",
+      "finishTick": "تیک پایان",
+      "progress": "پیشرفت",
+      "saveProgress": "ذخیره پیشرفت",
+      "pages": "صفحات",
+      "entries": "یادداشت‌ها",
+      "allKinds": "همه انواع",
+      "allMedia": "همه رسانه‌ها",
+      "emptyEntriesTitle": "یادداشتی نیست",
+      "emptyEntriesBody": "اولین حس یا نقل‌قول را ثبت کن.",
+      "finishedLead": "کتاب تمام شد؛ امتیاز بده، دیدگاه پایانی بنویس و اگر خواستی تحلیل دیگران را ببین.",
+      "editMeta": "ویرایش مشخصات",
+      "removeFromShelf": "حذف از قفسه",
+      "socialEyebrow": "اجتماعی",
+      "finalViewpoint": "دیدگاه پایانی",
+      "finalDone": "دیدگاه پایانی‌ات ثبت شده. می‌توانی یک دیدگاه تصادفی از کسانی که این کتاب را تمام کرده‌اند ببینی.",
+      "finalLocked": "با ثبت یک دیدگاه پایانی، قفل دیدن تحلیل دیگران برای این کتاب باز می‌شود.",
+      "submitFinal": "ثبت دیدگاه پایانی",
+      "peerViewpoints": "دیدگاه دیگران",
+      "anotherOfMine": "دیدگاه دیگر از خودم",
+      "progressSaved": "پیشرفت ذخیره شد.",
+      "finishedToast": "کتاب تمام شد. حالا می‌توانی دیدگاه پایانی ثبت کنی.",
+      "finalSaved": "دیدگاه پایانی ثبت شد.",
+      "finalFailed": "ثبت دیدگاه ناموفق بود.",
+      "ratingSaved": "امتیاز ذخیره شد.",
+      "predictionSealed": "پیش‌بینی‌ات مهروموم شد.",
+      "confirmDeleteBook": "این کتاب از قفسه حذف شود؟",
+      "confirmDeleteEntry": "یادداشت حذف شود؟",
+      "entryDeleted": "یادداشت حذف شد."
+    },
+    "entry": {
+      "newTitle": "یادداشت جدید",
+      "editTitle": "ویرایش یادداشت",
+      "contentType": "نوع محتوا",
+      "mediaType": "رسانه",
+      "flags": "پرچم‌ها",
+      "text": "متن",
+      "captionOptional": "توضیح (اختیاری)",
+      "image": "تصویر",
+      "pageNumber": "شماره صفحه",
+      "date": "تاریخ",
+      "keepPreviousVoice": "ویس قبلی نگه داشته می‌شود مگر دوباره ضبط کنی",
+      "savedToast": "یادداشت ذخیره شد.",
+      "pagePill": "صفحه {{page}}",
+      "public": "عمومی",
+      "sealed": "مهروموم",
+      "publicHint": "برای اشتراک‌گذاری بعدی علامت بزن",
+      "sealedHint": "تا پایان کتاب دیده و شنیده نمی‌شود",
+      "sealedTitle": "مهروموم شده",
+      "sealedBody": "این {{kind}} تا اتمام کتاب قفل است؛ بعد از پایان می‌توانی ببینی یا بشنوی.",
+      "kindFallback": "یادداشت"
+    },
+    "rating": {
+      "title": "امتیاز کتاب",
+      "lockedHint": "بعد از زدن تیک پایان می‌توانی به کتاب امتیاز بدهی.",
+      "outOf5": "از ۵",
+      "starAria": "{{n}} از ۵",
+      "hint": "چند فاکتور را جداگانه بسنج؛ میانگین‌شان نمره کلی می‌شود.",
+      "reviewLabel": "یادداشت کوتاه (اختیاری)",
+      "reviewPlaceholder": "جمع‌بندی حس‌ات از کتاب…",
+      "submit": "ثبت امتیاز",
+      "update": "به‌روزرسانی امتیاز",
+      "badgeTitle": "نمره کلی تو"
+    },
+    "finishConfirm": {
+      "eyebrow": "اتمام کتاب",
+      "title": "واقعاً تموم شده؟",
+      "bodyWithTitle": "«{{title}}» را به‌عنوان تمام‌شده علامت بزنم؟ یادداشت‌های مهروموم باز می‌شوند و بعد می‌توانی دیدگاه پایانی ثبت کنی.",
+      "body": "کتاب را تمام‌شده علامت بزنم؟ یادداشت‌های مهروموم باز می‌شوند.",
+      "confirm": "بله، تمام شد",
+      "cancel": "نه، هنوز نه"
+    },
+    "finalModal": {
+      "eyebrow": "دیدگاه پایانی",
+      "title": "تحلیل آخرت از این کتاب چیه؟",
+      "hintWithTitle": "برای «{{title}}» یک دیدگاه پایانی ثبت کن؛ عمومی می‌شود و قفل دیدن دیدگاه دیگران باز می‌شود.",
+      "hint": "یک دیدگاه پایانی ثبت کن؛ عمومی می‌شود و قفل دیدن دیدگاه دیگران باز می‌شود.",
+      "mediaAria": "نوع محتوا",
+      "textLabel": "متن دیدگاه",
+      "textPlaceholder": "حس نهایی، تحلیل، یا حرفی که بعد از تمام شدن کتاب ماند…",
+      "recordVoice": "ضبط ویس",
+      "recordAgain": "ضبط دوباره",
+      "submit": "ثبت دیدگاه پایانی"
+    },
+    "midpoint": {
+      "eyebrow": "نیمه‌راه کتاب",
+      "title": "به‌نظرت آخر کتاب چی می‌شه؟",
+      "hint": "حدست را بنویس؛ تا پایان کتاب مهروموم می‌ماند و بعد از اتمام دوباره می‌بینی‌اش.",
+      "label": "پیش‌بینی پایان",
+      "placeholder": "مثلاً فکر می‌کنم قهرمان…",
+      "seal": "مهروموم کن",
+      "skip": "فعلاً نه"
+    },
+    "firstFinal": {
+      "eyebrow": "اولین ردپا",
+      "title": "اولین دیدگاه این کتاب از توست",
+      "bodyWithTitle": "اولین دیدگاه و تحلیل عمومی برای «{{title}}» را تو ثبت کردی. بقیه بعداً می‌توانند دیدگاه تو را ببینند.",
+      "body": "اولین دیدگاه و تحلیل عمومی این کتاب را تو ثبت کردی.",
+      "great": "عالیه",
+      "goToBook": "برو به کتاب"
+    },
+    "peer": {
+      "eyebrow": "دیدگاه دیگران",
+      "title": "یک تحلیل تصادفی",
+      "loading": "در حال آوردن یک دیدگاه…",
+      "empty": "هنوز کسی غیر از تو دیدگاه پایانی عمومی برای این کتاب ثبت نکرده.",
+      "authorFallback": "خواننده‌ای دیگر",
+      "another": "یکی دیگر",
+      "busyEllipsis": "…"
+    },
+    "playlist": {
+      "eyebrow": "مرور بعد از اتمام",
+      "title": "پلی‌لیست یادداشت‌ها",
+      "emptyTitle": "هنوز یادداشتی نیست",
+      "emptyBody": "برای این کتاب دیدگاهی ثبت نشده.",
+      "wasSealed": "قبلاً مهروموم",
+      "predictionBanner": "پیش‌بینی تو در نیمه‌راه کتاب",
+      "prev": "قبلی",
+      "next": "بعدی",
+      "trackList": "فهرست",
+      "nothingToPlay": "موردی برای پخش نیست.",
+      "pageShort": "ص {{page}}",
+      "previewMidpoint": "پیش‌بینی نیمه‌راه",
+      "previewFinal": "دیدگاه پایانی",
+      "previewVoice": "یادداشت صوتی",
+      "previewImage": "یادداشت تصویری"
+    }
+  },
+  "challenges": {
+    "status": {
+      "planned": "برنامه‌ریزی‌شده",
+      "active": "فعال",
+      "completed": "تمام‌شده",
+      "failed": "ناتمام",
+      "cancelled": "لغو‌شده"
+    },
+    "periodUnit": {
+      "day": "روز",
+      "week": "هفته",
+      "month": "ماه"
+    },
+    "periodLabel": "{{duration}} {{unit}}",
+    "dateRange": "{{start}} تا {{end}}",
+    "list": {
+      "eyebrow": "چالش مطالعه",
+      "title": "هدف‌هایت را دنبال کن",
+      "new": "چالش جدید",
+      "statTotal": "کل",
+      "statActive": "فعال",
+      "statCompleted": "تمام‌شده",
+      "emptyTitle": "چالشی نیست",
+      "create": "ساخت چالش",
+      "timePercent": "زمان {{percent}}%",
+      "completionPercent": "تکمیل {{percent}}%"
+    },
+    "form": {
+      "newTitle": "چالش جدید",
+      "editTitle": "ویرایش چالش",
+      "title": "عنوان",
+      "description": "توضیح",
+      "periodUnit": "واحد زمان",
+      "duration": "مدت",
+      "startsOn": "شروع",
+      "shelfBooks": "کتاب‌های قفسه",
+      "emptyShelf": "اول کتابی به قفسه اضافه کن.",
+      "addBook": "افزودن کتاب",
+      "createdToast": "چالش ساخته شد.",
+      "updatedToast": "چالش به‌روز شد."
+    },
+    "detail": {
+      "dualProgress": "پیشرفت دوگانه",
+      "timeLeft": "زمان {{percent}}% · {{days}} روز مانده",
+      "booksDone": "تکمیل {{percent}}% · {{done}}/{{total}} کتاب",
+      "challengeBooks": "کتاب‌های چالش",
+      "goToShelf": "برو به قفسه",
+      "confirmDelete": "چالش حذف شود؟"
+    }
+  },
+  "vocabulary": {
+    "list": {
+      "eyebrow": "واژه‌نامه",
+      "title": "فلش‌کارت‌های تو",
+      "newWord": "واژه جدید",
+      "statWords": "واژه",
+      "statWithAudio": "با تلفظ",
+      "searchPlaceholder": "جستجو در واژه یا معنی…",
+      "emptyTitle": "واژه‌ای نیست",
+      "add": "افزودن",
+      "termKicker": "واژه",
+      "meaningKicker": "معنی",
+      "tapForMeaning": "برای معنی ضربه بزن",
+      "usage": "کاربرد",
+      "play": "پخش",
+      "confirmDelete": "واژه حذف شود؟"
+    },
+    "form": {
+      "newTitle": "واژه جدید",
+      "editTitle": "ویرایش واژه",
+      "term": "واژه",
+      "meaning": "معنی",
+      "usage": "کاربرد",
+      "pronunciation": "تلفظ",
+      "clearAudio": "حذف تلفظ فعلی",
+      "savedToast": "واژه ذخیره شد."
+    }
+  },
+  "dashboard": {
+    "loading": "در حال آماده‌سازی داشبورد…",
+    "loadFailed": "بارگذاری داشبورد ناموفق بود.",
+    "eyebrow": "داشبورد",
+    "greeting": "سلام، {{name}}",
+    "subtitle": "نبض مطالعه‌ات — streak، فعالیت روزانه و میان‌برهای سریع.",
+    "goToShelf": "برو به قفسه",
+    "readerFallback": "خواننده",
+    "stats": {
+      "aria": "وضعیت سریع",
+      "streakCurrent": {
+        "label": "Streak فعلی",
+        "short": "Streak",
+        "suffix": "روز"
+      },
+      "streakLongest": {
+        "label": "بیشینهٔ Streak",
+        "short": "رکورد",
+        "suffix": "روز"
+      },
+      "activeDays": {
+        "label": "روز فعال",
+        "short": "فعال",
+        "suffix": "روز"
+      },
+      "readingCount": {
+        "label": "در حال خواندن",
+        "short": "خواندن",
+        "suffix": "کتاب"
+      },
+      "entriesCount": {
+        "label": "یادداشت‌ها",
+        "short": "یادداشت",
+        "suffix": "مورد"
+      },
+      "challengesActive": {
+        "label": "چالش فعال",
+        "short": "چالش",
+        "suffix": "مورد"
+      }
+    },
+    "quick": {
+      "aria": "دسترسی سریع",
+      "title": "دسترسی سریع",
+      "subtitle": "میان‌بر به بخش‌هایی که بیشتر به کار می‌آیند.",
+      "vocabulary": {
+        "title": "فلش‌کارت‌ها",
+        "subtitle": "مرور واژه‌ها",
+        "countLabel": "واژه"
+      },
+      "challenges": {
+        "title": "چالش‌ها",
+        "subtitle": "هدف‌های مطالعه",
+        "countLabel": "فعال"
+      },
+      "reading": {
+        "title": "در حال خواندن",
+        "subtitle": "ادامه از قفسه",
+        "countLabel": "کتاب"
+      }
+    },
+    "heatmap": {
+      "aria": "نقشه فعالیت",
+      "filterAria": "فیلتر نوع فعالیت",
+      "title": "نقشهٔ فعالیت",
+      "streakLine": "هر مربع یک روز است. Streak فعلی:",
+      "days": "روز",
+      "record": "رکورد",
+      "low": "کم",
+      "high": "زیاد",
+      "noActivity": "بدون فعالیت",
+      "activityCount": "{{count}} فعالیت",
+      "activityWithParts": "{{count}} فعالیت — {{parts}}",
+      "partEntries": "{{count}} یادداشت",
+      "partChallenges": "{{count}} چالش",
+      "partReading": "{{count}} مطالعه",
+      "cellAria": "{{date}}: {{count}} فعالیت",
+      "placeholder": "یک روز را لمس کن یا نشانگر را روی آن بگذار",
+      "filters": {
+        "all": "همه",
+        "entries": "یادداشت",
+        "challenges": "چالش",
+        "reading": "مطالعه"
+      },
+      "types": {
+        "entries": "یادداشت",
+        "challenges": "چالش",
+        "reading": "مطالعه"
+      },
+      "weekdays": {
+        "sat": "ش",
+        "sun": "ی",
+        "mon": "د",
+        "tue": "س",
+        "wed": "چ",
+        "thu": "پ",
+        "fri": "ج"
+      }
+    },
+    "vibe": {
+      "aria": "گراف شخصیت و وایب مطالعاتی",
+      "chartAria": "گراف شخصیت مطالعاتی",
+      "title": "گراف شخصیت",
+      "subtitle": "مود و ژانر مطالعاتی‌ات با هر کتاب جابه‌جا می‌شود.",
+      "pendingHeadline": "در صف تحلیل…",
+      "emptyHeadline": "هنوز شکل نگرفته",
+      "emptyBody": "اولین کتاب را به قفسه اضافه کن تا رادار شخصیتت زنده شود.",
+      "pendingBody": "کتاب روی قفسه‌ات هست؛ با یک کلیک وایب را بساز.",
+      "analyze": "تحلیل وایب",
+      "analyzing": "در حال تحلیل…",
+      "analyzeFailed": "تحلیل وایب ناموفق بود.",
+      "addBook": "افزودن کتاب",
+      "now": "الان",
+      "favorite": "محبوب",
+      "genreMixAria": "ترکیب ژانر",
+      "percent": "{{value}}٪",
+      "recentChanges": "تغییرات اخیر",
+      "noLogs": "هنوز لاگی نیست.",
+      "bookFallback": "کتاب"
+    }
+  }
+}

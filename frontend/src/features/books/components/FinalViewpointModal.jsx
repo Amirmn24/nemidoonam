@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 /**
  * پاپ‌آپ ثبت دیدگاه پایانی — همیشه final_viewpoint؛ متن یا ویس؛ بدون شماره صفحه.
@@ -10,6 +11,7 @@ export default function FinalViewpointModal({
   onSubmit,
   onClose,
 }) {
+  const { t } = useTranslation()
   const [media, setMedia] = useState('text')
   const [text, setText] = useState('')
   const [recording, setRecording] = useState(false)
@@ -62,15 +64,15 @@ export default function FinalViewpointModal({
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
         setAudioBlob(blob)
         setAudioUrl(URL.createObjectURL(blob))
-        stream.getTracks().forEach((t) => t.stop())
+        stream.getTracks().forEach((track) => track.stop())
       }
       mediaRecorderRef.current = recorder
       recorder.start()
       setRecording(true)
       setTimer(0)
-      timerRef.current = setInterval(() => setTimer((t) => t + 1), 1000)
+      timerRef.current = setInterval(() => setTimer((n) => n + 1), 1000)
     } catch {
-      setLocalError('دسترسی به میکروفون ممکن نشد.')
+      setLocalError(t('api.micDenied'))
     }
   }
 
@@ -104,31 +106,27 @@ export default function FinalViewpointModal({
       <div className="book-modal-sheet final-viewpoint-sheet">
         <div className="book-modal-head">
           <div>
-            <p className="eyebrow">دیدگاه پایانی</p>
-            <h2 id="final-viewpoint-title">تحلیل آخرت از این کتاب چیه؟</h2>
+            <p className="eyebrow">{t('books.finalModal.eyebrow')}</p>
+            <h2 id="final-viewpoint-title">{t('books.finalModal.title')}</h2>
           </div>
         </div>
         <p className="final-viewpoint-hint">
-          {bookTitle ? (
-            <>
-              برای «{bookTitle}» یک دیدگاه پایانی ثبت کن؛ عمومی می‌شود و قفل دیدن دیدگاه دیگران باز می‌شود.
-            </>
-          ) : (
-            <>یک دیدگاه پایانی ثبت کن؛ عمومی می‌شود و قفل دیدن دیدگاه دیگران باز می‌شود.</>
-          )}
+          {bookTitle
+            ? t('books.finalModal.hintWithTitle', { title: bookTitle })
+            : t('books.finalModal.hint')}
         </p>
 
         {localError ? <p className="form-errors">{localError}</p> : null}
 
         <form onSubmit={handleSubmit}>
-          <div className="choice-grid final-media-choices" role="group" aria-label="نوع محتوا">
+          <div className="choice-grid final-media-choices" role="group" aria-label={t('books.finalModal.mediaAria')}>
             <button
               type="button"
               className={`choice-card${media === 'text' ? ' is-active' : ''}`}
               disabled={busy || recording}
               onClick={() => setMedia('text')}
             >
-              متن
+              {t('books.media.text')}
             </button>
             <button
               type="button"
@@ -136,20 +134,20 @@ export default function FinalViewpointModal({
               disabled={busy || recording}
               onClick={() => setMedia('voice')}
             >
-              ویس
+              {t('books.media.voice')}
             </button>
           </div>
 
           {media === 'text' ? (
             <div className="field">
-              <label htmlFor="final-viewpoint-text">متن دیدگاه</label>
+              <label htmlFor="final-viewpoint-text">{t('books.finalModal.textLabel')}</label>
               <textarea
                 id="final-viewpoint-text"
                 className="field-textarea"
                 rows={5}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="حس نهایی، تحلیل، یا حرفی که بعد از تمام شدن کتاب ماند…"
+                placeholder={t('books.finalModal.textPlaceholder')}
                 maxLength={4000}
                 required
                 autoFocus
@@ -165,7 +163,11 @@ export default function FinalViewpointModal({
                   disabled={busy}
                   onClick={recording ? stopRecording : startRecording}
                 >
-                  {recording ? 'توقف' : audioBlob ? 'ضبط دوباره' : 'ضبط ویس'}
+                  {recording
+                    ? t('app.stop')
+                    : audioBlob
+                      ? t('books.finalModal.recordAgain')
+                      : t('books.finalModal.recordVoice')}
                 </button>
                 <span>{`${String(Math.floor(timer / 60)).padStart(2, '0')}:${String(timer % 60).padStart(2, '0')}`}</span>
               </div>
@@ -175,10 +177,10 @@ export default function FinalViewpointModal({
 
           <div className="form-actions">
             <button type="submit" className="btn btn-primary" disabled={!canSubmit}>
-              {busy ? 'در حال ثبت…' : 'ثبت دیدگاه پایانی'}
+              {busy ? t('app.submitting') : t('books.finalModal.submit')}
             </button>
             <button type="button" className="btn btn-ghost" disabled={busy || recording} onClick={onClose}>
-              بعداً
+              {t('app.later')}
             </button>
           </div>
         </form>

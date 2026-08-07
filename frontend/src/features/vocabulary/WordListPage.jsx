@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { vocabularyApi } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
 
 export default function WordListPage() {
+  const { t } = useTranslation()
   const { showToast } = useAuth()
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
@@ -40,9 +42,9 @@ export default function WordListPage() {
   }
 
   const onDelete = async (id) => {
-    if (!window.confirm('واژه حذف شود؟')) return
+    if (!window.confirm(t('vocabulary.list.confirmDelete'))) return
     await vocabularyApi.remove(id)
-    showToast('حذف شد.')
+    showToast(t('app.deleted'))
     await load()
   }
 
@@ -52,28 +54,28 @@ export default function WordListPage() {
   }
 
   if (error) return <p className="form-errors">{error}</p>
-  if (!data) return <p>در حال بارگذاری…</p>
+  if (!data) return <p>{t('app.loading')}</p>
 
   return (
     <div className="page-vocabulary">
       <section className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">واژه‌نامه</p>
-          <h1>فلش‌کارت‌های تو</h1>
+          <p className="eyebrow">{t('vocabulary.list.eyebrow')}</p>
+          <h1>{t('vocabulary.list.title')}</h1>
           <div className="cluster">
             <Link to="/vocabulary/new" className="btn btn-primary btn-lg">
-              واژه جدید
+              {t('vocabulary.list.newWord')}
             </Link>
           </div>
         </div>
         <div className="hero-stats">
           <div>
             <strong>{data.total_count}</strong>
-            <span>واژه</span>
+            <span>{t('vocabulary.list.statWords')}</span>
           </div>
           <div>
             <strong>{data.with_audio_count}</strong>
-            <span>با تلفظ</span>
+            <span>{t('vocabulary.list.statWithAudio')}</span>
           </div>
         </div>
       </section>
@@ -83,16 +85,16 @@ export default function WordListPage() {
           <input
             name="q"
             className="field-input"
-            placeholder="جستجو در واژه یا معنی…"
+            placeholder={t('vocabulary.list.searchPlaceholder')}
             defaultValue={q}
           />
         </form>
 
         {data.results.length === 0 ? (
           <div className="empty-state">
-            <h3>واژه‌ای نیست</h3>
+            <h3>{t('vocabulary.list.emptyTitle')}</h3>
             <Link to="/vocabulary/new" className="btn btn-secondary">
-              افزودن
+              {t('vocabulary.list.add')}
             </Link>
           </div>
         ) : (
@@ -108,16 +110,16 @@ export default function WordListPage() {
                     className="flashcard-face flashcard-front"
                     onClick={() => setFlipped((f) => ({ ...f, [word.id]: !f[word.id] }))}
                   >
-                    <span className="flashcard-kicker">واژه</span>
+                    <span className="flashcard-kicker">{t('vocabulary.list.termKicker')}</span>
                     <strong className="flashcard-term">{word.term}</strong>
-                    <span className="flashcard-hint">برای معنی ضربه بزن</span>
+                    <span className="flashcard-hint">{t('vocabulary.list.tapForMeaning')}</span>
                   </button>
                   <button
                     type="button"
                     className="flashcard-face flashcard-back"
                     onClick={() => setFlipped((f) => ({ ...f, [word.id]: !f[word.id] }))}
                   >
-                    <span className="flashcard-kicker">معنی</span>
+                    <span className="flashcard-kicker">{t('vocabulary.list.meaningKicker')}</span>
                     <p className="flashcard-meaning">{word.meaning}</p>
                   </button>
                 </div>
@@ -128,7 +130,7 @@ export default function WordListPage() {
                       className="flashcard-action"
                       onClick={() => setUsageModal(word)}
                     >
-                      کاربرد
+                      {t('vocabulary.list.usage')}
                     </button>
                   ) : null}
                   {word.has_audio ? (
@@ -137,18 +139,18 @@ export default function WordListPage() {
                       className="flashcard-action"
                       onClick={() => playAudio(word.audio_url)}
                     >
-                      پخش
+                      {t('vocabulary.list.play')}
                     </button>
                   ) : null}
                   <Link to={`/vocabulary/${word.id}/edit`} className="flashcard-action">
-                    ویرایش
+                    {t('app.edit')}
                   </Link>
                   <button
                     type="button"
                     className="flashcard-action is-danger"
                     onClick={() => onDelete(word.id)}
                   >
-                    حذف
+                    {t('app.delete')}
                   </button>
                 </div>
               </article>
@@ -162,7 +164,7 @@ export default function WordListPage() {
           <div className="vocab-modal-backdrop" onClick={() => setUsageModal(null)} />
           <div className="vocab-modal-sheet">
             <button type="button" onClick={() => setUsageModal(null)}>
-              بستن
+              {t('app.close')}
             </button>
             <h3>{usageModal.term}</h3>
             <p>{usageModal.usage}</p>

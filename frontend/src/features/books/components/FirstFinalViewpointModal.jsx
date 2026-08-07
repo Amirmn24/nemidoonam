@@ -1,8 +1,11 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 /** پاپ‌آپ اولین دیدگاه پایانی عمومی برای یک کتاب کاتالوگ */
 export default function FirstFinalViewpointModal({ open, bookTitle, bookId, onClose }) {
+  const { t } = useTranslation()
+
   useEffect(() => {
     if (!open) return undefined
     const prev = document.body.style.overflow
@@ -25,27 +28,22 @@ export default function FirstFinalViewpointModal({ open, bookTitle, bookId, onCl
       <div className="book-modal-sheet first-final-sheet">
         <div className="book-modal-head">
           <div>
-            <p className="eyebrow">اولین ردپا</p>
-            <h2 id="first-final-title">اولین دیدگاه این کتاب از توست</h2>
+            <p className="eyebrow">{t('books.firstFinal.eyebrow')}</p>
+            <h2 id="first-final-title">{t('books.firstFinal.title')}</h2>
           </div>
         </div>
         <p className="first-final-copy">
-          {bookTitle ? (
-            <>
-              اولین دیدگاه و تحلیل عمومی برای «{bookTitle}» را تو ثبت کردی. بقیه بعداً می‌توانند دیدگاه تو را
-              ببینند.
-            </>
-          ) : (
-            <>اولین دیدگاه و تحلیل عمومی این کتاب را تو ثبت کردی.</>
-          )}
+          {bookTitle
+            ? t('books.firstFinal.bodyWithTitle', { title: bookTitle })
+            : t('books.firstFinal.body')}
         </p>
         <div className="form-actions">
           <button type="button" className="btn btn-primary" onClick={onClose}>
-            عالیه
+            {t('books.firstFinal.great')}
           </button>
           {bookId ? (
             <Link to={`/books/${bookId}`} className="btn btn-ghost" onClick={onClose}>
-              برو به کتاب
+              {t('books.firstFinal.goToBook')}
             </Link>
           ) : null}
         </div>

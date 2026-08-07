@@ -1,8 +1,15 @@
+import i18n from '../i18n'
+import { normalizeLocale } from '../i18n/config'
+
 const API_BASE = '/api/v1'
 
 function getCookie(name) {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`))
   return match ? decodeURIComponent(match[1]) : null
+}
+
+function acceptLanguage() {
+  return normalizeLocale(i18n.language)
 }
 
 let csrfReady = false
@@ -15,8 +22,9 @@ export async function ensureCsrf() {
   if (csrfReady && getCookie('csrftoken')) return getCookie('csrftoken')
   const res = await fetch(`${API_BASE}/auth/csrf/`, {
     credentials: 'include',
+    headers: { 'Accept-Language': acceptLanguage() },
   })
-  if (!res.ok) throw new Error('نتوانستیم CSRF را بگیریم.')
+  if (!res.ok) throw new Error(i18n.t('api.csrfFailed'))
   const data = await res.json()
   csrfReady = true
   return data.csrfToken || getCookie('csrftoken')
@@ -48,6 +56,10 @@ export async function api(path, options = {}) {
   const headers = { ...(options.headers || {}) }
   const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
 
+  if (!headers['Accept-Language']) {
+    headers['Accept-Language'] = acceptLanguage()
+  }
+
   if (!isFormData && options.body && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json'
   }
@@ -70,7 +82,7 @@ export async function api(path, options = {}) {
 
   const data = await parseBody(res)
   if (!res.ok) {
-    throw new ApiError(data?.detail || 'خطایی رخ داد.', {
+    throw new ApiError(data?.detail || i18n.t('api.genericError'), {
       status: res.status,
       errors: data?.errors || {},
       payload: data,
@@ -87,11 +99,14 @@ export const authApi = {
     const res = await fetch(`${API_BASE}/auth/logout/`, {
       method: 'POST',
       credentials: 'include',
-      headers: { Accept: 'application/json' },
+      headers: {
+        Accept: 'application/json',
+        'Accept-Language': acceptLanguage(),
+      },
     })
     if (!res.ok && res.status !== 204) {
       const data = await parseBody(res)
-      throw new ApiError(data?.detail || 'خروج ناموفق بود.', {
+      throw new ApiError(data?.detail || i18n.t('api.logoutFailed'), {
         status: res.status,
         errors: data?.errors || {},
         payload: data,

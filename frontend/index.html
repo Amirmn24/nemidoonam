@@ -10,17 +10,27 @@
     <script>
       (function () {
         try {
-          var key = 'vyrvona.theme'
-          var stored = localStorage.getItem(key)
+          var themeKey = 'vyrvona.theme'
+          var storedTheme = localStorage.getItem(themeKey)
           var theme =
-            stored === 'dark' || stored === 'light'
-              ? stored
+            storedTheme === 'dark' || storedTheme === 'light'
+              ? storedTheme
               : window.matchMedia('(prefers-color-scheme: dark)').matches
                 ? 'dark'
                 : 'light'
           document.documentElement.setAttribute('data-theme', theme)
         } catch (e) {
           document.documentElement.setAttribute('data-theme', 'light')
+        }
+        try {
+          var localeKey = 'vyrvona.locale'
+          var storedLocale = localStorage.getItem(localeKey)
+          var locale = storedLocale === 'en' || storedLocale === 'fa' ? storedLocale : 'fa'
+          document.documentElement.lang = locale === 'en' ? 'en' : 'fa'
+          document.documentElement.dir = locale === 'en' ? 'ltr' : 'rtl'
+        } catch (e) {
+          document.documentElement.lang = 'fa'
+          document.documentElement.dir = 'rtl'
         }
       })()
     </script>

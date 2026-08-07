@@ -1,7 +1,10 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 /** تأیید آگاهانهٔ اتمام کتاب قبل از تیک پایان */
 export default function FinishConfirmModal({ open, busy, bookTitle, onConfirm, onCancel }) {
+  const { t } = useTranslation()
+
   useEffect(() => {
     if (!open) return undefined
     const prev = document.body.style.overflow
@@ -24,26 +27,21 @@ export default function FinishConfirmModal({ open, busy, bookTitle, onConfirm, o
       <div className="book-modal-sheet finish-confirm-sheet">
         <div className="book-modal-head">
           <div>
-            <p className="eyebrow">اتمام کتاب</p>
-            <h2 id="finish-confirm-title">واقعاً تموم شده؟</h2>
+            <p className="eyebrow">{t('books.finishConfirm.eyebrow')}</p>
+            <h2 id="finish-confirm-title">{t('books.finishConfirm.title')}</h2>
           </div>
         </div>
         <p className="finish-confirm-copy">
-          {bookTitle ? (
-            <>
-              «{bookTitle}» را به‌عنوان تمام‌شده علامت بزنم؟ یادداشت‌های مهروموم باز می‌شوند و بعد می‌توانی
-              دیدگاه پایانی ثبت کنی.
-            </>
-          ) : (
-            <>کتاب را تمام‌شده علامت بزنم؟ یادداشت‌های مهروموم باز می‌شوند.</>
-          )}
+          {bookTitle
+            ? t('books.finishConfirm.bodyWithTitle', { title: bookTitle })
+            : t('books.finishConfirm.body')}
         </p>
         <div className="form-actions">
           <button type="button" className="btn btn-primary" disabled={busy} onClick={onConfirm}>
-            {busy ? 'در حال ثبت…' : 'بله، تمام شد'}
+            {busy ? t('app.submitting') : t('books.finishConfirm.confirm')}
           </button>
           <button type="button" className="btn btn-ghost" disabled={busy} onClick={onCancel}>
-            نه، هنوز نه
+            {t('books.finishConfirm.cancel')}
           </button>
         </div>
       </div>

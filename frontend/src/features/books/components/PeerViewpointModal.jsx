@@ -1,7 +1,10 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 /** نمایش یک دیدگاه پایانی تصادفی از دیگران (متن یا ویس) */
 export default function PeerViewpointModal({ open, busy, viewpoint, empty, error, onRefresh, onClose }) {
+  const { t } = useTranslation()
+
   useEffect(() => {
     if (!open) return undefined
     const prev = document.body.style.overflow
@@ -26,23 +29,23 @@ export default function PeerViewpointModal({ open, busy, viewpoint, empty, error
       <div className="book-modal-sheet peer-viewpoint-sheet">
         <div className="book-modal-head">
           <div>
-            <p className="eyebrow">دیدگاه دیگران</p>
-            <h2 id="peer-viewpoint-title">یک تحلیل تصادفی</h2>
+            <p className="eyebrow">{t('books.peer.eyebrow')}</p>
+            <h2 id="peer-viewpoint-title">{t('books.peer.title')}</h2>
           </div>
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose} aria-label="بستن">
-            بستن
+          <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose} aria-label={t('app.close')}>
+            {t('app.close')}
           </button>
         </div>
 
         {error ? <p className="form-errors">{error}</p> : null}
 
         {busy && !viewpoint && !empty ? (
-          <p className="peer-viewpoint-loading">در حال آوردن یک دیدگاه…</p>
+          <p className="peer-viewpoint-loading">{t('books.peer.loading')}</p>
         ) : null}
 
         {empty ? (
           <div className="peer-viewpoint-empty">
-            <p>هنوز کسی غیر از تو دیدگاه پایانی عمومی برای این کتاب ثبت نکرده.</p>
+            <p>{t('books.peer.empty')}</p>
           </div>
         ) : null}
 
@@ -57,7 +60,7 @@ export default function PeerViewpointModal({ open, busy, viewpoint, empty, error
               </blockquote>
             ) : null}
             <figcaption>
-              <span>{viewpoint.author_label || 'خواننده‌ای دیگر'}</span>
+              <span>{viewpoint.author_label || t('books.peer.authorFallback')}</span>
               {viewpoint.entry_date ? <time dateTime={viewpoint.entry_date}>{viewpoint.entry_date}</time> : null}
             </figcaption>
           </figure>
@@ -65,10 +68,10 @@ export default function PeerViewpointModal({ open, busy, viewpoint, empty, error
 
         <div className="form-actions">
           <button type="button" className="btn btn-secondary" disabled={busy || empty} onClick={onRefresh}>
-            {busy ? '…' : 'یکی دیگر'}
+            {busy ? t('books.peer.busyEllipsis') : t('books.peer.another')}
           </button>
           <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
-            بستن
+            {t('app.close')}
           </button>
         </div>
       </div>

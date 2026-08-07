@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { booksApi, ApiError } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
 import BookAddProgressOverlay from './components/BookAddProgressOverlay'
@@ -14,6 +15,7 @@ function useDebounced(value, ms = 280) {
 }
 
 function SuggestItem({ item, onPick }) {
+  const { t } = useTranslation()
   if (item.on_shelf && item.shelf_id) {
     return (
       <li>
@@ -22,7 +24,7 @@ function SuggestItem({ item, onPick }) {
             <strong>{item.title || item.author}</strong>
             {item.title ? <small>{item.author} · {item.source_label || ''}</small> : null}
           </span>
-          <span className="book-suggest-badge">باز کردن</span>
+          <span className="book-suggest-badge">{t('books.form.open')}</span>
         </Link>
       </li>
     )
@@ -34,7 +36,7 @@ function SuggestItem({ item, onPick }) {
           <strong>{item.title || item.author}</strong>
           {item.title ? <small>{item.author} · {item.source_label || ''}</small> : null}
         </span>
-        <span className="book-suggest-badge">انتخاب</span>
+        <span className="book-suggest-badge">{t('books.form.pick')}</span>
       </button>
     </li>
   )
@@ -60,7 +62,10 @@ async function waitForSetup(shelfId, onUpdate, { timeoutMs = 180000 } = {}) {
   })
 }
 
+const STATUS_VALUES = ['want_to_read', 'reading', 'paused', 'finished', 'abandoned']
+
 export default function BookFormPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
@@ -179,11 +184,11 @@ export default function BookFormPage() {
           setJourneySetup({ ...saved.setup, ready: true, current_step: 'done' })
           await sleep(500)
         }
-        showToast('کتاب به قفسه اضافه شد.', 'success')
+        showToast(t('books.form.addedToast'), 'success')
         navigate(`/books/${saved.id}`)
         return
       }
-      showToast('کتاب به‌روز شد.', 'success')
+      showToast(t('books.form.updatedToast'), 'success')
       navigate(`/books/${saved.id}`)
     } catch (err) {
       setJourneyOpen(false)
@@ -193,14 +198,14 @@ export default function BookFormPage() {
         setError(err.message)
         setSimilar(err.payload?.similar_matches || [])
       } else {
-        setError('ذخیره ناموفق بود.')
+        setError(t('app.saveFailed'))
       }
     } finally {
       setBusy(false)
     }
   }
 
-  if (loading) return <p>در حال بارگذاری…</p>
+  if (loading) return <p>{t('app.loading')}</p>
 
   return (
     <div className="page-book-form">
@@ -212,21 +217,21 @@ export default function BookFormPage() {
       />
       <section className="section form-page">
         <div className="page-toolbar">
-          <h1>{isEdit ? 'ویرایش کتاب' : 'افزودن کتاب'}</h1>
+          <h1>{isEdit ? t('books.form.editTitle') : t('books.form.addTitle')}</h1>
         </div>
         {error ? <div className="form-errors">{error}</div> : null}
         {similar.length > 0 ? (
           <div className="book-dup-banner is-similar">
-            <p>کتاب‌های شبیه پیدا شد:</p>
+            <p>{t('books.form.similarFound')}</p>
             <ul>
               {similar.map((m) => (
                 <li key={m.id}>
                   <strong>{m.title}</strong> — {m.author}{' '}
                   {m.on_shelf ? (
-                    <Link to={`/books/${m.shelf_id}`}>برو به قفسه</Link>
+                    <Link to={`/books/${m.shelf_id}`}>{t('books.form.goToShelf')}</Link>
                   ) : (
                     <button type="button" className="btn btn-secondary" onClick={() => fillFromSuggestion(m)}>
-                      انتخاب از کتابخانه
+                      {t('books.form.pickFromLibrary')}
                     </button>
                   )}
                 </li>
@@ -239,11 +244,11 @@ export default function BookFormPage() {
           <input type="hidden" name="catalog_book_id" value={catalogId} readOnly />
           <div className="form-step">
             <div className="form-step-label">
-              <span className="form-step-num">۱</span> هویت کتاب
+              <span className="form-step-num">1</span> {t('books.form.stepIdentity')}
             </div>
             <div className="form-grid two">
               <div className="field book-suggest-field">
-                <label>عنوان</label>
+                <label>{t('books.form.title')}</label>
                 <input
                   name="title"
                   className="field-input"
@@ -270,7 +275,7 @@ export default function BookFormPage() {
                 ) : null}
               </div>
               <div className="field book-suggest-field">
-                <label>نویسنده</label>
+                <label>{t('books.form.author')}</label>
                 <input
                   name="author"
                   className="field-input"
@@ -297,9 +302,9 @@ export default function BookFormPage() {
                           >
                             <span className="book-suggest-copy">
                               <strong>{item.author}</strong>
-                              <small>{item.source_label || 'نویسنده ثبت‌شده'}</small>
+                              <small>{item.source_label || t('books.form.registeredAuthor')}</small>
                             </span>
-                            <span className="book-suggest-badge">انتخاب</span>
+                            <span className="book-suggest-badge">{t('books.form.pick')}</span>
                           </button>
                         </li>
                       ))}
@@ -310,7 +315,7 @@ export default function BookFormPage() {
             </div>
             {matchResults.length > 0 ? (
               <div className="book-suggest-panel is-match" data-book-suggest>
-                <p className="book-suggest-hint">موارد شبیه در کتابخانه:</p>
+                <p className="book-suggest-hint">{t('books.form.matchHint')}</p>
                 <ul data-suggest-list="match">
                   {matchResults.map((item) => (
                     <SuggestItem key={`m-${item.id}`} item={item} onPick={fillFromSuggestion} />
@@ -322,11 +327,11 @@ export default function BookFormPage() {
 
           <div className="form-step">
             <div className="form-step-label">
-              <span className="form-step-num">۲</span> پیشرفت و جلد
+              <span className="form-step-num">2</span> {t('books.form.stepProgress')}
             </div>
             <div className="form-grid two">
               <div className="field">
-                <label>تعداد صفحات</label>
+                <label>{t('books.form.totalPages')}</label>
                 <input
                   name="total_pages"
                   type="number"
@@ -338,7 +343,7 @@ export default function BookFormPage() {
                 />
               </div>
               <div className="field">
-                <label>صفحه فعلی</label>
+                <label>{t('books.form.currentPage')}</label>
                 <input
                   name="current_page"
                   type="number"
@@ -348,17 +353,17 @@ export default function BookFormPage() {
                 />
               </div>
               <div className="field">
-                <label>وضعیت</label>
+                <label>{t('books.form.status')}</label>
                 <select name="status" className="field-select" defaultValue={book?.status || 'want_to_read'}>
-                  <option value="want_to_read">می‌خواهم بخوانم</option>
-                  <option value="reading">در حال خواندن</option>
-                  <option value="paused">متوقف شده</option>
-                  <option value="finished">تمام شده</option>
-                  <option value="abandoned">رها شده</option>
+                  {STATUS_VALUES.map((value) => (
+                    <option key={value} value={value}>
+                      {t(`books.status.${value}`)}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="field">
-                <label>جلد</label>
+                <label>{t('books.form.cover')}</label>
                 <input name="cover" type="file" accept="image/*" className="field-file" />
               </div>
             </div>
@@ -366,7 +371,7 @@ export default function BookFormPage() {
 
           <div className="form-step">
             <div className="form-step-label">
-              <span className="form-step-num">۳</span> یادداشت کلی
+              <span className="form-step-num">3</span> {t('books.form.stepNotes')}
             </div>
             <div className="field full">
               <textarea name="notes" className="field-textarea" rows={3} defaultValue={book?.notes || ''} />
@@ -375,16 +380,16 @@ export default function BookFormPage() {
 
           {similar.length > 0 ? (
             <label className="book-confirm-similar">
-              <input type="checkbox" name="confirm_similar" /> مطمئنم این کتاب جدید است و با موارد پیشنهادی فرق دارد
+              <input type="checkbox" name="confirm_similar" /> {t('books.form.confirmSimilar')}
             </label>
           ) : null}
 
           <div className="form-actions">
             <button type="submit" className="btn btn-primary" disabled={busy}>
-              ذخیره
+              {t('app.save')}
             </button>
             <Link to={isEdit ? `/books/${id}` : '/books'} className="btn btn-ghost">
-              انصراف
+              {t('app.cancel')}
             </Link>
           </div>
         </form>

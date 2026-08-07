@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { booksApi } from '../../shared/api'
+import { labelFromCode } from '../../i18n/labels'
 import { RatingBadge } from './components/BookRatingPanel'
 
 export default function BookListPage() {
+  const { t } = useTranslation()
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [params, setParams] = useSearchParams()
@@ -13,8 +16,8 @@ export default function BookListPage() {
     booksApi
       .list()
       .then(setData)
-      .catch((err) => setError(err.message || 'خطا'))
-  }, [])
+      .catch((err) => setError(err.message || t('app.error')))
+  }, [t])
 
   const filtered = useMemo(() => {
     if (!data) return []
@@ -30,18 +33,18 @@ export default function BookListPage() {
   }
 
   if (error) return <p className="form-errors">{error}</p>
-  if (!data) return <p>در حال بارگذاری قفسه…</p>
+  if (!data) return <p>{t('books.list.loading')}</p>
 
   return (
     <div className="page-home">
       <section className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">قفسه شخصی</p>
-          <h1>کتاب‌هایت اینجان</h1>
-          <p>وضعیت‌ها، پیشرفت و یادداشت‌های هر ورق را همین‌جا نگه دار.</p>
+          <p className="eyebrow">{t('books.list.eyebrow')}</p>
+          <h1>{t('books.list.title')}</h1>
+          <p>{t('books.list.subtitle')}</p>
           <div className="cluster">
             <Link to="/books/new" className="btn btn-primary btn-lg">
-              افزودن کتاب
+              {t('books.list.addBook')}
             </Link>
           </div>
         </div>
@@ -49,15 +52,15 @@ export default function BookListPage() {
           <div className="hero-stats">
             <div>
               <strong>{data.total_count}</strong>
-              <span>کتاب</span>
+              <span>{t('books.list.statBooks')}</span>
             </div>
             <div>
               <strong>{data.reading_count}</strong>
-              <span>در حال خواندن</span>
+              <span>{t('books.list.statReading')}</span>
             </div>
             <div>
               <strong>{data.finished_count}</strong>
-              <span>تمام‌شده</span>
+              <span>{t('books.list.statFinished')}</span>
             </div>
           </div>
         ) : null}
@@ -65,11 +68,11 @@ export default function BookListPage() {
 
       <section className="section library" id="library">
         <div className="page-toolbar">
-          <h2>قفسه</h2>
+          <h2>{t('books.list.shelf')}</h2>
         </div>
         <div className="filter-bar">
           <button type="button" className={`chip${!active ? ' is-active' : ''}`} onClick={() => setStatus('')}>
-            همه
+            {t('app.all')}
           </button>
           {data.statuses.map((s) => (
             <button
@@ -78,17 +81,17 @@ export default function BookListPage() {
               className={`chip${active === s.value ? ' is-active' : ''}`}
               onClick={() => setStatus(s.value)}
             >
-              {s.label}
+              {labelFromCode('books.status', s.value, s.label)}
             </button>
           ))}
         </div>
 
         {filtered.length === 0 ? (
           <div className="empty-state">
-            <h3>کتابی با این وضعیت نیست</h3>
-            <p>فیلتر را عوض کن یا کتاب جدیدی اضافه کن.</p>
+            <h3>{t('books.list.emptyTitle')}</h3>
+            <p>{t('books.list.emptyBody')}</p>
             <button type="button" className="btn btn-secondary" onClick={() => setStatus('')}>
-              نمایش همه
+              {t('books.list.showAll')}
             </button>
           </div>
         ) : (
@@ -102,11 +105,17 @@ export default function BookListPage() {
                   <h3>{book.title}</h3>
                   <p>{book.author}</p>
                   <div className="cluster">
-                    <span className={`status status-${book.status}`}>{book.status_display}</span>
+                    <span className={`status status-${book.status}`}>
+                      {labelFromCode('books.status', book.status, book.status_display)}
+                    </span>
                     <RatingBadge score={book.overall_score} />
                   </div>
                   <div className="book-progress-label">
-                    {book.current_page} / {book.total_pages} · {book.progress_percent}%
+                    {t('books.list.progressLabel', {
+                      current: book.current_page,
+                      total: book.total_pages,
+                      percent: book.progress_percent,
+                    })}
                   </div>
                   <div className="progress">
                     <span style={{ width: `${book.progress_percent}%` }} />

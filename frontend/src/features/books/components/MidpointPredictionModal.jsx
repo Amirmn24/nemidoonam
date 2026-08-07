@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 /** پاپ‌آپ اولین عبور از نیمهٔ کتاب — پیش‌بینی پایان (مهروموم می‌شود) */
 export default function MidpointPredictionModal({ open, busy, onSubmit, onDismiss }) {
+  const { t } = useTranslation()
   const [text, setText] = useState('')
 
   useEffect(() => {
@@ -25,13 +27,11 @@ export default function MidpointPredictionModal({ open, busy, onSubmit, onDismis
       <div className="book-modal-sheet midpoint-sheet">
         <div className="book-modal-head">
           <div>
-            <p className="eyebrow">نیمه‌راه کتاب</p>
-            <h2 id="midpoint-title">به‌نظرت آخر کتاب چی می‌شه؟</h2>
+            <p className="eyebrow">{t('books.midpoint.eyebrow')}</p>
+            <h2 id="midpoint-title">{t('books.midpoint.title')}</h2>
           </div>
         </div>
-        <p className="midpoint-hint">
-          حدست را بنویس؛ تا پایان کتاب مهروموم می‌ماند و بعد از اتمام دوباره می‌بینی‌اش.
-        </p>
+        <p className="midpoint-hint">{t('books.midpoint.hint')}</p>
         <form
           onSubmit={(e) => {
             e.preventDefault()
@@ -40,24 +40,24 @@ export default function MidpointPredictionModal({ open, busy, onSubmit, onDismis
           }}
         >
           <div className="field">
-            <label htmlFor="midpoint-text">پیش‌بینی پایان</label>
+            <label htmlFor="midpoint-text">{t('books.midpoint.label')}</label>
             <textarea
               id="midpoint-text"
               className="field-textarea"
               rows={5}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="مثلاً فکر می‌کنم قهرمان…"
+              placeholder={t('books.midpoint.placeholder')}
               required
               autoFocus
             />
           </div>
           <div className="form-actions">
             <button type="submit" className="btn btn-primary" disabled={busy || !text.trim()}>
-              مهروموم کن
+              {t('books.midpoint.seal')}
             </button>
             <button type="button" className="btn btn-ghost" disabled={busy} onClick={onDismiss}>
-              فعلاً نه
+              {t('books.midpoint.skip')}
             </button>
           </div>
         </form>

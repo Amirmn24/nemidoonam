@@ -1,23 +1,27 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { labelFromCode } from '../../../i18n/labels'
 
-function entryPreview(entry) {
-  if (entry.kind === 'ending_prediction') return 'پیش‌بینی نیمه‌راه'
-  if (entry.kind === 'final_viewpoint') return 'دیدگاه پایانی'
+function entryPreview(entry, t) {
+  if (entry.kind === 'ending_prediction') return t('books.playlist.previewMidpoint')
+  if (entry.kind === 'final_viewpoint') return t('books.playlist.previewFinal')
   if (entry.text_content) {
-    const t = entry.text_content.trim()
-    return t.length > 48 ? `${t.slice(0, 48)}…` : t
+    const text = entry.text_content.trim()
+    return text.length > 48 ? `${text.slice(0, 48)}…` : text
   }
-  if (entry.media_type === 'voice') return 'یادداشت صوتی'
-  if (entry.media_type === 'image') return 'یادداشت تصویری'
-  return entry.kind_display
+  if (entry.media_type === 'voice') return t('books.playlist.previewVoice')
+  if (entry.media_type === 'image') return t('books.playlist.previewImage')
+  return labelFromCode('books.kind', entry.kind, entry.kind_display)
 }
 
 function PlaylistStage({ entry }) {
+  const { t } = useTranslation()
+
   if (!entry) {
     return (
       <div className="playlist-empty">
-        <h3>هنوز یادداشتی نیست</h3>
-        <p>برای این کتاب دیدگاهی ثبت نشده.</p>
+        <h3>{t('books.playlist.emptyTitle')}</h3>
+        <p>{t('books.playlist.emptyBody')}</p>
       </div>
     )
   }
@@ -25,14 +29,14 @@ function PlaylistStage({ entry }) {
   return (
     <div className={`playlist-stage kind-${entry.kind}`}>
       <div className="playlist-stage-meta">
-        <span className="tag">{entry.kind_display}</span>
-        <span className="tag">{entry.media_type_display}</span>
-        <span className="meta-pill">صفحه {entry.page_number}</span>
+        <span className="tag">{labelFromCode('books.kind', entry.kind, entry.kind_display)}</span>
+        <span className="tag">{labelFromCode('books.media', entry.media_type, entry.media_type_display)}</span>
+        <span className="meta-pill">{t('books.entry.pagePill', { page: entry.page_number })}</span>
         <span className="meta-pill">{entry.entry_date}</span>
-        {entry.is_sealed ? <span className="tag tag-sealed">قبلاً مهروموم</span> : null}
+        {entry.is_sealed ? <span className="tag tag-sealed">{t('books.playlist.wasSealed')}</span> : null}
       </div>
       {entry.kind === 'ending_prediction' ? (
-        <p className="playlist-prediction-banner">پیش‌بینی تو در نیمه‌راه کتاب</p>
+        <p className="playlist-prediction-banner">{t('books.playlist.predictionBanner')}</p>
       ) : null}
       {entry.media_type === 'image' && entry.image_url ? (
         <img src={entry.image_url} alt="" className="playlist-stage-image" />
@@ -47,6 +51,7 @@ function PlaylistStage({ entry }) {
 
 /** پلی‌لیست روایی یادداشت‌ها بعد از اتمام کتاب */
 export default function FinishedBookPlaylist({ entries }) {
+  const { t } = useTranslation()
   const tracks = useMemo(() => entries || [], [entries])
   const [index, setIndex] = useState(0)
 
@@ -66,8 +71,8 @@ export default function FinishedBookPlaylist({ entries }) {
     <section className="playlist-shell" id="playlist">
       <div className="playlist-toolbar">
         <div>
-          <p className="eyebrow">مرور بعد از اتمام</p>
-          <h2>پلی‌لیست یادداشت‌ها</h2>
+          <p className="eyebrow">{t('books.playlist.eyebrow')}</p>
+          <h2>{t('books.playlist.title')}</h2>
         </div>
         {hasTracks ? (
           <div className="playlist-counter">
@@ -82,19 +87,19 @@ export default function FinishedBookPlaylist({ entries }) {
           {hasTracks ? (
             <div className="playlist-controls">
               <button type="button" className="btn btn-ghost" onClick={() => go(-1)}>
-                قبلی
+                {t('books.playlist.prev')}
               </button>
               <button type="button" className="btn btn-secondary" onClick={() => go(1)}>
-                بعدی
+                {t('books.playlist.next')}
               </button>
             </div>
           ) : null}
         </div>
 
         <aside className="playlist-tracks surface surface-muted">
-          <h3>فهرست</h3>
+          <h3>{t('books.playlist.trackList')}</h3>
           {!hasTracks ? (
-            <p className="field-hint">موردی برای پخش نیست.</p>
+            <p className="field-hint">{t('books.playlist.nothingToPlay')}</p>
           ) : (
             <ol className="playlist-track-list">
               {tracks.map((entry, i) => (
@@ -106,10 +111,10 @@ export default function FinishedBookPlaylist({ entries }) {
                   >
                     <span className="playlist-track-num">{String(i + 1).padStart(2, '0')}</span>
                     <span className="playlist-track-copy">
-                      <strong>{entry.kind_display}</strong>
-                      <small>{entryPreview(entry)}</small>
+                      <strong>{labelFromCode('books.kind', entry.kind, entry.kind_display)}</strong>
+                      <small>{entryPreview(entry, t)}</small>
                     </span>
-                    <span className="playlist-track-page">ص {entry.page_number}</span>
+                    <span className="playlist-track-page">{t('books.playlist.pageShort', { page: entry.page_number })}</span>
                   </button>
                 </li>
               ))}

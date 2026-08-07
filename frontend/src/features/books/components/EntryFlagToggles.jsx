@@ -1,5 +1,8 @@
+import { useTranslation } from 'react-i18next'
+
 /** گزینه‌های پرچم دیدگاه: عمومی و مهروموم */
 export default function EntryFlagToggles({ isPublic, isSealed, onPublicChange, onSealedChange, showPublic = true }) {
+  const { t } = useTranslation()
   return (
     <div className="entry-flag-grid">
       {showPublic ? (
@@ -10,8 +13,8 @@ export default function EntryFlagToggles({ isPublic, isSealed, onPublicChange, o
             onChange={(e) => onPublicChange(e.target.checked)}
           />
           <span className="entry-flag-body">
-            <strong>عمومی</strong>
-            <small>برای اشتراک‌گذاری بعدی علامت بزن</small>
+            <strong>{t('books.entry.public')}</strong>
+            <small>{t('books.entry.publicHint')}</small>
           </span>
         </label>
       ) : null}
@@ -22,8 +25,8 @@ export default function EntryFlagToggles({ isPublic, isSealed, onPublicChange, o
           onChange={(e) => onSealedChange(e.target.checked)}
         />
         <span className="entry-flag-body">
-          <strong>مهروموم</strong>
-          <small>تا پایان کتاب دیده و شنیده نمی‌شود</small>
+          <strong>{t('books.entry.sealed')}</strong>
+          <small>{t('books.entry.sealedHint')}</small>
         </span>
       </label>
     </div>

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { vocabularyApi, ApiError } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
 
 export default function WordFormPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
@@ -52,15 +54,15 @@ export default function WordFormPage() {
         setAudioBlob(blob)
         setAudioUrl(URL.createObjectURL(blob))
         setClearAudio(false)
-        stream.getTracks().forEach((t) => t.stop())
+        stream.getTracks().forEach((track) => track.stop())
       }
       mediaRecorderRef.current = recorder
       recorder.start()
       setRecording(true)
       setTimer(0)
-      timerRef.current = setInterval(() => setTimer((t) => t + 1), 1000)
+      timerRef.current = setInterval(() => setTimer((n) => n + 1), 1000)
     } catch {
-      setError('دسترسی به میکروفون ممکن نشد.')
+      setError(t('api.micDenied'))
     }
   }
 
@@ -85,31 +87,31 @@ export default function WordFormPage() {
     try {
       if (isEdit) await vocabularyApi.update(id, fd)
       else await vocabularyApi.create(fd)
-      showToast('واژه ذخیره شد.', 'success')
+      showToast(t('vocabulary.form.savedToast'), 'success')
       navigate('/vocabulary')
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'ذخیره ناموفق بود.')
+      setError(err instanceof ApiError ? err.message : t('app.saveFailed'))
     } finally {
       setBusy(false)
     }
   }
 
-  if (loading) return <p>در حال بارگذاری…</p>
+  if (loading) return <p>{t('app.loading')}</p>
 
   return (
     <div className="page-vocabulary-form">
       <section className="section form-page">
         <div className="page-toolbar">
-          <h1>{isEdit ? 'ویرایش واژه' : 'واژه جدید'}</h1>
+          <h1>{isEdit ? t('vocabulary.form.editTitle') : t('vocabulary.form.newTitle')}</h1>
         </div>
         {error ? <div className="form-errors">{error}</div> : null}
         <form className="form-panel" id="vocab-form" onSubmit={onSubmit}>
           <div className="field">
-            <label>واژه</label>
+            <label>{t('vocabulary.form.term')}</label>
             <input name="term" className="field-input" defaultValue={word?.term || ''} required />
           </div>
           <div className="field">
-            <label>معنی</label>
+            <label>{t('vocabulary.form.meaning')}</label>
             <textarea
               name="meaning"
               className="field-textarea"
@@ -119,7 +121,7 @@ export default function WordFormPage() {
             />
           </div>
           <div className="field">
-            <label>کاربرد</label>
+            <label>{t('vocabulary.form.usage')}</label>
             <textarea
               name="usage"
               className="field-textarea"
@@ -129,14 +131,14 @@ export default function WordFormPage() {
           </div>
 
           <div className="field voice-recorder">
-            <div className="form-step-label">تلفظ</div>
+            <div className="form-step-label">{t('vocabulary.form.pronunciation')}</div>
             <div className="cluster">
               <button
                 type="button"
                 className={`btn btn-record${recording ? ' is-recording' : ''}`}
                 onClick={recording ? stopRecording : startRecording}
               >
-                {recording ? 'توقف' : 'ضبط'}
+                {recording ? t('app.stop') : t('app.record')}
               </button>
               <span>{`${String(Math.floor(timer / 60)).padStart(2, '0')}:${String(timer % 60).padStart(2, '0')}`}</span>
             </div>
@@ -148,17 +150,17 @@ export default function WordFormPage() {
                   checked={clearAudio}
                   onChange={(e) => setClearAudio(e.target.checked)}
                 />{' '}
-                حذف تلفظ فعلی
+                {t('vocabulary.form.clearAudio')}
               </label>
             ) : null}
           </div>
 
           <div className="form-actions">
             <button type="submit" className="btn btn-primary" disabled={busy}>
-              ذخیره
+              {t('app.save')}
             </button>
             <Link to="/vocabulary" className="btn btn-ghost">
-              انصراف
+              {t('app.cancel')}
             </Link>
           </div>
         </form>

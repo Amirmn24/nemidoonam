@@ -1,32 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { formatDate } from '../../../i18n/format'
 
-const TYPE_META = {
-  entries: { label: 'یادداشت', short: 'یادداشت' },
-  challenges: { label: 'چالش', short: 'چالش' },
-  reading: { label: 'مطالعه', short: 'مطالعه' },
-}
-
-const WEEKDAY_LABELS = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'] // Sat → Fri
-
-const FILTERS = [
-  { id: 'all', label: 'همه' },
-  { id: 'entries', label: 'یادداشت' },
-  { id: 'challenges', label: 'چالش' },
-  { id: 'reading', label: 'مطالعه' },
-]
+const TYPE_KEYS = ['entries', 'challenges', 'reading']
+const WEEKDAY_KEYS = ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'] // Sat → Fri
+const FILTER_IDS = ['all', 'entries', 'challenges', 'reading']
 
 function parseISO(iso) {
   const [y, m, d] = iso.split('-').map(Number)
   return new Date(y, m - 1, d)
 }
 
-function formatFaDate(iso) {
+function formatHeatDate(iso) {
   try {
-    return new Intl.DateTimeFormat('fa-IR', {
+    return formatDate(parseISO(iso), {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    }).format(parseISO(iso))
+    })
   } catch {
     return iso
   }
@@ -38,7 +29,7 @@ function monthKey(iso) {
 
 function monthLabel(iso) {
   try {
-    return new Intl.DateTimeFormat('fa-IR', { month: 'short' }).format(parseISO(iso))
+    return formatDate(parseISO(iso), { month: 'short' })
   } catch {
     return iso.slice(5, 7)
   }
@@ -121,30 +112,57 @@ function buildMonthLabels(weeks) {
   return labels
 }
 
-function buildTooltip(day, date, filter) {
+function buildTooltip(day, date, filter, t) {
   const count = filteredCount(day, filter)
   const parts = []
   const b = day?.breakdown
   if (b) {
-    if (b.entries) parts.push(`${b.entries} یادداشت`)
-    if (b.challenges) parts.push(`${b.challenges} چالش`)
-    if (b.reading) parts.push(`${b.reading} مطالعه`)
+    if (b.entries) parts.push(t('dashboard.heatmap.partEntries', { count: b.entries }))
+    if (b.challenges) parts.push(t('dashboard.heatmap.partChallenges', { count: b.challenges }))
+    if (b.reading) parts.push(t('dashboard.heatmap.partReading', { count: b.reading }))
   }
   return {
-    title: formatFaDate(date),
+    title: formatHeatDate(date),
     line: count
-      ? `${count} فعالیت${parts.length ? ` — ${parts.join(' · ')}` : ''}`
-      : 'بدون فعالیت',
+      ? parts.length
+        ? t('dashboard.heatmap.activityWithParts', { count, parts: parts.join(' · ') })
+        : t('dashboard.heatmap.activityCount', { count })
+      : t('dashboard.heatmap.noActivity'),
   }
 }
 
 export default function ActivityHeatmap({ heatmap, stats }) {
+  const { t, i18n } = useTranslation()
   const [filter, setFilter] = useState('all')
   const [hover, setHover] = useState(null)
   const scrollRef = useRef(null)
 
+  const filters = useMemo(
+    () => FILTER_IDS.map((id) => ({ id, label: t(`dashboard.heatmap.filters.${id}`) })),
+    [t],
+  )
+
+  const weekdayLabels = useMemo(
+    () => WEEKDAY_KEYS.map((key) => t(`dashboard.heatmap.weekdays.${key}`)),
+    [t],
+  )
+
+  const typeMeta = useMemo(
+    () =>
+      Object.fromEntries(
+        TYPE_KEYS.map((key) => [
+          key,
+          {
+            label: t(`dashboard.heatmap.types.${key}`),
+            short: t(`dashboard.heatmap.types.${key}`),
+          },
+        ]),
+      ),
+    [t],
+  )
+
   const weeks = useMemo(() => buildWeeks(heatmap?.days || []), [heatmap])
-  const monthLabels = useMemo(() => buildMonthLabels(weeks), [weeks])
+  const monthLabels = useMemo(() => buildMonthLabels(weeks), [weeks, i18n.language])
 
   useEffect(() => {
     const el = scrollRef.current
@@ -153,7 +171,7 @@ export default function ActivityHeatmap({ heatmap, stats }) {
     el.scrollLeft = el.scrollWidth
   }, [weeks])
 
-  const tooltip = hover ? buildTooltip(hover.day, hover.date, filter) : null
+  const tooltip = hover ? buildTooltip(hover.day, hover.date, filter, t) : null
 
   const selectCell = (cell) => {
     if (!cell.inRange) return
@@ -161,23 +179,23 @@ export default function ActivityHeatmap({ heatmap, stats }) {
   }
 
   return (
-    <section className="dash-heatmap section" aria-label="نقشه فعالیت">
+    <section className="dash-heatmap section" aria-label={t('dashboard.heatmap.aria')}>
       <div className="dash-heatmap-head">
         <div className="section-head">
-          <h2>نقشهٔ فعالیت</h2>
+          <h2>{t('dashboard.heatmap.title')}</h2>
           <p>
-            هر مربع یک روز است. Streak فعلی:{' '}
-            <strong>{stats?.streak_current ?? 0}</strong> روز
+            {t('dashboard.heatmap.streakLine')}{' '}
+            <strong>{stats?.streak_current ?? 0}</strong> {t('dashboard.heatmap.days')}
             {stats?.streak_longest ? (
               <>
                 {' '}
-                · رکورد <strong>{stats.streak_longest}</strong>
+                · {t('dashboard.heatmap.record')} <strong>{stats.streak_longest}</strong>
               </>
             ) : null}
           </p>
         </div>
-        <div className="dash-heatmap-filters" role="tablist" aria-label="فیلتر نوع فعالیت">
-          {FILTERS.map((item) => (
+        <div className="dash-heatmap-filters" role="tablist" aria-label={t('dashboard.heatmap.filterAria')}>
+          {filters.map((item) => (
             <button
               key={item.id}
               type="button"
@@ -197,8 +215,8 @@ export default function ActivityHeatmap({ heatmap, stats }) {
           <div className="dash-heatmap-body">
             <div className="dash-heatmap-weekdays" aria-hidden="true">
               <span className="dash-heatmap-weekday-spacer" />
-              {WEEKDAY_LABELS.map((label, i) => (
-                <span key={label} className={i % 2 === 0 ? 'is-visible' : ''}>
+              {weekdayLabels.map((label, i) => (
+                <span key={WEEKDAY_KEYS[i]} className={i % 2 === 0 ? 'is-visible' : ''}>
                   {i % 2 === 0 ? label : ''}
                 </span>
               ))}
@@ -230,7 +248,7 @@ export default function ActivityHeatmap({ heatmap, stats }) {
                             !cell.inRange ? ' is-out' : ''
                           }${selected ? ' is-selected' : ''}`}
                           disabled={!cell.inRange}
-                          aria-label={`${cell.date}: ${count} فعالیت`}
+                          aria-label={t('dashboard.heatmap.cellAria', { date: cell.date, count })}
                           aria-pressed={selected}
                           onMouseEnter={() => selectCell(cell)}
                           onMouseLeave={() => setHover(null)}
@@ -249,14 +267,14 @@ export default function ActivityHeatmap({ heatmap, stats }) {
 
         <div className="dash-heatmap-foot">
           <div className="dash-heatmap-legend" aria-hidden="true">
-            <span>کم</span>
+            <span>{t('dashboard.heatmap.low')}</span>
             {[0, 1, 2, 3, 4].map((level) => (
               <span key={level} className={`dash-heat-cell level-${level} is-legend`} />
             ))}
-            <span>زیاد</span>
+            <span>{t('dashboard.heatmap.high')}</span>
           </div>
           <div className="dash-heatmap-type-legend">
-            {Object.entries(TYPE_META).map(([key, meta]) => (
+            {Object.entries(typeMeta).map(([key, meta]) => (
               <span key={key} className={`dash-type-pill type-${key}`}>
                 {meta.label}
               </span>
@@ -269,7 +287,7 @@ export default function ActivityHeatmap({ heatmap, stats }) {
             </div>
           ) : (
             <div className="dash-heatmap-tooltip is-placeholder">
-              یک روز را لمس کن یا نشانگر را روی آن بگذار
+              {t('dashboard.heatmap.placeholder')}
             </div>
           )}
         </div>

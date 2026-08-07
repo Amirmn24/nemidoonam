@@ -1,4 +1,5 @@
 import { useTheme } from './ThemeContext'
+import { useTranslation } from 'react-i18next'
 
 function IconSun() {
   return (
@@ -19,14 +20,16 @@ function IconMoon() {
 
 export default function ThemeToggle({ className = '' }) {
   const { isDark, toggleTheme } = useTheme()
+  const { t } = useTranslation()
+  const label = isDark ? t('theme.light') : t('theme.dark')
 
   return (
     <button
       type="button"
       className={`theme-toggle ${className}`.trim()}
       onClick={toggleTheme}
-      aria-label={isDark ? 'حالت روشن' : 'حالت تاریک'}
-      title={isDark ? 'حالت روشن' : 'حالت تاریک'}
+      aria-label={label}
+      title={label}
     >
       {isDark ? <IconSun /> : <IconMoon />}
     </button>

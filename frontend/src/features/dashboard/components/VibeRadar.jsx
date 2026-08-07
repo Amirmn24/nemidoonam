@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { dashboardApi } from '../../../shared/api'
+import { formatDate } from '../../../i18n/format'
 
 const SIZE = 260
 const CX = SIZE / 2
@@ -24,19 +26,19 @@ function polygonPoints(axes, max = 100) {
     .join(' ')
 }
 
-function formatFaDate(iso) {
+function formatLogDate(iso) {
   if (!iso) return ''
   try {
-    return new Intl.DateTimeFormat('fa-IR', {
+    return formatDate(iso, {
       month: 'short',
       day: 'numeric',
-    }).format(new Date(iso))
+    })
   } catch {
     return iso
   }
 }
 
-function RadarSvg({ axes }) {
+function RadarSvg({ axes, chartAria }) {
   const rings = [0.33, 0.66, 1]
   const n = axes?.length || 8
   const step = 360 / n
@@ -54,7 +56,7 @@ function RadarSvg({ axes }) {
   const shape = polygonPoints(axes)
 
   return (
-    <svg className="dash-vibe-svg" viewBox="-28 -28 316 316" role="img" aria-label="گراف شخصیت مطالعاتی">
+    <svg className="dash-vibe-svg" viewBox="-28 -28 316 316" role="img" aria-label={chartAria}>
       {grid.map((pts, i) => (
         <polygon key={`ring-${i}`} points={pts} className="dash-vibe-ring" />
       ))}
@@ -92,6 +94,7 @@ function DeltaInline({ deltas }) {
 }
 
 export default function VibeRadar({ vibe: initialVibe }) {
+  const { t } = useTranslation()
   const [vibe, setVibe] = useState(initialVibe)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
@@ -103,9 +106,9 @@ export default function VibeRadar({ vibe: initialVibe }) {
 
   const headline = useMemo(() => {
     if (status === 'ready' && vibe?.mood_label) return vibe.mood_label
-    if (status === 'pending') return 'در صف تحلیل…'
-    return 'هنوز شکل نگرفته'
-  }, [status, vibe?.mood_label])
+    if (status === 'pending') return t('dashboard.vibe.pendingHeadline')
+    return t('dashboard.vibe.emptyHeadline')
+  }, [status, vibe?.mood_label, t])
 
   async function handleRefresh() {
     setBusy(true)
@@ -114,18 +117,18 @@ export default function VibeRadar({ vibe: initialVibe }) {
       const res = await dashboardApi.refreshVibe()
       if (res?.vibe) setVibe(res.vibe)
     } catch (e) {
-      setErr(e.message || 'تحلیل وایب ناموفق بود.')
+      setErr(e.message || t('dashboard.vibe.analyzeFailed'))
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <section className="dash-vibe section" aria-label="گراف شخصیت و وایب مطالعاتی">
+    <section className="dash-vibe section" aria-label={t('dashboard.vibe.aria')}>
       <div className="dash-vibe-head">
         <div className="section-head">
-          <h2>گراف شخصیت</h2>
-          <p>مود و ژانر مطالعاتی‌ات با هر کتاب جابه‌جا می‌شود.</p>
+          <h2>{t('dashboard.vibe.title')}</h2>
+          <p>{t('dashboard.vibe.subtitle')}</p>
         </div>
         {status === 'ready' && headline ? <span className="dash-vibe-badge">{headline}</span> : null}
       </div>
@@ -135,18 +138,18 @@ export default function VibeRadar({ vibe: initialVibe }) {
 
         {status === 'empty' ? (
           <div className="dash-vibe-empty">
-            <p>اولین کتاب را به قفسه اضافه کن تا رادار شخصیتت زنده شود.</p>
+            <p>{t('dashboard.vibe.emptyBody')}</p>
             <Link to="/books/new" className="btn btn-primary">
-              افزودن کتاب
+              {t('dashboard.vibe.addBook')}
             </Link>
           </div>
         ) : null}
 
         {status === 'pending' ? (
           <div className="dash-vibe-empty">
-            <p>کتاب روی قفسه‌ات هست؛ با یک کلیک وایب را بساز.</p>
+            <p>{t('dashboard.vibe.pendingBody')}</p>
             <button type="button" className="btn btn-primary" disabled={busy} onClick={handleRefresh}>
-              {busy ? 'در حال تحلیل…' : 'تحلیل وایب'}
+              {busy ? t('dashboard.vibe.analyzing') : t('dashboard.vibe.analyze')}
             </button>
           </div>
         ) : null}
@@ -154,7 +157,7 @@ export default function VibeRadar({ vibe: initialVibe }) {
         {status === 'ready' ? (
           <div className="dash-vibe-grid">
             <div className="dash-vibe-chart-wrap">
-              <RadarSvg axes={axes} />
+              <RadarSvg axes={axes} chartAria={t('dashboard.vibe.chartAria')} />
             </div>
 
             <div className="dash-vibe-side">
@@ -162,13 +165,13 @@ export default function VibeRadar({ vibe: initialVibe }) {
                 <dl className="dash-vibe-genres">
                   {vibe.current_genre ? (
                     <div>
-                      <dt>الان</dt>
+                      <dt>{t('dashboard.vibe.now')}</dt>
                       <dd>{vibe.current_genre}</dd>
                     </div>
                   ) : null}
                   {vibe.favorite_genre ? (
                     <div>
-                      <dt>محبوب</dt>
+                      <dt>{t('dashboard.vibe.favorite')}</dt>
                       <dd>{vibe.favorite_genre}</dd>
                     </div>
                   ) : null}
@@ -176,11 +179,11 @@ export default function VibeRadar({ vibe: initialVibe }) {
               )}
 
               {genreMix.length > 0 ? (
-                <ul className="dash-vibe-mix" aria-label="ترکیب ژانر">
+                <ul className="dash-vibe-mix" aria-label={t('dashboard.vibe.genreMixAria')}>
                   {genreMix.slice(0, 3).map((g) => (
                     <li key={g.key}>
                       <span>{g.label}</span>
-                      <b>{g.value}٪</b>
+                      <b>{t('dashboard.vibe.percent', { value: g.value })}</b>
                     </li>
                   ))}
                 </ul>
@@ -189,16 +192,16 @@ export default function VibeRadar({ vibe: initialVibe }) {
               {vibe.quote ? <p className="dash-vibe-quote">{vibe.quote}</p> : null}
 
               <div className="dash-vibe-log">
-                <h3>تغییرات اخیر</h3>
+                <h3>{t('dashboard.vibe.recentChanges')}</h3>
                 {logs.length === 0 ? (
-                  <p className="dash-vibe-log-empty">هنوز لاگی نیست.</p>
+                  <p className="dash-vibe-log-empty">{t('dashboard.vibe.noLogs')}</p>
                 ) : (
                   <ul>
                     {logs.map((log) => (
                       <li key={log.id}>
                         <div className="dash-vibe-log-meta">
-                          <strong>{log.book_title || 'کتاب'}</strong>
-                          <time dateTime={log.created_at}>{formatFaDate(log.created_at)}</time>
+                          <strong>{log.book_title || t('dashboard.vibe.bookFallback')}</strong>
+                          <time dateTime={log.created_at}>{formatLogDate(log.created_at)}</time>
                         </div>
                         <p>{log.change_summary}</p>
                         <DeltaInline deltas={log.deltas} />
