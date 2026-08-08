@@ -97,13 +97,26 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+# اسناد خصوصی خارج از /media/ عمومی — فقط از API احراز هویت‌شده خوانده می‌شوند
+PRIVATE_MEDIA_ROOT = BASE_DIR / 'private_media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
-DATA_UPLOAD_MAX_MEMORY_SIZE = 45 * 1024 * 1024
-# سقف PDF کتاب الکترونیک/جزوه — روی دیسک ذخیره می‌شود، نه در RAM پاسخ
+DATA_UPLOAD_MAX_MEMORY_SIZE = 15 * 1024 * 1024
 BOOKS_PDF_MAX_BYTES = int(os.getenv('BOOKS_PDF_MAX_BYTES', str(40 * 1024 * 1024)))
+DOCUMENTS_UPLOAD_URL_EXPIRES = int(os.getenv('DOCUMENTS_UPLOAD_URL_EXPIRES', '600'))
+DOCUMENTS_DOWNLOAD_URL_EXPIRES = int(os.getenv('DOCUMENTS_DOWNLOAD_URL_EXPIRES', '120'))
+
+# Object storage (S3-compatible: AWS / MinIO / Arvan / ParsPack)
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', '')
+AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', '')
+AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
+DOCUMENTS_USE_S3 = os.getenv('DOCUMENTS_USE_S3', '').lower() in {'1', 'true', 'yes'} or bool(
+    AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME
+)
 
 # --- API / SPA ---
 REST_FRAMEWORK = {
@@ -122,6 +135,7 @@ REST_FRAMEWORK = {
         'peer_viewpoint': '40/hour',
         'entry_write': '120/hour',
         'echo': '30/hour',
+        'document_upload': '40/hour',
         'waitlist': '10/hour',
     },
     'DEFAULT_RENDERER_CLASSES': [

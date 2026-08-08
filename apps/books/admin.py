@@ -39,8 +39,8 @@ class UserBookDocumentInline(admin.StackedInline):
     model = UserBookDocument
     extra = 0
     max_num = 1
-    fields = ('pdf', 'course', 'original_filename', 'content_type', 'size_bytes')
-    readonly_fields = ('original_filename', 'content_type', 'size_bytes')
+    fields = ('storage_key', 'course', 'original_filename', 'content_type', 'size_bytes')
+    readonly_fields = ('storage_key', 'original_filename', 'content_type', 'size_bytes')
 
 
 class UserBookInline(admin.TabularInline):
@@ -95,9 +95,16 @@ class UserBookAdmin(admin.ModelAdmin):
 @admin.register(UserBookDocument)
 class UserBookDocumentAdmin(admin.ModelAdmin):
     list_display = ('user_book', 'course', 'original_filename', 'size_bytes', 'updated_at')
-    search_fields = ('user_book__book__title', 'course', 'original_filename')
+    search_fields = ('user_book__book__title', 'course', 'original_filename', 'storage_key')
     autocomplete_fields = ('user_book',)
-    readonly_fields = ('original_filename', 'content_type', 'size_bytes', 'created_at', 'updated_at')
+    readonly_fields = (
+        'storage_key',
+        'original_filename',
+        'content_type',
+        'size_bytes',
+        'created_at',
+        'updated_at',
+    )
 
 
 @admin.register(Entry)

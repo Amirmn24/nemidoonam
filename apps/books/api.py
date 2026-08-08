@@ -26,7 +26,11 @@ from apps.books.services.books import (
 from apps.books.services.catalog import add_book_to_shelf, create_shelf_book, update_shelf_book
 from apps.books.services.documents import (
     create_digital_shelf_item,
+    create_upload_session,
+    get_owned_upload_session,
     is_digital_kind,
+    issue_document_access,
+    receive_local_upload,
     serialize_document,
     update_digital_shelf_item,
 )
@@ -198,7 +202,7 @@ class ShelfWriteSerializer(serializers.Serializer):
     catalog_book_id = EmptyIntegerField(required=False, allow_null=True)
     confirm_similar = serializers.BooleanField(required=False, default=False)
     course = serializers.CharField(max_length=255, required=False, allow_blank=True, default='')
-    pdf = serializers.FileField(required=False, allow_null=True)
+    upload_token = serializers.UUIDField(required=False, allow_null=True)
 
     def validate(self, attrs):
         user = self.context['request'].user
@@ -215,15 +219,17 @@ class ShelfWriteSerializer(serializers.Serializer):
             attrs['title'] = title
             attrs['author'] = ''
             attrs['course'] = (attrs.get('course') or '').strip()
-            pdf = attrs.get('pdf')
-            if not user_book and not pdf:
-                raise serializers.ValidationError({'pdf': 'آپلود فایل PDF الزامی است.'})
-            # صفحات از PDF استخراج می‌شود؛ ورودی دستی لازم نیست
+            token = attrs.get('upload_token')
+            if not user_book and not token:
+                raise serializers.ValidationError(
+                    {'upload_token': 'اول PDF را آپلود کن (نشست آپلود).'}
+                )
             attrs['total_pages'] = attrs.get('total_pages') or 1
             attrs['_digital'] = True
             return attrs
 
         attrs['_digital'] = False
+        attrs.pop('upload_token', None)
         catalog_id = attrs.get('catalog_book_id')
         current_page = attrs.get('current_page') or 0
         total_pages = attrs.get('total_pages')
@@ -604,7 +610,7 @@ class ShelfViewSet(ViewSet):
                     request.user,
                     resource_kind=data['resource_kind'],
                     title=data['title'],
-                    pdf=data['pdf'],
+                    upload_token=str(data['upload_token']),
                     course=data.get('course') or '',
                     status=data.get('status', BookStatus.WANT_TO_READ),
                     notes=data.get('notes') or '',
@@ -685,7 +691,7 @@ class ShelfViewSet(ViewSet):
                     status=data.get('status'),
                     notes=data.get('notes'),
                     current_page=data.get('current_page'),
-                    pdf=data.get('pdf'),
+                    upload_token=str(data['upload_token']) if data.get('upload_token') else None,
                 )
             elif data.get('_catalog_book'):
                 book = data['_catalog_book']
@@ -1211,3 +1217,133 @@ class EchoActionView(APIView):
                 'status': get_echo_status(request.user, request),
             }
         )
+
+
+class DocumentUploadIntentSerializer(serializers.Serializer):
+    filename = serializers.CharField(max_length=255)
+    content_type = serializers.CharField(max_length=100, required=False, default='application/pdf')
+    size_bytes = serializers.IntegerField(min_value=1)
+
+
+class DocumentUploadSessionView(APIView):
+    """صدور نشست آپلود مستقیم (S3 Presigned یا endpoint لوکال خصوصی)."""
+
+    throttle_scope = 'document_upload'
+
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
+
+    def post(self, request):
+        serializer = DocumentUploadIntentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        try:
+            _session, payload = create_upload_session(
+                request.user,
+                filename=data['filename'],
+                content_type=data.get('content_type') or 'application/pdf',
+                size_bytes=data['size_bytes'],
+                request=request,
+            )
+        except DjangoValidationError as exc:
+            message = exc.messages[0] if hasattr(exc, 'messages') else str(exc)
+            return Response({'detail': message}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(payload, status=status.HTTP_201_CREATED)
+
+
+class DocumentUploadBinaryView(APIView):
+    """آپلود باینری لوکال — فقط وقتی S3 خاموش است؛ فایل به private_media می‌رود."""
+
+    throttle_scope = 'document_upload'
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
+
+    def post(self, request, token):
+        return self._receive(request, token)
+
+    def put(self, request, token):
+        return self._receive(request, token)
+
+    def _receive(self, request, token):
+        try:
+            session = get_owned_upload_session(request.user, token)
+            upload = request.FILES.get('file')
+            if upload is not None:
+                session = receive_local_upload(
+                    session,
+                    upload,
+                    content_length=int(getattr(upload, 'size', 0) or 0) or None,
+                )
+            else:
+                # raw body — برای سازگاری؛ ترجیح با multipart است
+                from io import BytesIO
+
+                raw = request.body
+                if not raw:
+                    return Response(
+                        {'detail': 'فایل خالی است.'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                session = receive_local_upload(
+                    session,
+                    BytesIO(raw),
+                    content_length=len(raw),
+                )
+        except DjangoValidationError as exc:
+            message = exc.messages[0] if hasattr(exc, 'messages') else str(exc)
+            detail = exc.message_dict if hasattr(exc, 'message_dict') else {'detail': message}
+            if isinstance(detail, dict) and len(detail) == 1:
+                first = next(iter(detail.values()))
+                message = first[0] if isinstance(first, list) else first
+            return Response({'detail': message}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {
+                'token': str(session.token),
+                'status': session.status,
+                'size_bytes': session.actual_size_bytes,
+            }
+        )
+
+
+class ShelfDocumentContentView(APIView):
+    """
+    دسترسی امن به PDF:
+    - مالکیت چک می‌شود
+    - S3: ریدایرکت به Presigned GET کوتاه‌عمر (جنگو فایل را استریم نمی‌کند)
+    - Local: FileResponse از private_media (خارج از /media/ عمومی)
+    """
+
+    throttle_scope = 'document_upload'
+
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
+
+    def get(self, request, pk):
+        from django.http import FileResponse, HttpResponseRedirect
+
+        from apps.books.services import object_storage as storage
+
+        user_book = get_object_or_404(get_shelf_queryset(request.user), pk=pk)
+        try:
+            doc, target = issue_document_access(request.user, user_book)
+        except PermissionError:
+            return Response({'detail': 'اجازه نداری.'}, status=status.HTTP_403_FORBIDDEN)
+        except FileNotFoundError:
+            return Response({'detail': 'فایل پیدا نشد.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if target.is_redirect and target.url:
+            return HttpResponseRedirect(target.url)
+
+        try:
+            handle = storage.open_local_file(doc.storage_key)
+        except FileNotFoundError:
+            return Response({'detail': 'فایل پیدا نشد.'}, status=status.HTTP_404_NOT_FOUND)
+
+        response = FileResponse(handle, content_type=doc.content_type or 'application/pdf')
+        filename = doc.original_filename or 'document.pdf'
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['Cache-Control'] = 'private, no-store'
+        return response

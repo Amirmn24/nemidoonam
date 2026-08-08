@@ -55,10 +55,10 @@ function ReadingDetail({
           {book.course ? <p className="meta-pill">{t('books.form.course')}: {book.course}</p> : null}
           {book.notes ? <p>{book.notes}</p> : null}
           <div className="cluster">
-            {book.document?.pdf_url ? (
+            {book.document?.content_url ? (
               <a
                 className="btn btn-secondary"
-                href={book.document.pdf_url}
+                href={book.document.content_url}
                 target="_blank"
                 rel="noreferrer"
               >

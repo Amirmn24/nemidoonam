@@ -13,10 +13,13 @@ from apps.accounts.api import (
 )
 from apps.books.api import (
     CatalogAddView,
+    DocumentUploadBinaryView,
+    DocumentUploadSessionView,
     EchoActionView,
     EchoView,
     EntryViewSet,
     MetaChoicesView,
+    ShelfDocumentContentView,
     ShelfViewSet,
     SuggestView,
 )
@@ -47,6 +50,21 @@ urlpatterns = [
     path('books/suggest/', SuggestView.as_view(), name='api-suggest'),
     path('books/echo/', EchoView.as_view(), name='api-echo'),
     path('books/echo/<uuid:token>/<str:action>/', EchoActionView.as_view(), name='api-echo-action'),
+    path(
+        'documents/upload-sessions/',
+        DocumentUploadSessionView.as_view(),
+        name='api-document-upload-session',
+    ),
+    path(
+        'documents/upload-sessions/<uuid:token>/binary/',
+        DocumentUploadBinaryView.as_view(),
+        name='api-document-upload-binary',
+    ),
+    path(
+        'shelf/<int:pk>/document/content/',
+        ShelfDocumentContentView.as_view(),
+        name='api-shelf-document-content',
+    ),
     path('catalog/<int:pk>/add/', CatalogAddView.as_view(), name='api-catalog-add'),
     path('shelf/<int:book_pk>/entries/', entry_list, name='api-entries'),
     path('shelf/<int:book_pk>/entries/<int:pk>/', entry_detail, name='api-entry-detail'),

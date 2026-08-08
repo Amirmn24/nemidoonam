@@ -202,6 +202,31 @@ export const booksApi = {
   echoReveal: (token) => api(`/books/echo/${token}/reveal/`, { method: 'POST' }),
   echoSave: (token) => api(`/books/echo/${token}/save/`, { method: 'POST' }),
   echoDismiss: (token) => api(`/books/echo/${token}/dismiss/`, { method: 'POST' }),
+  createUploadSession: (body) =>
+    api('/documents/upload-sessions/', { method: 'POST', body }),
+  uploadLocalPdf: async (token, file) => {
+    const fd = new FormData()
+    fd.append('file', file, file.name || 'document.pdf')
+    return api(`/documents/upload-sessions/${token}/binary/`, {
+      method: 'POST',
+      body: fd,
+      headers: {},
+    })
+  },
+  uploadToPresigned: async (uploadUrl, file, headers = {}) => {
+    const res = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type || 'application/pdf',
+        ...headers,
+      },
+      body: file,
+    })
+    if (!res.ok) {
+      throw new ApiError(i18n.t('api.genericError'), { status: res.status })
+    }
+    return true
+  },
   choices: () => api('/meta/choices/'),
 }
 

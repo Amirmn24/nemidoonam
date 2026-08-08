@@ -178,39 +178,56 @@ export default function BookFormPage() {
     const fd = new FormData(form)
     fd.set('resource_kind', resourceKind)
     fd.set('title', title)
-    if (digital) {
-      fd.set('author', '')
-      fd.set('course', course)
-      fd.delete('total_pages')
-      fd.delete('cover')
-      fd.delete('catalog_book_id')
-      fd.delete('confirm_similar')
-      if (!fd.get('pdf')?.size) {
-        if (!isEdit) {
-          setError(t('books.form.pdfRequired'))
-          setBusy(false)
-          return
-        }
-        fd.delete('pdf')
-      }
-    } else {
-      if (catalogId) fd.set('catalog_book_id', catalogId)
-      if (!fd.get('cover')?.size) fd.delete('cover')
-      if (!form.confirm_similar?.checked) fd.delete('confirm_similar')
-      else fd.set('confirm_similar', 'true')
-      fd.delete('pdf')
-      fd.delete('course')
-    }
-
-    const isCreate = !isEdit
-    const awaitCover = isCreate && !digital
-    if (awaitCover) {
-      setJourneyOpen(true)
-      setJourneySaving(true)
-      setJourneySetup(null)
-    }
 
     try {
+      if (digital) {
+        fd.set('author', '')
+        fd.set('course', course)
+        fd.delete('total_pages')
+        fd.delete('cover')
+        fd.delete('catalog_book_id')
+        fd.delete('confirm_similar')
+        fd.delete('pdf')
+
+        const pdfInput = form.pdf
+        const file = pdfInput?.files?.[0]
+        if (!file) {
+          if (!isEdit) {
+            setError(t('books.form.pdfRequired'))
+            setBusy(false)
+            return
+          }
+        } else {
+          const session = await booksApi.createUploadSession({
+            filename: file.name || 'document.pdf',
+            content_type: file.type || 'application/pdf',
+            size_bytes: file.size,
+          })
+          if (session.backend === 's3') {
+            await booksApi.uploadToPresigned(session.upload_url, file, session.headers || {})
+          } else {
+            await booksApi.uploadLocalPdf(session.token, file)
+          }
+          fd.set('upload_token', session.token)
+        }
+      } else {
+        if (catalogId) fd.set('catalog_book_id', catalogId)
+        if (!fd.get('cover')?.size) fd.delete('cover')
+        if (!form.confirm_similar?.checked) fd.delete('confirm_similar')
+        else fd.set('confirm_similar', 'true')
+        fd.delete('pdf')
+        fd.delete('course')
+        fd.delete('upload_token')
+      }
+
+      const isCreate = !isEdit
+      const awaitCover = isCreate && !digital
+      if (awaitCover) {
+        setJourneyOpen(true)
+        setJourneySaving(true)
+        setJourneySetup(null)
+      }
+
       const saved = isEdit ? await booksApi.update(id, fd) : await booksApi.create(fd)
       if (isCreate) {
         if (awaitCover) {

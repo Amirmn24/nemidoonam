@@ -162,7 +162,7 @@
       "course": "Related course",
       "optional": "(optional)",
       "pdf": "PDF file",
-      "pdfHint": "Page count is read from the PDF after upload. The file is stored on media storage and is not streamed through Django.",
+      "pdfHint": "The file is uploaded separately (direct to storage). Page count is read after registration. Download requires login and ownership.",
       "pdfRequired": "PDF upload is required.",
       "pdfSelected": "Selected: {{name}}",
       "pagesFromPdf": "Current page count: {{count}}",
