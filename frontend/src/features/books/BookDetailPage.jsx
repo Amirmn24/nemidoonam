@@ -12,6 +12,7 @@ import FinishedBookPlaylist from './components/FinishedBookPlaylist'
 import FirstFinalViewpointModal from './components/FirstFinalViewpointModal'
 import MidpointPredictionModal from './components/MidpointPredictionModal'
 import PeerViewpointModal from './components/PeerViewpointModal'
+import PublicConsentModal from './components/PublicConsentModal'
 
 const STATUS_VALUES = ['want_to_read', 'reading', 'paused', 'finished', 'abandoned']
 const KIND_FILTERS = ['viewpoint', 'feeling', 'book_text']
@@ -28,6 +29,7 @@ function ReadingDetail({
   onAskFinish,
   onDelete,
   onDeleteEntry,
+  onAskPublish,
   setFilter,
 }) {
   const { t } = useTranslation()
@@ -171,6 +173,7 @@ function ReadingDetail({
                 entry={entry}
                 bookId={id}
                 onDelete={onDeleteEntry}
+                onAskPublish={onAskPublish}
               />
             ))}
           </div>
@@ -286,6 +289,8 @@ export default function BookDetailPage() {
   const [peerView, setPeerView] = useState(null)
   const [peerEmpty, setPeerEmpty] = useState(false)
   const [peerError, setPeerError] = useState('')
+  const [publishEntry, setPublishEntry] = useState(null)
+  const [publishBusy, setPublishBusy] = useState(false)
 
   const kind = params.get('kind') || ''
   const media = params.get('media') || ''
@@ -457,12 +462,30 @@ export default function BookDetailPage() {
     await load()
   }
 
+  const onConfirmPublish = async () => {
+    if (!publishEntry) return
+    setPublishBusy(true)
+    try {
+      await booksApi.publishEntry(id, publishEntry.id)
+      showToast(t('books.publicConsent.doneToast'), 'success')
+      setPublishEntry(null)
+      await load()
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : t('app.saveFailed'), 'error')
+    } finally {
+      setPublishBusy(false)
+    }
+  }
+
   if (error) return <p className="form-errors">{error}</p>
   if (!data) return <p>{t('app.loading')}</p>
 
   const book = data.book
   const isFinished = book.status === 'finished' || data.view_mode === 'playlist'
   const social = data.social || {}
+  const publishKindLabel = publishEntry
+    ? labelFromCode('books.kind', publishEntry.kind, publishEntry.kind_display)
+    : ''
 
   return (
     <div className={`page-detail${isFinished ? ' is-finished' : ''}`}>
@@ -490,6 +513,7 @@ export default function BookDetailPage() {
           onAskFinish={() => setShowFinishConfirm(true)}
           onDelete={onDelete}
           onDeleteEntry={onDeleteEntry}
+          onAskPublish={setPublishEntry}
           setFilter={setFilter}
         />
       )}
@@ -532,6 +556,16 @@ export default function BookDetailPage() {
         error={peerError}
         onRefresh={fetchPeerViewpoint}
         onClose={() => setPeerOpen(false)}
+      />
+
+      <PublicConsentModal
+        open={Boolean(publishEntry)}
+        busy={publishBusy}
+        kindLabel={publishKindLabel}
+        onConfirm={onConfirmPublish}
+        onCancel={() => {
+          if (!publishBusy) setPublishEntry(null)
+        }}
       />
     </div>
   )

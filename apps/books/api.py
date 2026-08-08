@@ -37,6 +37,17 @@ from apps.books.services.midpoint import (
 )
 from apps.books.services.ratings import get_rating_for_shelf, serialize_rating, upsert_book_rating
 from apps.books.services.setup import serialize_setup_status
+from apps.books.services.echo import (
+    can_make_entry_public,
+    dismiss_echo,
+    draw_echo,
+    get_echo_status,
+    get_user_echo_claim,
+    publish_entry_with_consent,
+    reveal_echo_book,
+    save_echo_to_shelf,
+    serialize_echo_claim,
+)
 from apps.books.services.social import (
     FINAL_VIEWPOINT_MAX_LEN,
     get_social_status,
@@ -325,7 +336,32 @@ class EntryWriteSerializer(serializers.Serializer):
         attrs['text_content'] = text_content
         attrs['_content_locked'] = content_locked
         attrs['_is_first_final'] = False
+
+        want_public = bool(attrs.get('is_public', False))
+        if want_public:
+            probe = Entry(
+                user_book=user_book,
+                kind=kind,
+                media_type=media_type,
+                page_number=attrs.get('page_number') or (instance.page_number if instance else 1),
+                text_content=text_content,
+                is_sealed=bool(attrs.get('is_sealed', False)),
+                image=image or (instance.image if instance else None),
+                audio=audio or (instance.audio if instance else None),
+            )
+            ok, reason = can_make_entry_public(probe)
+            if not ok:
+                raise serializers.ValidationError({'is_public': reason})
         return attrs
+
+
+class EntryPublishSerializer(serializers.Serializer):
+    confirm = serializers.BooleanField()
+
+    def validate_confirm(self, value):
+        if value is not True:
+            raise serializers.ValidationError('برای عمومی‌سازی باید رضایت را تأیید کنی.')
+        return value
 
 
 class MidpointPredictionSerializer(serializers.Serializer):
@@ -795,7 +831,7 @@ class EntryViewSet(ViewSet):
     throttle_scope = 'entry_write'
 
     def get_throttles(self):
-        if getattr(self, 'action', None) in {'create', 'partial_update', 'destroy'}:
+        if getattr(self, 'action', None) in {'create', 'partial_update', 'destroy', 'publish'}:
             return [ScopedRateThrottle()]
         return super().get_throttles()
 
@@ -926,3 +962,138 @@ class EntryViewSet(ViewSet):
         locked = is_entry_content_locked(entry, user_book)
         entry._content_locked = locked
         return Response(EntrySerializer(entry, context={'request': request}).data)
+
+    def publish(self, request, book_pk=None, pk=None):
+        """عمومی‌سازی با رضایت صریح (confirm=true) — از لیست یادداشت‌ها."""
+        user_book = self._get_shelf(request, book_pk)
+        entry = get_object_or_404(Entry, pk=pk, user_book=user_book)
+        serializer = EntryPublishSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            entry = publish_entry_with_consent(
+                entry,
+                confirm=serializer.validated_data['confirm'],
+            )
+        except ValueError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(self._entry_response(entry, user_book, request, redact_locked=False))
+
+
+class EchoView(APIView):
+    """وضعیت و قرعه‌کشی پژواک شبانه."""
+
+    throttle_scope = 'echo'
+
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
+
+    def get(self, request):
+        return Response(get_echo_status(request.user, request))
+
+    def post(self, request):
+        claim, code = draw_echo(request.user, request)
+        if code == 'window_closed':
+            return Response(
+                {
+                    'detail': 'پژواک فقط از ۲۰ شب تا ۸ صبح فعال است.',
+                    'status': get_echo_status(request.user, request),
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if code == 'already_used':
+            return Response(
+                {
+                    'detail': 'امشب از پژواک استفاده کرده‌ای.',
+                    'status': get_echo_status(request.user, request),
+                    'already_used': True,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if code == 'empty':
+            return Response(
+                {
+                    'claim': None,
+                    'empty': True,
+                    'detail': 'فعلاً یادداشت عمومی مناسبی برای پژواک نیست.',
+                    'status': get_echo_status(request.user, request),
+                }
+            )
+        if code == 'error' or not claim:
+            return Response(
+                {'detail': 'خطا در ثبت پژواک.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        return Response(
+            {
+                'claim': serialize_echo_claim(claim, request, user=request.user),
+                'empty': False,
+                'status': get_echo_status(request.user, request),
+                'resumed': code == 'already_open',
+            }
+        )
+
+
+class EchoActionView(APIView):
+    """آشکارسازی کتاب / ذخیره در قفسه / رد پژواک."""
+
+    throttle_scope = 'echo'
+
+    def get_throttles(self):
+        return [ScopedRateThrottle()]
+
+    def _get_claim(self, request, token):
+        claim = get_user_echo_claim(request.user, token)
+        if not claim:
+            return None, Response({'detail': 'پژواک پیدا نشد.'}, status=status.HTTP_404_NOT_FOUND)
+        return claim, None
+
+    def post(self, request, token, action=None):
+        claim, err = self._get_claim(request, token)
+        if err:
+            return err
+
+        if action not in {'reveal', 'dismiss', 'save'}:
+            return Response({'detail': 'عمل نامعتبر.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if action == 'reveal':
+            claim = reveal_echo_book(claim)
+            return Response(
+                {
+                    'claim': serialize_echo_claim(claim, request, user=request.user),
+                    'status': get_echo_status(request.user, request),
+                }
+            )
+
+        if action == 'dismiss':
+            if claim.resolution != claim.Resolution.OPEN:
+                return Response(
+                    {
+                        'detail': 'این پژواک قبلاً بسته شده است.',
+                        'claim': serialize_echo_claim(claim, request, user=request.user),
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            claim = dismiss_echo(claim)
+            return Response(
+                {
+                    'claim': serialize_echo_claim(claim, request, user=request.user),
+                    'status': get_echo_status(request.user, request),
+                }
+            )
+
+        # save
+        if claim.resolution == claim.Resolution.DISMISSED:
+            return Response(
+                {'detail': 'این پژواک رد شده و قابل ذخیره نیست.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        claim, user_book, created = save_echo_to_shelf(claim, request.user)
+        shelf = get_shelf_queryset(request.user).filter(pk=user_book.pk).first() or user_book
+        return Response(
+            {
+                'claim': serialize_echo_claim(claim, request, user=request.user),
+                'shelf_book': ShelfBookSerializer(shelf, context={'request': request}).data,
+                'created': created,
+                'status': get_echo_status(request.user, request),
+            }
+        )

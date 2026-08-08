@@ -3,10 +3,18 @@ import { useTranslation } from 'react-i18next'
 import { labelFromCode } from '../../../i18n/labels'
 import SealedEntryCard from './SealedEntryCard'
 
-/** یک آیتم تایم‌لاین یادداشت با پشتیبانی مهروموم و پرچم‌ها */
-export default function EntryTimelineItem({ entry, bookId, onDelete }) {
+const SHAREABLE_KINDS = new Set(['viewpoint', 'feeling', 'book_text'])
+
+/** یک آیتم تایم‌لاین یادداشت با پشتیبانی مهروموم، عمومی‌سازی و پرچم‌ها */
+export default function EntryTimelineItem({ entry, bookId, onDelete, onAskPublish }) {
   const { t } = useTranslation()
   const locked = entry.is_content_locked
+  const canPublish =
+    Boolean(onAskPublish) &&
+    !entry.is_public &&
+    !entry.is_sealed &&
+    !locked &&
+    SHAREABLE_KINDS.has(entry.kind)
 
   return (
     <article
@@ -36,6 +44,11 @@ export default function EntryTimelineItem({ entry, bookId, onDelete }) {
       )}
 
       <div className="cluster">
+        {canPublish ? (
+          <button type="button" className="text-link" onClick={() => onAskPublish(entry)}>
+            {t('books.entry.makePublic')}
+          </button>
+        ) : null}
         <Link className="text-link" to={`/books/${bookId}/entries/${entry.id}/edit`}>
           {t('app.edit')}
         </Link>

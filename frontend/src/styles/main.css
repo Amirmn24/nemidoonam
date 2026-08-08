@@ -4945,8 +4945,10 @@ body.vocab-modal-open {
 .book-modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(15, 27, 51, 0.48);
-  backdrop-filter: blur(4px);
+  background:
+    radial-gradient(680px 380px at 50% 15%, color-mix(in srgb, var(--primary) 28%, transparent), transparent 62%),
+    color-mix(in srgb, var(--chrome) 58%, transparent);
+  backdrop-filter: blur(6px);
 }
 
 .book-modal-sheet {
@@ -4955,11 +4957,13 @@ body.vocab-modal-open {
   width: min(100%, 480px);
   padding: 1.4rem 1.45rem 1.55rem;
   border-radius: var(--radius);
-  border: 1px solid var(--line);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
   background:
-    radial-gradient(420px 180px at 100% 0%, rgba(107, 20, 44, 0.12), transparent 65%),
-    linear-gradient(165deg, rgba(255, 250, 243, 0.98), rgba(240, 230, 212, 0.96));
-  box-shadow: var(--shadow);
+    radial-gradient(420px 200px at 100% 0%, color-mix(in srgb, var(--primary) 16%, transparent), transparent 68%),
+    radial-gradient(360px 180px at 0% 100%, color-mix(in srgb, var(--secondary) 12%, transparent), transparent 70%),
+    linear-gradient(165deg, var(--bg-elevated), color-mix(in srgb, var(--primary-light) 35%, var(--bg-secondary)));
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
   animation: vocab-modal-in 0.28s var(--ease);
 }
 
@@ -4967,10 +4971,14 @@ body.vocab-modal-open {
   margin-bottom: 0.55rem;
 }
 
+.book-modal-head .eyebrow {
+  color: var(--primary);
+}
+
 .book-modal-head h2 {
   margin: 0.2rem 0 0;
   font-size: 1.25rem;
-  color: var(--sky);
+  color: var(--text-primary);
 }
 
 .finish-confirm-copy,
@@ -5008,6 +5016,15 @@ body.vocab-modal-open {
 
 .social-final-actions {
   flex: 0 0 auto;
+}
+
+.final-viewpoint-sheet,
+.echo-sheet {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  background:
+    radial-gradient(440px 210px at 100% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 65%),
+    radial-gradient(380px 190px at 0% 100%, color-mix(in srgb, var(--secondary) 14%, transparent), transparent 70%),
+    linear-gradient(165deg, var(--bg-elevated), color-mix(in srgb, var(--primary-light) 42%, var(--bg-secondary)));
 }
 
 .final-viewpoint-hint {
@@ -5077,6 +5094,81 @@ body.vocab-modal-open {
   margin-top: 0.75rem;
   font-size: 0.8rem;
   color: var(--ink-soft);
+}
+
+.echo-status-line {
+  margin: 0.65rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+
+.echo-trigger.is-disabled,
+.echo-trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.echo-window-hint {
+  margin: 0 0 0.75rem;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.echo-intro {
+  margin: 0 0 1rem;
+  color: var(--ink-soft);
+  line-height: 1.65;
+  font-size: 0.95rem;
+}
+
+.echo-card .tag {
+  margin-bottom: 0.55rem;
+}
+
+.echo-book-hidden {
+  font-style: italic;
+}
+
+.echo-book-reveal {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.echo-book-reveal strong {
+  display: block;
+  color: var(--primary);
+}
+
+.echo-book-reveal span {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.echo-book-cover {
+  width: 3rem;
+  height: 4.2rem;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border));
+  flex-shrink: 0;
+}
+
+.echo-book-cover-fallback {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 35%, transparent), color-mix(in srgb, var(--secondary) 22%, transparent));
+}
+
+.echo-on-shelf {
+  margin: 0;
+  width: 100%;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.echo-actions {
+  flex-wrap: wrap;
 }
 
 .midpoint-hint {
@@ -5310,8 +5402,9 @@ body.vocab-modal-open {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(700px 420px at 50% 20%, rgba(107, 20, 44, 0.28), transparent 60%),
-    rgba(15, 27, 51, 0.62);
+    radial-gradient(700px 420px at 50% 20%, color-mix(in srgb, var(--primary) 32%, transparent), transparent 60%),
+    radial-gradient(520px 320px at 80% 80%, color-mix(in srgb, var(--secondary) 18%, transparent), transparent 65%),
+    color-mix(in srgb, var(--chrome) 68%, transparent);
   backdrop-filter: blur(6px);
 }
 
@@ -5321,13 +5414,19 @@ body.vocab-modal-open {
   width: min(100%, 440px);
   padding: 1.7rem 1.5rem 1.6rem;
   border-radius: var(--radius);
-  border: 1px solid var(--line);
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border));
   background:
-    radial-gradient(420px 180px at 100% 0%, rgba(107, 20, 44, 0.1), transparent 70%),
-    linear-gradient(165deg, rgba(255, 250, 243, 0.98), rgba(232, 220, 200, 0.96));
-  box-shadow: var(--shadow);
+    radial-gradient(420px 180px at 100% 0%, color-mix(in srgb, var(--primary) 16%, transparent), transparent 70%),
+    radial-gradient(340px 160px at 0% 100%, color-mix(in srgb, var(--secondary) 12%, transparent), transparent 72%),
+    linear-gradient(165deg, var(--bg-elevated), color-mix(in srgb, var(--primary-light) 40%, var(--bg-secondary)));
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
   text-align: center;
   animation: vocab-modal-in 0.35s var(--ease);
+}
+
+.book-journey-sheet .eyebrow {
+  color: var(--primary);
 }
 
 .book-journey-orbit {
@@ -5343,13 +5442,13 @@ body.vocab-modal-open {
   position: absolute;
   inset: 8px;
   border-radius: 50%;
-  border: 1.5px dashed rgba(107, 20, 44, 0.35);
+  border: 1.5px dashed color-mix(in srgb, var(--primary) 42%, transparent);
   animation: journey-spin 12s linear infinite;
 }
 
 .book-journey-ring.is-delay {
   inset: 0;
-  border-color: rgba(15, 27, 51, 0.22);
+  border-color: color-mix(in srgb, var(--secondary) 38%, transparent);
   animation-duration: 18s;
   animation-direction: reverse;
 }
@@ -5366,19 +5465,19 @@ body.vocab-modal-open {
   border-radius: 22px;
   display: grid;
   place-items: center;
-  background: linear-gradient(160deg, var(--sky-mid), var(--sky));
-  box-shadow: 0 14px 28px rgba(15, 27, 51, 0.28);
+  background: linear-gradient(160deg, var(--primary-bright), var(--primary));
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--primary) 35%, transparent);
   overflow: hidden;
   animation: journey-float 2.4s ease-in-out infinite;
 }
 
 .book-journey-core.is-cover {
-  background: linear-gradient(160deg, var(--brand-mid), var(--brand-deep));
+  background: linear-gradient(160deg, var(--accent), var(--primary));
 }
 
 .book-journey-core.is-vibe,
 .book-journey-core.is-done {
-  background: linear-gradient(160deg, #1a2d52, #6b142c);
+  background: linear-gradient(160deg, var(--secondary), var(--primary));
 }
 
 @keyframes journey-float {
@@ -5409,15 +5508,15 @@ body.vocab-modal-open {
   inset: 0 auto 0 0;
   width: 10px;
   border-radius: 3px 0 0 3px;
-  background: rgba(255, 249, 240, 0.35);
+  background: color-mix(in srgb, var(--text-inverse) 35%, transparent);
 }
 
 .book-journey-book-page {
   position: absolute;
   inset: 4px 0 4px 8px;
   border-radius: 0 6px 6px 0;
-  background: rgba(255, 249, 240, 0.92);
-  box-shadow: 4px 0 0 rgba(255, 249, 240, 0.35);
+  background: color-mix(in srgb, var(--text-inverse) 92%, transparent);
+  box-shadow: 4px 0 0 color-mix(in srgb, var(--text-inverse) 35%, transparent);
   transform-origin: left center;
   animation: journey-page 1.6s var(--ease) infinite;
 }
@@ -5438,7 +5537,7 @@ body.vocab-modal-open {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 1px solid rgba(234, 208, 215, 0.55);
+  border: 1px solid color-mix(in srgb, var(--secondary) 55%, transparent);
   animation: journey-radar 2.2s ease-out infinite;
 }
 
@@ -5452,7 +5551,7 @@ body.vocab-modal-open {
 
 .book-journey-sheet h2 {
   margin: 0.2rem 0 0.4rem;
-  color: var(--sky);
+  color: var(--text-primary);
   font-size: 1.35rem;
 }
 
@@ -5466,7 +5565,7 @@ body.vocab-modal-open {
 .book-journey-title {
   margin: 0.65rem 0 0;
   font-weight: 700;
-  color: var(--brand-deep);
+  color: var(--primary);
 }
 
 .book-journey-steps {
@@ -5486,7 +5585,7 @@ body.vocab-modal-open {
   padding: 0.65rem 0.8rem;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
-  background: rgba(255, 249, 240, 0.55);
+  background: color-mix(in srgb, var(--bg-tertiary) 70%, transparent);
   color: var(--ink-soft);
   transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
@@ -5495,19 +5594,23 @@ body.vocab-modal-open {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: rgba(20, 25, 37, 0.18);
+  background: color-mix(in srgb, var(--text-secondary) 35%, transparent);
 }
 
 .book-journey-step.is-current {
-  border-color: rgba(107, 20, 44, 0.28);
-  background: linear-gradient(165deg, rgba(234, 208, 215, 0.5), rgba(255, 249, 240, 0.9));
-  color: var(--ink);
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--primary-light) 75%, transparent),
+    color-mix(in srgb, var(--bg-elevated) 90%, transparent)
+  );
+  color: var(--text-primary);
   box-shadow: var(--shadow-sm);
 }
 
 .book-journey-step.is-current .book-journey-step-dot {
-  background: var(--brand);
-  box-shadow: 0 0 0 4px rgba(107, 20, 44, 0.18);
+  background: var(--primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 22%, transparent);
   animation: journey-dot 1s ease-in-out infinite;
 }
 
@@ -5516,11 +5619,11 @@ body.vocab-modal-open {
 }
 
 .book-journey-step.is-done {
-  color: var(--ok);
+  color: var(--secondary);
 }
 
 .book-journey-step.is-done .book-journey-step-dot {
-  background: var(--ok);
+  background: var(--secondary);
 }
 
 .book-journey-step.is-failed {

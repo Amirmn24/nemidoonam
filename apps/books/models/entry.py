@@ -47,7 +47,10 @@ class Entry(models.Model):
     is_public = models.BooleanField(
         'عمومی',
         default=False,
-        help_text='برای دیدگاه پایانی اجباری است و در آشکارسازی اجتماعی دیده می‌شود.',
+        help_text=(
+            'با رضایت صریح کاربر؛ دیدگاه/حس/متن کتاب در پژواک و آشکارسازی اجتماعی '
+            'دیده می‌شود. برای دیدگاه پایانی اجباری است.'
+        ),
     )
     is_sealed = models.BooleanField(
         'مهروموم',

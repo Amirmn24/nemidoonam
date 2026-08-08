@@ -114,7 +114,7 @@ export default function EntryFormPage() {
   }
 
   const today = new Date().toISOString().slice(0, 10)
-  const showPublicToggle = kind === 'viewpoint'
+  const showPublicToggle = kind === 'viewpoint' || kind === 'feeling' || kind === 'book_text'
 
   return (
     <div className="page-entry-form">
@@ -135,7 +135,6 @@ export default function EntryFormPage() {
                   className={`choice-card${kind === value ? ' is-active' : ''}`}
                   onClick={() => {
                     setKind(value)
-                    if (value !== 'viewpoint') setIsPublic(false)
                   }}
                 >
                   {t(`books.kind.${value}`)}

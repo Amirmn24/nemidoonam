@@ -119,6 +119,7 @@ REST_FRAMEWORK = {
         'finish_book': '30/hour',
         'peer_viewpoint': '40/hour',
         'entry_write': '120/hour',
+        'echo': '30/hour',
         'waitlist': '10/hour',
     },
     'DEFAULT_RENDERER_CLASSES': [

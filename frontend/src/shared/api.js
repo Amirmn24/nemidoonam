@@ -189,9 +189,19 @@ export const booksApi = {
       body,
       headers: body instanceof FormData ? {} : undefined,
     }),
+  publishEntry: (bookId, entryId) =>
+    api(`/shelf/${bookId}/entries/${entryId}/publish/`, {
+      method: 'POST',
+      body: { confirm: true },
+    }),
   deleteEntry: (bookId, entryId) =>
     api(`/shelf/${bookId}/entries/${entryId}/`, { method: 'DELETE' }),
   getEntry: (bookId, entryId) => api(`/shelf/${bookId}/entries/${entryId}/`),
+  echoStatus: () => api('/books/echo/'),
+  echoDraw: () => api('/books/echo/', { method: 'POST' }),
+  echoReveal: (token) => api(`/books/echo/${token}/reveal/`, { method: 'POST' }),
+  echoSave: (token) => api(`/books/echo/${token}/save/`, { method: 'POST' }),
+  echoDismiss: (token) => api(`/books/echo/${token}/dismiss/`, { method: 'POST' }),
   choices: () => api('/meta/choices/'),
 }
 

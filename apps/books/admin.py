@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from apps.books.models import Book, BookRating, Entry, ReadingVibeLog, ReadingVibeProfile, UserBook
+from apps.books.models import (
+    Book,
+    BookRating,
+    EchoClaim,
+    Entry,
+    ReadingVibeLog,
+    ReadingVibeProfile,
+    UserBook,
+)
 
 
 class EntryInline(admin.TabularInline):
@@ -116,3 +124,18 @@ class ReadingVibeLogAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'book_title', 'book_author', 'change_summary', 'current_genre')
     autocomplete_fields = ('user', 'user_book')
     readonly_fields = ('created_at',)
+
+
+@admin.register(EchoClaim)
+class EchoClaimAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'night_key',
+        'resolution',
+        'book_revealed',
+        'created_at',
+    )
+    list_filter = ('resolution', 'book_revealed', 'night_key')
+    search_fields = ('user__email', 'user__username', 'token')
+    autocomplete_fields = ('user', 'entry')
+    readonly_fields = ('token', 'created_at', 'updated_at')
