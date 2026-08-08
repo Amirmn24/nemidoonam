@@ -35,7 +35,7 @@ export function GuestRoute() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/app" replace />
   }
 
   return <Outlet />

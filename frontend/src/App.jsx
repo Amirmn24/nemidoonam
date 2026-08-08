@@ -11,6 +11,7 @@ import ChallengeDetailPage from './features/challenges/ChallengeDetailPage'
 import ChallengeFormPage from './features/challenges/ChallengeFormPage'
 import ChallengeListPage from './features/challenges/ChallengeListPage'
 import DashboardPage from './features/dashboard/DashboardPage'
+import LandingPage from './features/landing/LandingPage'
 import WordFormPage from './features/vocabulary/WordFormPage'
 import WordListPage from './features/vocabulary/WordListPage'
 import { AuthProvider } from './shared/AuthContext'
@@ -22,6 +23,8 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
+
             <Route element={<GuestRoute />}>
               <Route path="/login" element={<AuthPage mode="login" />} />
               <Route path="/signup" element={<AuthPage mode="signup" />} />
@@ -29,7 +32,7 @@ export default function App() {
 
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
-                <Route path="/" element={<DashboardPage />} />
+                <Route path="/app" element={<DashboardPage />} />
                 <Route path="/books" element={<BookListPage />} />
                 <Route path="/books/new" element={<BookFormPage />} />
                 <Route path="/books/:id" element={<BookDetailPage />} />

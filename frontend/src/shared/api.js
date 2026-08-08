@@ -91,6 +91,10 @@ export async function api(path, options = {}) {
   return data
 }
 
+export const waitlistApi = {
+  join: (body) => api('/waitlist/', { method: 'POST', body }),
+}
+
 export const authApi = {
   me: () => api('/auth/me/'),
   login: (body) => api('/auth/login/', { method: 'POST', body }),

@@ -1,7 +1,16 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
-from apps.accounts.models import User
+from apps.accounts.models import User, WaitlistEntry
+
+
+@admin.register(WaitlistEntry)
+class WaitlistEntryAdmin(admin.ModelAdmin):
+    list_display = ('email', 'source', 'created_at')
+    list_filter = ('source', 'created_at')
+    search_fields = ('email',)
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at',)
 
 
 @admin.register(User)

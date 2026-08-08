@@ -42,7 +42,7 @@ export default function AuthPage({ mode: initialMode = 'login' }) {
     const fd = new FormData(e.target)
     try {
       await login({ email: fd.get('email'), password: fd.get('password') })
-      navigate(location.state?.from || '/', { replace: true })
+      navigate(location.state?.from || '/app', { replace: true })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('auth.loginFailed'))
     } finally {
@@ -62,7 +62,7 @@ export default function AuthPage({ mode: initialMode = 'login' }) {
         password: fd.get('password'),
         password_confirm: fd.get('password_confirm'),
       })
-      navigate('/', { replace: true })
+      navigate('/app', { replace: true })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('auth.signupFailed'))
     } finally {

@@ -7,9 +7,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.models import User
+from apps.accounts.models import User, WaitlistEntry
 from apps.accounts.services.auth import authenticate_user, login_user, register_user
 from apps.accounts.services.dashboard import get_dashboard_payload
 from apps.books.services.vibe import (
@@ -206,6 +207,47 @@ class LogoutView(APIView):
     def post(self, request):
         logout(request)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class WaitlistJoinSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    source = serializers.CharField(max_length=64, required=False, allow_blank=True, default='landing')
+
+    def validate_email(self, value):
+        return User.objects.normalize_email(value).strip().lower()
+
+    def validate_source(self, value):
+        source = (value or 'landing').strip() or 'landing'
+        return source[:64]
+
+
+class WaitlistJoinView(APIView):
+    """ثبت ایمیل در لیست انتظار لندینگ — عمومی و idempotent."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'waitlist'
+
+    def post(self, request):
+        serializer = WaitlistJoinSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        source = serializer.validated_data.get('source') or 'landing'
+        _entry, created = WaitlistEntry.objects.get_or_create(
+            email=email,
+            defaults={'source': source},
+        )
+        return Response(
+            {
+                'ok': True,
+                'created': created,
+                'detail': 'ایمیلت در لیست انتظار ثبت شد.'
+                if created
+                else 'این ایمیل قبلاً در لیست انتظار است.',
+            },
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
 
 
 class DashboardView(APIView):

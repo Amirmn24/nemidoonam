@@ -111,7 +111,7 @@ export default function ProfilePage() {
             <button type="submit" className="btn btn-primary" disabled={busy}>
               {t('app.save')}
             </button>
-            <Link to="/" className="btn btn-ghost">
+            <Link to="/app" className="btn btn-ghost">
               {t('app.back')}
             </Link>
           </div>

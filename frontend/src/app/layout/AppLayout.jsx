@@ -150,7 +150,7 @@ export default function AppLayout() {
       <header className="site-header" data-site-header>
         <div className="container header-inner">
           <div className="header-start">
-            <Link className="brand" to="/" aria-label={t('nav.brandAria')}>
+            <Link className="brand" to="/app" aria-label={t('nav.brandAria')}>
               <img className="brand-logo" src={vyrvonaWhite} alt="" />
             </Link>
           </div>
@@ -200,7 +200,7 @@ export default function AppLayout() {
             </button>
           </div>
           <nav className="sidebar-nav">
-            <NavLink to="/" end className={navClass}>
+            <NavLink to="/app" end className={navClass}>
               <span className="sidebar-icon" aria-hidden="true">
                 <IconHome />
               </span>
@@ -288,7 +288,7 @@ export default function AppLayout() {
       </div>
 
       <nav className="mobile-dock" aria-label={t('nav.quickNav')}>
-        <Link to="/" className={dockClass(path === '/')}>
+        <Link to="/app" className={dockClass(path === '/app')}>
           <IconHome />
           <span>{t('nav.home')}</span>
         </Link>
