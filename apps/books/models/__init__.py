@@ -1,5 +1,14 @@
 from .book import Book, UserBook
-from .choices import BookStatus, EntryKind, EntryMediaType, RATING_FACTORS, SetupStepStatus
+from .choices import (
+    DIGITAL_RESOURCE_KINDS,
+    BookStatus,
+    EntryKind,
+    EntryMediaType,
+    RATING_FACTORS,
+    ResourceKind,
+    SetupStepStatus,
+)
+from .document import UserBookDocument
 from .echo import EchoClaim
 from .entry import Entry
 from .rating import BookRating
@@ -9,6 +18,7 @@ __all__ = [
     'Book',
     'BookRating',
     'BookStatus',
+    'DIGITAL_RESOURCE_KINDS',
     'EchoClaim',
     'Entry',
     'EntryKind',
@@ -16,6 +26,8 @@ __all__ = [
     'RATING_FACTORS',
     'ReadingVibeLog',
     'ReadingVibeProfile',
+    'ResourceKind',
     'SetupStepStatus',
     'UserBook',
+    'UserBookDocument',
 ]

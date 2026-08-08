@@ -1,6 +1,14 @@
 from django.db import models
 
 
+class ResourceKind(models.TextChoices):
+    """نوع منبع در قفسه — قابل گسترش برای فرمت‌های بعدی."""
+
+    PHYSICAL = 'physical', 'کتاب فیزیکی'
+    EBOOK = 'ebook', 'کتاب الکترونیکی'
+    BOOKLET = 'booklet', 'جزوه'
+
+
 class BookStatus(models.TextChoices):
     WANT_TO_READ = 'want_to_read', 'می‌خواهم بخوانم'
     READING = 'reading', 'در حال خواندن'
@@ -40,3 +48,5 @@ RATING_FACTORS = (
     ('pacing', 'ریتم روایت'),
     ('impact', 'تأثیر عاطفی'),
 )
+
+DIGITAL_RESOURCE_KINDS = frozenset({ResourceKind.EBOOK, ResourceKind.BOOKLET})

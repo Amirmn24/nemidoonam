@@ -35,7 +35,7 @@
     "profileOf": "پروفایل {{username}}",
     "dashboard": "داشبورد",
     "dashboardSub": "نبض فعالیت",
-    "books": "کتاب‌ها",
+    "books": "کتاب‌ها و جزوه‌ها",
     "booksSub": "قفسه شخصی",
     "challenges": "چالش‌ها",
     "challengesSub": "هدف‌های مطالعه",
@@ -129,21 +129,43 @@
     "list": {
       "loading": "در حال بارگذاری قفسه…",
       "eyebrow": "قفسه شخصی",
-      "title": "کتاب‌هایت اینجان",
-      "subtitle": "وضعیت‌ها، پیشرفت و یادداشت‌های هر ورق را همین‌جا نگه دار.",
-      "addBook": "افزودن کتاب",
-      "statBooks": "کتاب",
+      "title": "کتاب‌ها و جزوه‌هایت اینجان",
+      "subtitle": "فیزیکی، الکترونیک یا جزوه — وضعیت، پیشرفت و یادداشت‌ها را همین‌جا نگه دار.",
+      "addBook": "افزودن",
+      "statBooks": "منبع",
       "statReading": "در حال خواندن",
       "statFinished": "تمام‌شده",
       "shelf": "قفسه",
-      "emptyTitle": "کتابی با این وضعیت نیست",
-      "emptyBody": "فیلتر را عوض کن یا کتاب جدیدی اضافه کن.",
+      "emptyTitle": "موردی با این وضعیت نیست",
+      "emptyBody": "فیلتر را عوض کن یا منبع جدیدی اضافه کن.",
       "showAll": "نمایش همه",
       "progressLabel": "{{current}} / {{total}} · {{percent}}%"
     },
+    "resourceKind": {
+      "physical": "کتاب فیزیکی",
+      "ebook": "کتاب الکترونیکی",
+      "booklet": "جزوه"
+    },
     "form": {
-      "addTitle": "افزودن کتاب",
-      "editTitle": "ویرایش کتاب",
+      "addTitle": "افزودن به قفسه",
+      "editTitle": "ویرایش",
+      "kindLead": "اول نوع منبع را انتخاب کن.",
+      "kindHint": {
+        "physical": "عنوان، نویسنده و تعداد صفحات — مثل قبل",
+        "ebook": "عنوان، درس اختیاری و آپلود PDF",
+        "booklet": "عنوان، درس اختیاری و آپلود PDF"
+      },
+      "changeKind": "تغییر نوع منبع",
+      "pickKindFirst": "نوع منبع را انتخاب کن.",
+      "stepDigitalIdentity": "عنوان و درس",
+      "stepPdf": "فایل PDF",
+      "course": "درس مرتبط",
+      "optional": "(اختیاری)",
+      "pdf": "فایل PDF",
+      "pdfHint": "تعداد صفحات بعد از آپلود از روی PDF خوانده می‌شود. فایل روی استوریج ذخیره می‌شود و از خود جنگو استریم نمی‌شود.",
+      "pdfRequired": "آپلود PDF الزامی است.",
+      "pdfSelected": "انتخاب‌شده: {{name}}",
+      "pagesFromPdf": "تعداد صفحات فعلی: {{count}}",
       "similarFound": "کتاب‌های شبیه پیدا شد:",
       "goToShelf": "برو به قفسه",
       "pickFromLibrary": "انتخاب از کتابخانه",
@@ -161,8 +183,8 @@
       "confirmSimilar": "مطمئنم این کتاب جدید است و با موارد پیشنهادی فرق دارد",
       "open": "باز کردن",
       "pick": "انتخاب",
-      "addedToast": "کتاب به قفسه اضافه شد.",
-      "updatedToast": "کتاب به‌روز شد."
+      "addedToast": "به قفسه اضافه شد.",
+      "updatedToast": "به‌روز شد."
     },
     "setup": {
       "eyebrow": "آماده‌سازی کتاب",
@@ -208,7 +230,8 @@
       "predictionSealed": "پیش‌بینی‌ات مهروموم شد.",
       "confirmDeleteBook": "این کتاب از قفسه حذف شود؟",
       "confirmDeleteEntry": "یادداشت حذف شود؟",
-      "entryDeleted": "یادداشت حذف شد."
+      "entryDeleted": "یادداشت حذف شد.",
+      "openPdf": "باز کردن PDF"
     },
     "entry": {
       "newTitle": "یادداشت جدید",

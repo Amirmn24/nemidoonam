@@ -1,22 +1,74 @@
-from datetime import timedelta
-from unittest.mock import patch
+from io import BytesIO
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
-from django.utils import timezone
+from pypdf import PdfWriter
 from rest_framework.test import APIClient
 
-from apps.books.models import Book, BookStatus, Entry, EntryKind, EntryMediaType, UserBook
+from apps.books.models import ResourceKind, UserBook
 from apps.books.services.echo import (
     echo_night_key,
     is_echo_window_open,
     publish_entry_with_consent,
 )
+from apps.books.models import Book, BookStatus, Entry, EntryKind, EntryMediaType
+from datetime import timedelta
+from unittest.mock import patch
+from django.utils import timezone
 
 
 User = get_user_model()
 
 
+def make_pdf_bytes(pages: int = 3) -> bytes:
+    writer = PdfWriter()
+    for _ in range(pages):
+        writer.add_blank_page(width=200, height=200)
+    buf = BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+class DigitalShelfApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email='dig@example.com',
+            password='x',
+            username='dig',
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def test_create_booklet_from_pdf(self):
+        pdf = SimpleUploadedFile(
+            'notes.pdf',
+            make_pdf_bytes(4),
+            content_type='application/pdf',
+        )
+        res = self.client.post(
+            '/api/v1/shelf/',
+            {
+                'resource_kind': 'booklet',
+                'title': 'جزوه مدار',
+                'course': 'مدار ۱',
+                'pdf': pdf,
+                'status': 'reading',
+            },
+            format='multipart',
+        )
+        self.assertEqual(res.status_code, 201, res.data)
+        self.assertEqual(res.data['resource_kind'], ResourceKind.BOOKLET)
+        self.assertTrue(res.data['is_digital'])
+        self.assertEqual(res.data['total_pages'], 4)
+        self.assertEqual(res.data['course'], 'مدار ۱')
+        self.assertTrue(res.data['document']['pdf_url'])
+        self.assertFalse(res.data['await_setup'])
+        shelf = UserBook.objects.get(pk=res.data['id'])
+        self.assertTrue(shelf.document.has_file)
+
+
+# Keep previous echo/publish tests from earlier session
 class EchoWindowTests(TestCase):
     def test_window_open_at_night(self):
         local = timezone.localtime()
@@ -62,9 +114,7 @@ class PublishConsentTests(TestCase):
         self.assertTrue(published.is_public)
 
 
-@override_settings(
-    ROOT_URLCONF='config.urls',
-)
+@override_settings(ROOT_URLCONF='config.urls')
 class EchoApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()

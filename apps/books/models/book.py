@@ -1,15 +1,29 @@
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import Q
 
-from .choices import BookStatus, SetupStepStatus
+from .choices import BookStatus, DIGITAL_RESOURCE_KINDS, ResourceKind, SetupStepStatus
 
 
 class Book(models.Model):
-    """کاتالوگ سراسری کتاب — عنوان+نویسنده یکتا است؛ کاربران جداگانه به قفسه وصل می‌شوند."""
+    """کاتالوگ منبع — فیزیکی با عنوان+نویسنده یکتا؛ دیجیتال بدون اجبار نویسنده."""
 
+    resource_kind = models.CharField(
+        'نوع منبع',
+        max_length=20,
+        choices=ResourceKind.choices,
+        default=ResourceKind.PHYSICAL,
+        db_index=True,
+    )
     title = models.CharField('عنوان', max_length=255)
-    author = models.CharField('نویسنده', max_length=255)
+    author = models.CharField(
+        'نویسنده',
+        max_length=255,
+        blank=True,
+        default='',
+        help_text='برای کتاب فیزیکی الزامی است؛ برای الکترونیک/جزوه خالی می‌ماند.',
+    )
     title_normalized = models.CharField(
         'عنوان نرمال',
         max_length=255,
@@ -41,20 +55,28 @@ class Book(models.Model):
 
     class Meta:
         ordering = ['title', 'author']
-        verbose_name = 'کتاب'
-        verbose_name_plural = 'کتاب‌ها'
+        verbose_name = 'کتاب / جزوه'
+        verbose_name_plural = 'کتاب‌ها و جزوه‌ها'
         indexes = [
             models.Index(fields=['title_normalized', 'author_normalized']),
+            models.Index(fields=['resource_kind']),
         ]
         constraints = [
             models.UniqueConstraint(
                 fields=['title_normalized', 'author_normalized'],
-                name='books_unique_title_author_norm',
+                condition=Q(resource_kind=ResourceKind.PHYSICAL),
+                name='books_unique_physical_title_author_norm',
             ),
         ]
 
     def __str__(self) -> str:
-        return f'{self.title} — {self.author}'
+        if self.author:
+            return f'{self.title} — {self.author}'
+        return self.title
+
+    @property
+    def is_digital(self) -> bool:
+        return self.resource_kind in DIGITAL_RESOURCE_KINDS
 
     def sync_normalized_fields(self) -> None:
         from apps.books.services.matching import fingerprint
@@ -68,7 +90,7 @@ class Book(models.Model):
 
 
 class UserBook(models.Model):
-    """نسخهٔ قفسهٔ کاربر از یک کتاب کاتالوگ."""
+    """نسخهٔ قفسهٔ کاربر از یک منبع کاتالوگ."""
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -139,7 +161,6 @@ class UserBook(models.Model):
     def __str__(self) -> str:
         return f'{self.book} · {self.user}'
 
-    # Proxy catalog fields so templates can keep using book.title etc.
     @property
     def title(self) -> str:
         return self.book.title
@@ -155,6 +176,14 @@ class UserBook(models.Model):
     @property
     def cover(self):
         return self.book.cover
+
+    @property
+    def resource_kind(self) -> str:
+        return self.book.resource_kind
+
+    @property
+    def is_digital(self) -> bool:
+        return self.book.is_digital
 
     @property
     def progress_percent(self) -> int:

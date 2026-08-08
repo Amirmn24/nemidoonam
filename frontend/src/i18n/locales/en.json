@@ -35,7 +35,7 @@
     "profileOf": "Profile {{username}}",
     "dashboard": "Dashboard",
     "dashboardSub": "Activity pulse",
-    "books": "Books",
+    "books": "Books & notes",
     "booksSub": "Personal shelf",
     "challenges": "Challenges",
     "challengesSub": "Reading goals",
@@ -129,21 +129,43 @@
     "list": {
       "loading": "Loading shelf…",
       "eyebrow": "Personal shelf",
-      "title": "Your books are here",
-      "subtitle": "Keep statuses, progress, and page notes in one place.",
-      "addBook": "Add book",
-      "statBooks": "Books",
+      "title": "Your books & notes are here",
+      "subtitle": "Physical, ebook, or booklet — keep status, progress, and notes in one place.",
+      "addBook": "Add",
+      "statBooks": "Items",
       "statReading": "Reading",
       "statFinished": "Finished",
       "shelf": "Shelf",
-      "emptyTitle": "No books with this status",
-      "emptyBody": "Change the filter or add a new book.",
+      "emptyTitle": "Nothing with this status",
+      "emptyBody": "Change the filter or add something new.",
       "showAll": "Show all",
       "progressLabel": "{{current}} / {{total}} · {{percent}}%"
     },
+    "resourceKind": {
+      "physical": "Physical book",
+      "ebook": "E-book",
+      "booklet": "Booklet / notes"
+    },
     "form": {
-      "addTitle": "Add book",
-      "editTitle": "Edit book",
+      "addTitle": "Add to shelf",
+      "editTitle": "Edit",
+      "kindLead": "First choose the type of resource.",
+      "kindHint": {
+        "physical": "Title, author, and page count — as before",
+        "ebook": "Title, optional course, and PDF upload",
+        "booklet": "Title, optional course, and PDF upload"
+      },
+      "changeKind": "Change resource type",
+      "pickKindFirst": "Pick a resource type.",
+      "stepDigitalIdentity": "Title & course",
+      "stepPdf": "PDF file",
+      "course": "Related course",
+      "optional": "(optional)",
+      "pdf": "PDF file",
+      "pdfHint": "Page count is read from the PDF after upload. The file is stored on media storage and is not streamed through Django.",
+      "pdfRequired": "PDF upload is required.",
+      "pdfSelected": "Selected: {{name}}",
+      "pagesFromPdf": "Current page count: {{count}}",
       "similarFound": "Similar books found:",
       "goToShelf": "Go to shelf",
       "pickFromLibrary": "Pick from library",
@@ -161,8 +183,8 @@
       "confirmSimilar": "I'm sure this is a new book and different from the suggestions",
       "open": "Open",
       "pick": "Select",
-      "addedToast": "Book added to shelf.",
-      "updatedToast": "Book updated."
+      "addedToast": "Added to shelf.",
+      "updatedToast": "Updated."
     },
     "setup": {
       "eyebrow": "Preparing book",
@@ -208,7 +230,8 @@
       "predictionSealed": "Your prediction is sealed.",
       "confirmDeleteBook": "Remove this book from your shelf?",
       "confirmDeleteEntry": "Delete this note?",
-      "entryDeleted": "Note deleted."
+      "entryDeleted": "Note deleted.",
+      "openPdf": "Open PDF"
     },
     "entry": {
       "newTitle": "New note",

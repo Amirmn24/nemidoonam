@@ -165,6 +165,18 @@ def enqueue_shelf_setup(user_book_id: int) -> None:
 
 
 def schedule_shelf_setup(user_book: UserBook) -> None:
+    from apps.books.models import ResourceKind, SetupStepStatus
+
+    # منابع دیجیتال جلد/وایب کاتالوگ ندارند
+    if user_book.book_id and user_book.book.resource_kind != ResourceKind.PHYSICAL:
+        UserBook.objects.filter(pk=user_book.pk).update(
+            cover_setup_status=SetupStepStatus.SKIPPED,
+            vibe_setup_status=SetupStepStatus.SKIPPED,
+        )
+        user_book.cover_setup_status = SetupStepStatus.SKIPPED
+        user_book.vibe_setup_status = SetupStepStatus.SKIPPED
+        return
+
     mark_setup_queued(user_book)
     shelf_id = user_book.pk
 

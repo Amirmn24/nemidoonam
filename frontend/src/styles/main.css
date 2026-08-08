@@ -5167,8 +5167,35 @@ body.vocab-modal-open {
   font-size: 0.9rem;
 }
 
-.echo-actions {
-  flex-wrap: wrap;
+.resource-kind-grid {
+  margin-top: 1rem;
+}
+
+.resource-kind-card {
+  text-align: start;
+  min-height: 6.5rem;
+}
+
+.resource-kind-card strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--text-primary);
+}
+
+.resource-kind-card small {
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.form-lead {
+  margin: 0.35rem 0 0;
+  color: var(--ink-soft);
+}
+
+.field-optional {
+  color: var(--text-tertiary);
+  font-weight: 500;
+  font-size: 0.85em;
 }
 
 .midpoint-hint {

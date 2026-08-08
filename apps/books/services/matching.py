@@ -7,7 +7,7 @@ import unicodedata
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 
-from apps.books.models import Book, UserBook
+from apps.books.models import Book, ResourceKind, UserBook
 
 
 def _shelf_detail_path(shelf_id: int | None) -> str:
@@ -134,7 +134,7 @@ def find_duplicates(
         return []
 
     shelves = _shelf_map(owner)
-    qs = Book.objects.all().order_by('-updated_at')
+    qs = Book.objects.filter(resource_kind=ResourceKind.PHYSICAL).order_by('-updated_at')
     if exclude_book_pk:
         qs = qs.exclude(pk=exclude_book_pk)
     candidates = list(qs[:700])
@@ -184,6 +184,7 @@ def find_exact_on_shelf(
     exclude_shelf_pk: int | None = None,
 ) -> UserBook | None:
     book = Book.objects.filter(
+        resource_kind=ResourceKind.PHYSICAL,
         title_normalized=fingerprint(title),
         author_normalized=fingerprint(author),
     ).first()
@@ -201,6 +202,7 @@ def find_exact_catalog(title: str, author: str) -> Book | None:
     if not title_fp or not author_fp:
         return None
     return Book.objects.filter(
+        resource_kind=ResourceKind.PHYSICAL,
         title_normalized=title_fp,
         author_normalized=author_fp,
     ).first()

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from django.db import transaction
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
-from apps.books.models import UserBook
+from apps.books.models import UserBook, UserBookDocument
 
 
 @receiver(post_save, sender=UserBook)
@@ -15,6 +14,11 @@ def user_book_created_schedule_setup(sender, instance: UserBook, created: bool, 
 
     from apps.books.services.setup import schedule_shelf_setup
 
-    # schedule_shelf_setup خودش mark + on_commit می‌کند
-    # از refresh جلوگیری کن تا در همان تراکنش بماند
     schedule_shelf_setup(instance)
+
+
+@receiver(pre_delete, sender=UserBookDocument)
+def delete_document_storage_file(sender, instance: UserBookDocument, **kwargs) -> None:
+    """فایل را از استوریج پاک کن؛ محتوا هرگز در DB نبوده."""
+    if instance.pdf:
+        instance.pdf.delete(save=False)

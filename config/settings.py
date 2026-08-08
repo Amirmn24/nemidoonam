@@ -101,7 +101,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
-DATA_UPLOAD_MAX_MEMORY_SIZE = 15 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 45 * 1024 * 1024
+# سقف PDF کتاب الکترونیک/جزوه — روی دیسک ذخیره می‌شود، نه در RAM پاسخ
+BOOKS_PDF_MAX_BYTES = int(os.getenv('BOOKS_PDF_MAX_BYTES', str(40 * 1024 * 1024)))
 
 # --- API / SPA ---
 REST_FRAMEWORK = {

@@ -8,6 +8,7 @@ from apps.books.models import (
     ReadingVibeLog,
     ReadingVibeProfile,
     UserBook,
+    UserBookDocument,
 )
 
 
@@ -34,6 +35,14 @@ class BookRatingInline(admin.StackedInline):
     readonly_fields = ()
 
 
+class UserBookDocumentInline(admin.StackedInline):
+    model = UserBookDocument
+    extra = 0
+    max_num = 1
+    fields = ('pdf', 'course', 'original_filename', 'content_type', 'size_bytes')
+    readonly_fields = ('original_filename', 'content_type', 'size_bytes')
+
+
 class UserBookInline(admin.TabularInline):
     model = UserBook
     extra = 0
@@ -47,9 +56,11 @@ class BookAdmin(admin.ModelAdmin):
     list_display = (
         'title',
         'author',
+        'resource_kind',
         'total_pages',
         'updated_at',
     )
+    list_filter = ('resource_kind',)
     search_fields = ('title', 'author')
     inlines = [UserBookInline]
     readonly_fields = ('title_normalized', 'author_normalized', 'created_at', 'updated_at')
@@ -67,7 +78,7 @@ class UserBookAdmin(admin.ModelAdmin):
     list_filter = ('status',)
     search_fields = ('book__title', 'book__author', 'user__username')
     autocomplete_fields = ('user', 'book')
-    inlines = [EntryInline, BookRatingInline]
+    inlines = [UserBookDocumentInline, EntryInline, BookRatingInline]
     readonly_fields = ('created_at', 'updated_at')
     fields = (
         'user',
@@ -79,6 +90,14 @@ class UserBookAdmin(admin.ModelAdmin):
         'created_at',
         'updated_at',
     )
+
+
+@admin.register(UserBookDocument)
+class UserBookDocumentAdmin(admin.ModelAdmin):
+    list_display = ('user_book', 'course', 'original_filename', 'size_bytes', 'updated_at')
+    search_fields = ('user_book__book__title', 'course', 'original_filename')
+    autocomplete_fields = ('user_book',)
+    readonly_fields = ('original_filename', 'content_type', 'size_bytes', 'created_at', 'updated_at')
 
 
 @admin.register(Entry)

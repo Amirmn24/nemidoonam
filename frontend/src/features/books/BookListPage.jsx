@@ -245,6 +245,9 @@ export default function BookListPage() {
                     <span className={`status status-${book.status}`}>
                       {labelFromCode('books.status', book.status, book.status_display)}
                     </span>
+                    {book.resource_kind && book.resource_kind !== 'physical' ? (
+                      <span className="tag">{t(`books.resourceKind.${book.resource_kind}`)}</span>
+                    ) : null}
                     <RatingBadge score={book.overall_score} />
                   </div>
                   <div className="book-progress-label">

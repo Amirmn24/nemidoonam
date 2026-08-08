@@ -45,12 +45,26 @@ function ReadingDetail({
             <span className={`status status-${book.status}`}>
               {labelFromCode('books.status', book.status, book.status_display)}
             </span>
+            {book.resource_kind && book.resource_kind !== 'physical' ? (
+              <span className="tag">{t(`books.resourceKind.${book.resource_kind}`)}</span>
+            ) : null}
             <RatingBadge score={book.overall_score} />
           </div>
           <h1>{book.title}</h1>
-          <p className="meta-pill">{book.author}</p>
+          {book.author ? <p className="meta-pill">{book.author}</p> : null}
+          {book.course ? <p className="meta-pill">{t('books.form.course')}: {book.course}</p> : null}
           {book.notes ? <p>{book.notes}</p> : null}
           <div className="cluster">
+            {book.document?.pdf_url ? (
+              <a
+                className="btn btn-secondary"
+                href={book.document.pdf_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t('books.detail.openPdf')}
+              </a>
+            ) : null}
             <Link to={`/books/${id}/entries/new`} className="btn btn-primary">
               {t('books.detail.newEntry')}
             </Link>

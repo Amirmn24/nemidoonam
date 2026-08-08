@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from django.db import transaction
 
-from apps.books.models import Book, BookStatus, UserBook
+from apps.books.models import Book, BookStatus, ResourceKind, UserBook
 from apps.books.services.matching import fingerprint
 
 
@@ -14,6 +14,7 @@ def get_catalog_book_by_identity(title: str, author: str) -> Book | None:
     if not title_fp or not author_fp:
         return None
     return Book.objects.filter(
+        resource_kind=ResourceKind.PHYSICAL,
         title_normalized=title_fp,
         author_normalized=author_fp,
     ).first()
@@ -46,6 +47,7 @@ def get_or_create_catalog_book(
         title=title.strip(),
         author=author.strip(),
         total_pages=total_pages,
+        resource_kind=ResourceKind.PHYSICAL,
     )
     if cover:
         book.cover = cover

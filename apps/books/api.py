@@ -8,7 +8,15 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
-from apps.books.models import Book, BookStatus, Entry, EntryKind, EntryMediaType, UserBook
+from apps.books.models import (
+    Book,
+    BookStatus,
+    Entry,
+    EntryKind,
+    EntryMediaType,
+    ResourceKind,
+    UserBook,
+)
 from apps.books.models.choices import RATING_FACTORS
 from apps.books.services.books import (
     filter_entries,
@@ -16,6 +24,12 @@ from apps.books.services.books import (
     get_shelf_queryset,
 )
 from apps.books.services.catalog import add_book_to_shelf, create_shelf_book, update_shelf_book
+from apps.books.services.documents import (
+    create_digital_shelf_item,
+    is_digital_kind,
+    serialize_document,
+    update_digital_shelf_item,
+)
 from apps.books.services.entries import (
     is_entry_content_locked,
     playlist_entries,
@@ -67,6 +81,9 @@ def _media_url(request, field):
 class ShelfBookSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     book_id = serializers.IntegerField()
+    resource_kind = serializers.CharField(source='book.resource_kind')
+    resource_kind_display = serializers.CharField(source='book.get_resource_kind_display')
+    is_digital = serializers.BooleanField(source='book.is_digital')
     title = serializers.CharField()
     author = serializers.CharField()
     total_pages = serializers.IntegerField()
@@ -76,6 +93,8 @@ class ShelfBookSerializer(serializers.Serializer):
     status = serializers.CharField()
     status_display = serializers.CharField(source='get_status_display')
     notes = serializers.CharField()
+    course = serializers.SerializerMethodField()
+    document = serializers.SerializerMethodField()
     entry_count = serializers.SerializerMethodField()
     overall_score = serializers.SerializerMethodField()
     has_rating = serializers.SerializerMethodField()
@@ -86,6 +105,16 @@ class ShelfBookSerializer(serializers.Serializer):
 
     def get_cover_url(self, obj):
         return _media_url(self.context.get('request'), obj.cover)
+
+    def get_course(self, obj):
+        doc = getattr(obj, 'document', None)
+        if doc is None:
+            return ''
+        return doc.course or ''
+
+    def get_document(self, obj):
+        doc = getattr(obj, 'document', None)
+        return serialize_document(doc, self.context.get('request'))
 
     def get_entry_count(self, obj):
         if hasattr(obj, 'entry_count'):
@@ -154,29 +183,64 @@ class EmptyIntegerField(serializers.IntegerField):
 
 
 class ShelfWriteSerializer(serializers.Serializer):
+    resource_kind = serializers.ChoiceField(
+        choices=ResourceKind.choices,
+        required=False,
+        default=ResourceKind.PHYSICAL,
+    )
     title = serializers.CharField(max_length=255)
-    author = serializers.CharField(max_length=255)
-    total_pages = serializers.IntegerField(min_value=1)
+    author = serializers.CharField(max_length=255, required=False, allow_blank=True, default='')
+    total_pages = EmptyIntegerField(min_value=1, required=False, allow_null=True)
     current_page = EmptyIntegerField(min_value=0, required=False, default=0)
     status = serializers.ChoiceField(choices=BookStatus.choices, default=BookStatus.WANT_TO_READ)
     notes = serializers.CharField(required=False, allow_blank=True, default='')
     cover = serializers.ImageField(required=False, allow_null=True)
     catalog_book_id = EmptyIntegerField(required=False, allow_null=True)
     confirm_similar = serializers.BooleanField(required=False, default=False)
+    course = serializers.CharField(max_length=255, required=False, allow_blank=True, default='')
+    pdf = serializers.FileField(required=False, allow_null=True)
 
     def validate(self, attrs):
         user = self.context['request'].user
         user_book = self.context.get('user_book')
+        kind = attrs.get('resource_kind') or ResourceKind.PHYSICAL
+        if user_book is not None:
+            kind = user_book.book.resource_kind
+            attrs['resource_kind'] = kind
+
+        if is_digital_kind(kind):
+            title = (attrs.get('title') or '').strip()
+            if not title:
+                raise serializers.ValidationError({'title': 'عنوان الزامی است.'})
+            attrs['title'] = title
+            attrs['author'] = ''
+            attrs['course'] = (attrs.get('course') or '').strip()
+            pdf = attrs.get('pdf')
+            if not user_book and not pdf:
+                raise serializers.ValidationError({'pdf': 'آپلود فایل PDF الزامی است.'})
+            # صفحات از PDF استخراج می‌شود؛ ورودی دستی لازم نیست
+            attrs['total_pages'] = attrs.get('total_pages') or 1
+            attrs['_digital'] = True
+            return attrs
+
+        attrs['_digital'] = False
         catalog_id = attrs.get('catalog_book_id')
         current_page = attrs.get('current_page') or 0
         total_pages = attrs.get('total_pages')
-        if total_pages is not None and current_page > total_pages:
+        if total_pages is None:
+            raise serializers.ValidationError({'total_pages': 'تعداد صفحات الزامی است.'})
+        if current_page > total_pages:
             raise serializers.ValidationError(
                 {'current_page': 'صفحه فعلی نمی‌تواند بیشتر از تعداد صفحات باشد.'}
             )
 
+        author = (attrs.get('author') or '').strip()
+        if not author and not catalog_id:
+            raise serializers.ValidationError({'author': 'نویسنده الزامی است.'})
+        attrs['author'] = author
+
         if catalog_id:
-            book = Book.objects.filter(pk=catalog_id).first()
+            book = Book.objects.filter(pk=catalog_id, resource_kind=ResourceKind.PHYSICAL).first()
             if not book:
                 raise serializers.ValidationError('کتاب انتخاب‌شده پیدا نشد.')
             shelf = UserBook.objects.filter(user=user, book=book).first()
@@ -188,9 +252,7 @@ class ShelfWriteSerializer(serializers.Serializer):
             return attrs
 
         title = attrs['title'].strip()
-        author = attrs['author'].strip()
         attrs['title'] = title
-        attrs['author'] = author
 
         exclude_shelf = user_book.pk if user_book else None
         exclude_book = user_book.book_id if user_book else None
@@ -394,6 +456,9 @@ class MetaChoicesView(APIView):
                 'book_statuses': [
                     {'value': value, 'label': label} for value, label in BookStatus.choices
                 ],
+                'resource_kinds': [
+                    {'value': value, 'label': label} for value, label in ResourceKind.choices
+                ],
                 'entry_kinds': [
                     {'value': value, 'label': label} for value, label in EntryKind.choices
                 ],
@@ -533,6 +598,44 @@ class ShelfViewSet(ViewSet):
             )
 
         data = serializer.validated_data
+        if data.get('_digital'):
+            try:
+                user_book, _doc = create_digital_shelf_item(
+                    request.user,
+                    resource_kind=data['resource_kind'],
+                    title=data['title'],
+                    pdf=data['pdf'],
+                    course=data.get('course') or '',
+                    status=data.get('status', BookStatus.WANT_TO_READ),
+                    notes=data.get('notes') or '',
+                    current_page=data.get('current_page') or 0,
+                )
+            except DjangoValidationError as exc:
+                detail = exc.message_dict if hasattr(exc, 'message_dict') else {'detail': exc.messages}
+                message = (
+                    next(iter(detail.values()))[0]
+                    if isinstance(detail, dict)
+                    else str(exc)
+                )
+                if isinstance(message, list):
+                    message = message[0]
+                return Response(
+                    {'detail': message, 'errors': detail if isinstance(detail, dict) else {}},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            created = True
+            user_book = get_shelf_queryset(request.user).get(pk=user_book.pk)
+            setup = serialize_setup_status(user_book, request)
+            payload = ShelfBookSerializer(user_book, context={'request': request}).data
+            return Response(
+                {
+                    **payload,
+                    'setup': setup,
+                    'await_setup': False,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
         catalog_book = data.get('_catalog_book')
         if catalog_book:
             user_book, created = add_book_to_shelf(
@@ -574,7 +677,17 @@ class ShelfViewSet(ViewSet):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         try:
-            if data.get('_catalog_book'):
+            if data.get('_digital'):
+                user_book = update_digital_shelf_item(
+                    user_book,
+                    title=data.get('title'),
+                    course=data.get('course'),
+                    status=data.get('status'),
+                    notes=data.get('notes'),
+                    current_page=data.get('current_page'),
+                    pdf=data.get('pdf'),
+                )
+            elif data.get('_catalog_book'):
                 book = data['_catalog_book']
                 if book.pk != user_book.book_id:
                     clash = UserBook.objects.filter(user=request.user, book=book).exclude(
@@ -603,8 +716,9 @@ class ShelfViewSet(ViewSet):
                 )
         except DjangoValidationError as exc:
             message = exc.messages[0] if hasattr(exc, 'messages') else str(exc)
+            detail = exc.message_dict if hasattr(exc, 'message_dict') else {}
             return Response(
-                {'detail': message, 'errors': {}},
+                {'detail': message, 'errors': detail},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         user_book = get_shelf_queryset(request.user).get(pk=user_book.pk)
