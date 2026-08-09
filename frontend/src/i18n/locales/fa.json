@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "ویرونا · Vyrvona",
+    "title": "ویروانا · Vyrvona",
     "loading": "در حال بارگذاری…",
     "error": "خطا",
     "save": "ذخیره",
@@ -25,8 +25,8 @@
   },
   "nav": {
     "mainMenu": "منوی اصلی",
-    "brand": "ویرونا",
-    "brandAria": "ویرونا · Vyrvona",
+    "brand": "ویروانا",
+    "brandAria": "ویروانا · Vyrvona",
     "collapseSidebar": "جمع‌کردن سایدبار",
     "closeMenu": "بستن منو",
     "openMenu": "باز کردن منو",
@@ -68,7 +68,7 @@
     "username": "نام کاربری",
     "createAccount": "ساخت حساب",
     "helloAgain": "سلام دوباره",
-    "welcomeBack": "به ویرونا خوش آمدی.",
+    "welcomeBack": "به ویروانا خوش آمدی.",
     "newHere": "تازه‌واردی؟",
     "createAndStart": "یک حساب بساز و قفسه‌ات را شروع کن.",
     "noAccount": "حساب نداری؟",
