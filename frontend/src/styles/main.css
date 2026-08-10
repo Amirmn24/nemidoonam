@@ -2757,6 +2757,74 @@ body.page-auth .main-content.container {
 .book-pick-item span {
   font-weight: 500;
   color: var(--ink);
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.book-pick-item .tag {
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.form-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--muted, color-mix(in srgb, var(--ink) 62%, transparent));
+  line-height: 1.5;
+}
+
+.challenge-kind-grid {
+  margin-bottom: 1.1rem;
+}
+
+.challenge-pick-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.35rem 0 0.85rem;
+}
+
+.challenge-pick-toolbar .form-step-label {
+  margin: 0;
+}
+
+.challenge-selected-summary {
+  margin-top: 1.15rem;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  border: 1px dashed var(--line);
+  background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
+}
+
+.challenge-selected-summary ul {
+  list-style: none;
+  margin: 0.65rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.challenge-selected-summary li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.challenge-selected-summary li > span:first-child {
+  flex: 1;
+  min-width: 10rem;
+  font-weight: 500;
+}
+
+.btn-compact {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  min-height: auto;
 }
 
 

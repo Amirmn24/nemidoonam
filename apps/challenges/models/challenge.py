@@ -39,7 +39,8 @@ class Challenge(models.Model):
         'books.Book',
         through='ChallengeBook',
         related_name='challenges',
-        verbose_name='کتاب‌ها',
+        verbose_name='منابع',
+        help_text='کتاب فیزیکی، الکترونیکی یا جزوه از کاتالوگ قفسه.',
     )
     created_at = models.DateTimeField('تاریخ ایجاد', auto_now_add=True)
     updated_at = models.DateTimeField('آخرین به‌روزرسانی', auto_now=True)

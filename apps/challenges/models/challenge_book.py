@@ -2,7 +2,7 @@ from django.db import models
 
 
 class ChallengeBook(models.Model):
-    """عضویت کتاب در چالش — نقطهٔ گسترش برای هدف صفحه‌ای و غیره."""
+    """عضویت منبع (کتاب فیزیکی / الکترونیک / جزوه) در چالش."""
 
     challenge = models.ForeignKey(
         'challenges.Challenge',
@@ -14,7 +14,8 @@ class ChallengeBook(models.Model):
         'books.Book',
         on_delete=models.CASCADE,
         related_name='challenge_links',
-        verbose_name='کتاب',
+        verbose_name='منبع',
+        help_text='هر resource_kind روی books.Book مجاز است.',
     )
     target_pages = models.PositiveIntegerField(
         'هدف صفحات',
@@ -25,8 +26,8 @@ class ChallengeBook(models.Model):
     created_at = models.DateTimeField('تاریخ افزودن', auto_now_add=True)
 
     class Meta:
-        verbose_name = 'کتاب چالش'
-        verbose_name_plural = 'کتاب‌های چالش'
+        verbose_name = 'منبع چالش'
+        verbose_name_plural = 'منابع چالش'
         constraints = [
             models.UniqueConstraint(
                 fields=['challenge', 'book'],

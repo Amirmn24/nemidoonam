@@ -111,10 +111,24 @@ export default function ChallengeDetailPage() {
               </div>
               <div className="book-meta">
                 <h3>{b.title}</h3>
-                <p>{b.author}</p>
-                <span className={`status${b.shelf_status ? ` status-${b.shelf_status}` : ''}`}>
-                  {labelFromCode('books.status', b.shelf_status, b.shelf_status_display)}
-                </span>
+                {b.author ? <p>{b.author}</p> : null}
+                {b.course ? (
+                  <p className="meta-pill">
+                    {t('books.form.course')}: {b.course}
+                  </p>
+                ) : null}
+                <div className="cluster">
+                  <span className={`status${b.shelf_status ? ` status-${b.shelf_status}` : ''}`}>
+                    {labelFromCode('books.status', b.shelf_status, b.shelf_status_display)}
+                  </span>
+                  {b.resource_kind && b.resource_kind !== 'physical' ? (
+                    <span className="tag">
+                      {t(`books.resourceKind.${b.resource_kind}`, {
+                        defaultValue: b.resource_kind_display,
+                      })}
+                    </span>
+                  ) : null}
+                </div>
                 <div className="progress">
                   <span style={{ width: `${b.progress_percent}%` }} />
                 </div>

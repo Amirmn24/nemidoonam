@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { booksApi, ApiError } from '../../shared/api'
 import { useAuth } from '../../shared/AuthContext'
@@ -7,6 +7,19 @@ import BookAddProgressOverlay from './components/BookAddProgressOverlay'
 
 const STATUS_VALUES = ['want_to_read', 'reading', 'paused', 'finished', 'abandoned']
 const RESOURCE_KINDS = ['physical', 'ebook', 'booklet']
+
+function isSafeChallengeReturn(path) {
+  if (!path || typeof path !== 'string') return false
+  if (!path.startsWith('/') || path.startsWith('//')) return false
+  return path === '/challenges/new' || /^\/challenges\/\d+\/edit$/.test(path)
+}
+
+function buildReturnUrl(returnTo, { shelfId, kind }) {
+  const url = new URL(returnTo, window.location.origin)
+  if (shelfId) url.searchParams.set('added', String(shelfId))
+  if (kind) url.searchParams.set('kind', kind)
+  return `${url.pathname}${url.search}`
+}
 
 function useDebounced(value, ms = 280) {
   const [v, setV] = useState(value)
@@ -74,14 +87,20 @@ export default function BookFormPage() {
   const { id } = useParams()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { showToast } = useAuth()
+  const returnToRaw = searchParams.get('returnTo') || ''
+  const returnTo = isSafeChallengeReturn(returnToRaw) ? returnToRaw : ''
+  const kindFromQuery = searchParams.get('kind')
   const [loading, setLoading] = useState(isEdit)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [similar, setSimilar] = useState([])
   const [matchResults, setMatchResults] = useState([])
   const [book, setBook] = useState(null)
-  const [resourceKind, setResourceKind] = useState(null)
+  const [resourceKind, setResourceKind] = useState(() =>
+    !isEdit && RESOURCE_KINDS.includes(kindFromQuery) ? kindFromQuery : null,
+  )
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [course, setCourse] = useState('')
@@ -97,6 +116,16 @@ export default function BookFormPage() {
   const debouncedAuthor = useDebounced(author)
   const excludeRef = useRef(null)
   const digital = isDigitalKind(resourceKind)
+  const cancelTo = returnTo || '/books'
+
+  const finishCreate = (saved) => {
+    showToast(t('books.form.addedToast'), 'success')
+    if (returnTo) {
+      navigate(buildReturnUrl(returnTo, { shelfId: saved.id, kind: resourceKind }))
+      return
+    }
+    navigate(`/books/${saved.id}`)
+  }
 
   useEffect(() => {
     if (!isEdit) return
@@ -241,8 +270,7 @@ export default function BookFormPage() {
             await sleep(500)
           }
         }
-        showToast(t('books.form.addedToast'), 'success')
-        navigate(`/books/${saved.id}`)
+        finishCreate(saved)
         return
       }
       showToast(t('books.form.updatedToast'), 'success')
@@ -286,8 +314,8 @@ export default function BookFormPage() {
             ))}
           </div>
           <div className="form-actions">
-            <Link to="/books" className="btn btn-ghost">
-              {t('app.cancel')}
+            <Link to={cancelTo} className="btn btn-ghost">
+              {returnTo ? t('challenges.form.backToChallenge') : t('app.cancel')}
             </Link>
           </div>
         </section>
@@ -580,8 +608,11 @@ export default function BookFormPage() {
             <button type="submit" className="btn btn-primary" disabled={busy}>
               {t('app.save')}
             </button>
-            <Link to={isEdit ? `/books/${id}` : '/books'} className="btn btn-ghost">
-              {t('app.cancel')}
+            <Link
+              to={isEdit ? `/books/${id}` : cancelTo}
+              className="btn btn-ghost"
+            >
+              {returnTo && !isEdit ? t('challenges.form.backToChallenge') : t('app.cancel')}
             </Link>
           </div>
         </form>

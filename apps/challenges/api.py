@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.response import Response
@@ -29,6 +30,16 @@ class ChallengeProgressSerializer(serializers.Serializer):
     is_overdue = serializers.BooleanField()
 
 
+def _shelf_course(user_book: UserBook | None) -> str:
+    if user_book is None:
+        return ''
+    try:
+        doc = user_book.document
+    except ObjectDoesNotExist:
+        return ''
+    return doc.course or ''
+
+
 def serialize_challenge(challenge, request, *, progress: ChallengeProgress | None = None):
     progress = progress or compute_progress(challenge)
     shelf_map = {
@@ -36,7 +47,7 @@ def serialize_challenge(challenge, request, *, progress: ChallengeProgress | Non
         for ub in UserBook.objects.filter(
             user=challenge.owner_id,
             book_id__in=list(challenge.books.values_list('id', flat=True)),
-        ).select_related('book')
+        ).select_related('book', 'document')
     }
     books = []
     for cb in challenge.challenge_books.all():
@@ -45,8 +56,12 @@ def serialize_challenge(challenge, request, *, progress: ChallengeProgress | Non
         books.append(
             {
                 'book_id': book.pk,
+                'resource_kind': book.resource_kind,
+                'resource_kind_display': book.get_resource_kind_display(),
+                'is_digital': book.is_digital,
                 'title': book.title,
                 'author': book.author,
+                'course': _shelf_course(ub),
                 'target_pages': cb.target_pages,
                 'shelf_id': ub.pk if ub else None,
                 'progress_percent': ub.progress_percent if ub else 0,
@@ -95,11 +110,17 @@ class ChallengeWriteSerializer(serializers.Serializer):
 
     def validate_shelf_ids(self, value):
         user = self.context['request'].user
-        shelves = list(UserBook.objects.filter(user=user, pk__in=value).select_related('book'))
+        shelves = list(
+            UserBook.objects.filter(user=user, pk__in=value).select_related('book')
+        )
         if len(shelves) != len(set(value)):
-            raise serializers.ValidationError('بعضی از کتاب‌های انتخاب‌شده در قفسه‌ات نیستند.')
+            raise serializers.ValidationError(
+                'بعضی از منابع انتخاب‌شده در قفسه‌ات نیستند.'
+            )
         if not shelves:
-            raise serializers.ValidationError('حداقل یک کتاب انتخاب کن.')
+            raise serializers.ValidationError(
+                'حداقل یک کتاب، الکترونیک یا جزوه انتخاب کن.'
+            )
         return [ub.book for ub in shelves]
 
     def validate_title(self, value):

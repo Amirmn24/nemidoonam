@@ -7,13 +7,13 @@ import html
 
 def _books_phrase(book_titles: list[str]) -> str:
     if not book_titles:
-        return 'کتاب‌هات'
+        return 'منابع مطالعه‌ات'
     if len(book_titles) == 1:
-        return f'کتاب «{book_titles[0]}»'
+        return f'«{book_titles[0]}»'
     if len(book_titles) == 2:
-        return f'کتاب‌های «{book_titles[0]}» و «{book_titles[1]}»'
+        return f'«{book_titles[0]}» و «{book_titles[1]}»'
     head = '»، «'.join(book_titles[:-1])
-    return f'کتاب‌های «{head}» و «{book_titles[-1]}»'
+    return f'«{head}» و «{book_titles[-1]}»'
 
 
 def _greeting(name: str) -> str:
