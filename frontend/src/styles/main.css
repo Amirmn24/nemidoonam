@@ -5747,8 +5747,10 @@ body.vocab-modal-open {
 
 .pdf-reader-page {
   min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background:
     radial-gradient(900px 420px at 8% -8%, color-mix(in srgb, var(--primary) 18%, transparent), transparent),
     radial-gradient(700px 360px at 92% 0%, color-mix(in srgb, var(--secondary) 10%, transparent), transparent),
@@ -5902,19 +5904,168 @@ body.vocab-modal-open {
 
 .pdf-reader-stage {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
+  flex-direction: row;
+  padding: 0.85rem;
+  gap: 0.75rem;
+}
+
+.pdf-page-sidebar {
+  flex: 0 0 148px;
+  width: 148px;
+  max-width: 38vw;
+  display: flex;
   flex-direction: column;
-  height: calc(100vh - 4.5rem);
-  padding: 0.85rem 0.85rem 0.55rem;
-  gap: 0.55rem;
+  min-height: 0;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.pdf-page-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+}
+
+.pdf-page-sidebar-head .pdf-tool-btn {
+  color: var(--text-secondary);
+  min-width: auto;
+  height: 1.7rem;
+}
+
+.pdf-page-sidebar-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.65rem 0.55rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.pdf-thumb-item {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  font: inherit;
+  color: var(--text-secondary);
+}
+
+.pdf-thumb-frame {
+  width: 112px;
+  min-height: 72px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--bg-tertiary);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pdf-thumb-item:hover .pdf-thumb-frame {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+}
+
+.pdf-thumb-item.is-active .pdf-thumb-frame {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.pdf-thumb-item.is-active .pdf-thumb-label {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.pdf-thumb-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pdf-thumb-fallback {
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 1.2rem 0;
+}
+
+.pdf-thumb-label {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pdf-page-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--on-chrome) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--on-chrome) 12%, transparent);
+}
+
+.pdf-page-nav-input-wrap {
+  margin: 0;
+}
+
+.pdf-page-nav-input {
+  width: 2.6rem;
+  height: 1.85rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--on-chrome) 22%, transparent);
+  background: color-mix(in srgb, var(--on-chrome) 10%, transparent);
+  color: var(--on-chrome);
+  text-align: center;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pdf-page-nav-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--secondary) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.pdf-page-nav-of {
+  font-size: 0.78rem;
+  color: var(--on-chrome-muted);
+  padding-inline: 0.25rem 0.35rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pdf-tool-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pdf-tool-btn.is-active {
+  background: color-mix(in srgb, var(--secondary) 28%, transparent);
 }
 
 .pdf-reader-canvas {
   position: relative;
   flex: 1;
+  min-width: 0;
   min-height: 0;
+  height: 100%;
   border-radius: 18px;
   border: 1px solid var(--border);
   background:
@@ -5928,28 +6079,18 @@ body.vocab-modal-open {
   inset: 0;
 }
 
-.pdf-smart-viewer > div,
-.pdf-smart-viewer [class*='_container_'] {
-  height: 100%;
-  overflow: auto;
+/* الزام pdf.js: container با ارتفاع مشخص + overflow + position */
+.pdf-viewer-container {
   position: absolute !important;
   inset: 0;
-  background: transparent !important;
+  width: 100%;
+  height: 100%;
+  overflow: auto !important;
+  background: transparent;
 }
 
-/* صفحات PDF مثل کارت داخل اپ — نه خاکستری پیش‌فرض pdf.js */
-.pdf-reader-page .pdfViewer .page {
-  margin: 1.1rem auto !important;
-  border: none !important;
-  border-image: none !important;
-  box-shadow: var(--shadow-md) !important;
-  background-color: #fff !important;
-  border-radius: 2px;
-}
-
-.pdf-reader-page .pdfViewer .page .canvasWrapper,
-.pdf-reader-page .pdfViewer .page canvas {
-  border-radius: 2px;
+.pdf-viewer-container .pdfViewer {
+  padding: 1rem 0 2rem;
 }
 
 .pdf-viewer-status {
@@ -5972,6 +6113,15 @@ body.vocab-modal-open {
   padding-bottom: 0.15rem;
 }
 
+/* صفحات پشت‌سرهم با سایه — اسکرول عمودی روان */
+.pdf-reader-page .pdfViewer .page {
+  margin: 0.85rem auto 1.15rem !important;
+  border: none !important;
+  border-image: none !important;
+  box-shadow: var(--shadow-md) !important;
+  background-color: #fff !important;
+}
+
 .pdf-highlight-popup {
   background: var(--bg-elevated);
   color: var(--text-primary);
@@ -5985,7 +6135,7 @@ body.vocab-modal-open {
 
 @media (max-width: 720px) {
   .pdf-reader-title {
-    max-width: 42vw;
+    max-width: 36vw;
     font-size: 0.92rem;
   }
 
@@ -5994,15 +6144,25 @@ body.vocab-modal-open {
   }
 
   .pdf-reader-stage {
-    height: calc(100vh - 6rem);
     padding: 0.55rem;
+    gap: 0.45rem;
+  }
+
+  .pdf-page-sidebar {
+    position: absolute;
+    inset: 0.55rem auto 0.55rem 0.55rem;
+    z-index: 15;
+    width: min(168px, 46vw);
+    flex-basis: auto;
+    box-shadow: var(--shadow-lg);
   }
 
   .pdf-tool-btn-label {
-    display: none;
+    padding: 0 0.4rem;
+    font-size: 0.72rem;
   }
 
-  .pdf-tool-btn-label:last-child {
-    display: inline-flex;
+  .pdf-page-nav-of {
+    display: none;
   }
 }

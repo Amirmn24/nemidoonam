@@ -724,6 +724,17 @@
     "loadFailed": "Could not load the PDF.",
     "secureHint": "The file is loaded only through your account and the secure API — no public link.",
     "baseModeHint": "Smart reader base is live — highlights and interactive tools will land on this same layer soon.",
+    "nav": {
+      "label": "Page navigation",
+      "sidebar": "Page list",
+      "pages": "Pages",
+      "prev": "Previous page",
+      "next": "Next page",
+      "goTo": "Go to page",
+      "of": "of {{total}}",
+      "pageOf": "Page {{current}} of {{total}}",
+      "pageAria": "Page {{page}}"
+    },
     "toolbar": {
       "zoom": "Zoom",
       "zoomIn": "Zoom in",

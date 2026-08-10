@@ -1,31 +1,35 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { booksApi } from '../../shared/api'
 import { useSecurePdfSource } from './hooks/useSecurePdfSource'
-import { createEmptyLayerAdapters } from './layers/adapters'
+import PdfPageSidebar from './components/PdfPageSidebar'
 import PdfReaderToolbar from './components/PdfReaderToolbar'
 import PdfSmartViewer from './components/PdfSmartViewer'
 
-function nextScale(prev, delta) {
-  const n = Number(prev)
-  const base = Number.isFinite(n) ? n : 1
+function bumpScale(actualScale, delta) {
+  const base = Number.isFinite(actualScale) && actualScale > 0 ? actualScale : 1
   const next = Math.round((base + delta) * 10) / 10
   return String(Math.min(3, Math.max(0.5, next)))
 }
 
 /**
  * صفحهٔ تمام‌صفحهٔ خواندن PDF برای منابع دیجیتال قفسه.
- * AuthZ واقعی روی API محتواست؛ اینجا فقط مالک از detail قفسه می‌آید.
  */
 export default function PdfReaderPage() {
   const { t } = useTranslation()
   const { id } = useParams()
+  const viewerRef = useRef(null)
+  const pdfDocumentRef = useRef(null)
   const [book, setBook] = useState(null)
   const [metaError, setMetaError] = useState('')
   const [metaLoading, setMetaLoading] = useState(true)
-  const [pageCount, setPageCount] = useState(null)
+  const [pdfDocument, setPdfDocument] = useState(null)
+  const [pageCount, setPageCount] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
   const [pdfScaleValue, setPdfScaleValue] = useState('page-width')
+  const [actualScale, setActualScale] = useState(1)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -49,17 +53,55 @@ export default function PdfReaderPage() {
     }
   }, [id, t])
 
+  // فقط هنگام خروج از صفحه destroy — نه روی هر تغییر state (Strict Mode را می‌شکست)
+  useEffect(() => {
+    return () => {
+      const doc = pdfDocumentRef.current
+      pdfDocumentRef.current = null
+      if (doc) {
+        try {
+          doc.destroy()
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  }, [])
+
   const hasDocument = Boolean(book?.document?.has_file || book?.document?.content_url)
   const { sourceUrl, loading: pdfLoading, error: pdfError } = useSecurePdfSource(
     hasDocument ? id : null,
   )
 
-  const layerAdapters = useMemo(() => createEmptyLayerAdapters(), [])
+  const onScaleChange = useCallback((scale) => {
+    if (Number.isFinite(scale) && scale > 0) setActualScale(scale)
+  }, [])
 
-  const scaleLabel =
-    pdfScaleValue === 'auto' || pdfScaleValue === 'page-width'
-      ? t(`pdf.toolbar.scale.${pdfScaleValue === 'page-width' ? 'pageWidth' : 'auto'}`)
-      : `${Math.round(Number(pdfScaleValue) * 100)}%`
+  const onPageChange = useCallback((page, total) => {
+    if (Number.isFinite(page)) setCurrentPage(page)
+    if (Number.isFinite(total) && total > 0) setPageCount(total)
+  }, [])
+
+  const goToPage = useCallback((n) => {
+    viewerRef.current?.goToPage(n)
+  }, [])
+
+  const onDocumentLoad = useCallback((doc) => {
+    const prev = pdfDocumentRef.current
+    pdfDocumentRef.current = doc
+    if (prev && prev !== doc) {
+      try {
+        prev.destroy()
+      } catch {
+        /* ignore */
+      }
+    }
+    setPdfDocument(doc)
+    setPageCount(doc.numPages)
+    setCurrentPage(1)
+  }, [])
+
+  const scaleLabel = `${Math.round((actualScale || 1) * 100)}%`
 
   if (metaLoading) {
     return (
@@ -85,7 +127,7 @@ export default function PdfReaderPage() {
   }
 
   return (
-    <div className="pdf-reader-page">
+    <div className={`pdf-reader-page${sidebarOpen ? ' has-sidebar' : ''}`}>
       <PdfReaderToolbar
         title={book.title}
         shelfId={id}
@@ -96,23 +138,30 @@ export default function PdfReaderPage() {
               })
             : null
         }
-        pageLabel={
-          pageCount
-            ? t('pdf.toolbar.pages', { count: pageCount })
-            : t('books.list.progressLabel', {
-                current: book.current_page,
-                total: book.total_pages,
-                percent: book.progress_percent,
-              })
-        }
+        currentPage={currentPage}
+        pageCount={pageCount}
         scaleLabel={scaleLabel}
-        onZoomIn={() => setPdfScaleValue((s) => nextScale(s, 0.1))}
-        onZoomOut={() => setPdfScaleValue((s) => nextScale(s, -0.1))}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen((v) => !v)}
+        onGoToPage={goToPage}
+        onPrevPage={() => viewerRef.current?.prevPage()}
+        onNextPage={() => viewerRef.current?.nextPage()}
+        onZoomIn={() => setPdfScaleValue(bumpScale(actualScale, 0.15))}
+        onZoomOut={() => setPdfScaleValue(bumpScale(actualScale, -0.15))}
         onFitWidth={() => setPdfScaleValue('page-width')}
         onFitAuto={() => setPdfScaleValue('auto')}
       />
 
       <div className="pdf-reader-stage">
+        <PdfPageSidebar
+          open={sidebarOpen}
+          pdfDocument={pdfDocument}
+          pageCount={pageCount}
+          currentPage={currentPage}
+          onSelectPage={goToPage}
+          onClose={() => setSidebarOpen(false)}
+        />
+
         <div className="pdf-reader-canvas">
           {pdfLoading ? <p className="pdf-viewer-status">{t('pdf.loadingDocument')}</p> : null}
           {pdfError ? (
@@ -123,14 +172,15 @@ export default function PdfReaderPage() {
           ) : null}
           {!pdfLoading && !pdfError && sourceUrl ? (
             <PdfSmartViewer
+              ref={viewerRef}
               sourceUrl={sourceUrl}
-              layerAdapters={layerAdapters}
               pdfScaleValue={pdfScaleValue}
-              onDocumentLoad={(doc) => setPageCount(doc.numPages)}
+              onDocumentLoad={onDocumentLoad}
+              onScaleChange={onScaleChange}
+              onPageChange={onPageChange}
             />
           ) : null}
         </div>
-        <p className="pdf-reader-footnote">{t('pdf.baseModeHint')}</p>
       </div>
     </div>
   )

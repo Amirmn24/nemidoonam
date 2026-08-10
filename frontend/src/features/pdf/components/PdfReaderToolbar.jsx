@@ -1,16 +1,23 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../../../shared/ThemeContext'
+import PdfPageNav from './PdfPageNav'
 
 /**
- * نوار ابزار خوانندهٔ ویروانا — هم‌رنگ با chrome پروژه.
+ * نوار ابزار خوانندهٔ ویروانا — زوم + ناوبری صفحه.
  */
 export default function PdfReaderToolbar({
   title,
   shelfId,
   kindLabel,
-  pageLabel,
+  currentPage,
+  pageCount,
   scaleLabel,
+  sidebarOpen,
+  onToggleSidebar,
+  onGoToPage,
+  onPrevPage,
+  onNextPage,
   onZoomIn,
   onZoomOut,
   onFitWidth,
@@ -26,6 +33,15 @@ export default function PdfReaderToolbar({
           <span aria-hidden="true">→</span>
           <span>{t('app.back')}</span>
         </Link>
+        <button
+          type="button"
+          className={`pdf-tool-btn pdf-tool-btn-label${sidebarOpen ? ' is-active' : ''}`}
+          onClick={onToggleSidebar}
+          aria-pressed={sidebarOpen}
+          title={t('pdf.nav.sidebar')}
+        >
+          {t('pdf.nav.pages')}
+        </button>
         <div className="pdf-reader-brand-chip" title="Vyrvona">
           <span className="pdf-reader-brand-mark" aria-hidden="true" />
           <span>{t('pdf.brandReader')}</span>
@@ -34,16 +50,29 @@ export default function PdfReaderToolbar({
           <h1 className="pdf-reader-title">{title}</h1>
           <div className="pdf-reader-submeta">
             {kindLabel ? <span className="pdf-reader-kind">{kindLabel}</span> : null}
-            {pageLabel ? <span className="pdf-reader-meta">{pageLabel}</span> : null}
+            {pageCount ? (
+              <span className="pdf-reader-meta">
+                {t('pdf.nav.pageOf', { current: currentPage || 1, total: pageCount })}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
       <div className="pdf-reader-toolbar-end">
+        <PdfPageNav
+          currentPage={currentPage}
+          pageCount={pageCount}
+          onGoToPage={onGoToPage}
+          onPrev={onPrevPage}
+          onNext={onNextPage}
+        />
         <div className="pdf-reader-zoom-group" role="group" aria-label={t('pdf.toolbar.zoom')}>
           <button type="button" className="pdf-tool-btn" onClick={onZoomOut} title={t('pdf.toolbar.zoomOut')}>
             −
           </button>
-          <span className="pdf-reader-scale">{scaleLabel}</span>
+          <span className="pdf-reader-scale" title={scaleLabel}>
+            {scaleLabel}
+          </span>
           <button type="button" className="pdf-tool-btn" onClick={onZoomIn} title={t('pdf.toolbar.zoomIn')}>
             +
           </button>

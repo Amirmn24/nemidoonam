@@ -22,7 +22,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['pdfjs-dist', 'react-pdf-highlighter'],
+    include: ['pdfjs-dist', 'pdfjs-dist/web/pdf_viewer.mjs'],
   },
   worker: {
     format: 'es',
