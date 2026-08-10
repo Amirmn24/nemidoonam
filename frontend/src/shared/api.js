@@ -227,6 +227,29 @@ export const booksApi = {
     }
     return true
   },
+  /**
+   * بایت‌های PDF را با session کاربر می‌گیرد (نه URL عمومی).
+   * مسیر نسبی تا از proxy فرانت عبور کند؛ content_url مطلق بک‌اند استفاده نمی‌شود.
+   */
+  fetchDocumentBlob: async (shelfId) => {
+    const res = await fetch(`${API_BASE}/shelf/${shelfId}/document/content/`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/pdf,application/octet-stream,*/*',
+        'Accept-Language': acceptLanguage(),
+      },
+    })
+    if (!res.ok) {
+      const data = await parseBody(res)
+      throw new ApiError(data?.detail || i18n.t('api.genericError'), {
+        status: res.status,
+        errors: data?.errors || {},
+        payload: data,
+      })
+    }
+    return res.blob()
+  },
   choices: () => api('/meta/choices/'),
 }
 

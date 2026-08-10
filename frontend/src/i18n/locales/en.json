@@ -232,7 +232,7 @@
       "confirmDeleteBook": "Remove this book from your shelf?",
       "confirmDeleteEntry": "Delete this note?",
       "entryDeleted": "Note deleted.",
-      "openPdf": "Open PDF"
+      "openPdf": "Open in reader"
     },
     "entry": {
       "newTitle": "New note",
@@ -716,6 +716,27 @@
     "footer": {
       "tagline": "Crafted for curious minds",
       "rights": "© 2026 Vyrvona — All rights reserved."
+    }
+  },
+  "pdf": {
+    "brandReader": "Vyrvona reader",
+    "loadingDocument": "Preparing PDF…",
+    "loadFailed": "Could not load the PDF.",
+    "secureHint": "The file is loaded only through your account and the secure API — no public link.",
+    "baseModeHint": "Smart reader base is live — highlights and interactive tools will land on this same layer soon.",
+    "toolbar": {
+      "zoom": "Zoom",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fitWidth": "Fit width",
+      "pages": "{{count}} pages",
+      "toggleTheme": "Toggle theme",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "scale": {
+        "auto": "Auto",
+        "pageWidth": "Width"
+      }
     }
   }
 }

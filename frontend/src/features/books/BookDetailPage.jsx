@@ -56,14 +56,9 @@ function ReadingDetail({
           {book.notes ? <p>{book.notes}</p> : null}
           <div className="cluster">
             {book.document?.content_url ? (
-              <a
-                className="btn btn-secondary"
-                href={book.document.content_url}
-                target="_blank"
-                rel="noreferrer"
-              >
+              <Link to={`/books/${id}/read`} className="btn btn-secondary">
                 {t('books.detail.openPdf')}
-              </a>
+              </Link>
             ) : null}
             <Link to={`/books/${id}/entries/new`} className="btn btn-primary">
               {t('books.detail.newEntry')}

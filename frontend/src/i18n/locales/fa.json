@@ -232,7 +232,7 @@
       "confirmDeleteBook": "این کتاب از قفسه حذف شود؟",
       "confirmDeleteEntry": "یادداشت حذف شود؟",
       "entryDeleted": "یادداشت حذف شد.",
-      "openPdf": "باز کردن PDF"
+      "openPdf": "باز کردن در خواننده"
     },
     "entry": {
       "newTitle": "یادداشت جدید",
@@ -716,6 +716,27 @@
     "footer": {
       "tagline": "ساخته‌شده برای ذهن‌های کنجکاو",
       "rights": "© ۲۰۲۶ Vyrvona — همه حقوق محفوظ است."
+    }
+  },
+  "pdf": {
+    "brandReader": "خواننده ویروانا",
+    "loadingDocument": "در حال آماده‌سازی PDF…",
+    "loadFailed": "بارگذاری PDF ناموفق بود.",
+    "secureHint": "فایل فقط از طریق حساب خودت و API امن خوانده می‌شود؛ لینک عمومی وجود ندارد.",
+    "baseModeHint": "پایهٔ خوانندهٔ هوشمند فعال است — هایلایت و ابزارهای تعاملی به‌زودی روی همین لایه اضافه می‌شوند.",
+    "toolbar": {
+      "zoom": "زوم",
+      "zoomIn": "بزرگ‌نمایی",
+      "zoomOut": "کوچک‌نمایی",
+      "fitWidth": "عرض صفحه",
+      "pages": "{{count}} صفحه",
+      "toggleTheme": "تغییر تم",
+      "themeLight": "روشن",
+      "themeDark": "تیره",
+      "scale": {
+        "auto": "خودکار",
+        "pageWidth": "عرض"
+      }
     }
   }
 }

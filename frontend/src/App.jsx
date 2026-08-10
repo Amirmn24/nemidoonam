@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './app/layout/AppLayout'
 import { GuestRoute, ProtectedRoute } from './app/routes/guards'
@@ -17,6 +18,10 @@ import WordListPage from './features/vocabulary/WordListPage'
 import { AuthProvider } from './shared/AuthContext'
 import { ThemeProvider } from './shared/ThemeContext'
 
+const PdfReaderPage = lazy(() =>
+  import('./features/pdf').then((m) => ({ default: m.PdfReaderPage })),
+)
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -31,6 +36,21 @@ export default function App() {
             </Route>
 
             <Route element={<ProtectedRoute />}>
+              <Route
+                path="/books/:id/read"
+                element={
+                  <Suspense
+                    fallback={
+                      <div className="pdf-reader-page">
+                        <p className="pdf-viewer-status">…</p>
+                      </div>
+                    }
+                  >
+                    <PdfReaderPage />
+                  </Suspense>
+                }
+              />
+
               <Route element={<AppLayout />}>
                 <Route path="/app" element={<DashboardPage />} />
                 <Route path="/books" element={<BookListPage />} />

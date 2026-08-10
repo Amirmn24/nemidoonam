@@ -21,6 +21,12 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    include: ['pdfjs-dist', 'react-pdf-highlighter'],
+  },
+  worker: {
+    format: 'es',
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
