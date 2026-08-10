@@ -137,8 +137,10 @@
       "statReading": "Reading",
       "statFinished": "Finished",
       "shelf": "Shelf",
-      "emptyTitle": "Nothing with this status",
-      "emptyBody": "Change the filter or add something new.",
+      "filterByKind": "Resource type",
+      "filterByStatus": "Reading status",
+      "emptyTitle": "Nothing matches these filters",
+      "emptyBody": "Change the resource type or status, or add something new.",
       "showAll": "Show all",
       "progressLabel": "{{current}} / {{total}} · {{percent}}%"
     },

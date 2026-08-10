@@ -137,8 +137,10 @@
       "statReading": "در حال خواندن",
       "statFinished": "تمام‌شده",
       "shelf": "قفسه",
-      "emptyTitle": "موردی با این وضعیت نیست",
-      "emptyBody": "فیلتر را عوض کن یا منبع جدیدی اضافه کن.",
+      "filterByKind": "نوع منبع",
+      "filterByStatus": "وضعیت مطالعه",
+      "emptyTitle": "موردی با این فیلتر نیست",
+      "emptyBody": "نوع منبع یا وضعیت را عوض کن، یا منبع جدیدی اضافه کن.",
       "showAll": "نمایش همه",
       "progressLabel": "{{current}} / {{total}} · {{percent}}%"
     },

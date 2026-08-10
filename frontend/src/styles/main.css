@@ -1870,6 +1870,67 @@ a.book-suggest-item {
   border: 1px solid var(--line);
 }
 
+.shelf-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 1.35rem;
+}
+
+.shelf-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.shelf-filter-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.shelf-filter-group .filter-bar {
+  margin-bottom: 0;
+}
+
+.filter-bar-primary {
+  padding: 0.65rem;
+  background: color-mix(in srgb, var(--primary-light) 55%, var(--bg-secondary));
+  border-color: color-mix(in srgb, var(--primary) 22%, var(--line));
+}
+
+.chip-kind {
+  font-weight: 650;
+  gap: 0.4rem;
+}
+
+.chip-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  color: inherit;
+}
+
+.chip-kind.is-active .chip-count {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  color: var(--primary);
+}
+
+.tag-kind {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 650;
+}
+
 .filter-sep {
   width: 1px;
   align-self: stretch;

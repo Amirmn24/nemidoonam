@@ -7,13 +7,20 @@ import { useAuth } from '../../shared/AuthContext'
 import { RatingBadge } from './components/BookRatingPanel'
 import EchoModal from './components/EchoModal'
 
+const RESOURCE_KINDS = ['physical', 'ebook', 'booklet']
+
+function shelfKind(book) {
+  return book.resource_kind || 'physical'
+}
+
 export default function BookListPage() {
   const { t } = useTranslation()
   const { showToast } = useAuth()
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [params, setParams] = useSearchParams()
-  const active = params.get('status') || ''
+  const activeStatus = params.get('status') || ''
+  const activeKind = params.get('kind') || ''
 
   const [echoOpen, setEchoOpen] = useState(false)
   const [echoBusy, setEchoBusy] = useState(false)
@@ -41,18 +48,37 @@ export default function BookListPage() {
       })
   }, [])
 
+  const kindCounts = useMemo(() => {
+    const counts = { physical: 0, ebook: 0, booklet: 0 }
+    if (!data?.results) return counts
+    for (const b of data.results) {
+      const k = shelfKind(b)
+      counts[k] = (counts[k] || 0) + 1
+    }
+    return counts
+  }, [data])
+
   const filtered = useMemo(() => {
     if (!data) return []
-    if (!active) return data.results
-    return data.results.filter((b) => b.status === active)
-  }, [data, active])
+    return data.results.filter((b) => {
+      if (activeKind && shelfKind(b) !== activeKind) return false
+      if (activeStatus && b.status !== activeStatus) return false
+      return true
+    })
+  }, [data, activeKind, activeStatus])
 
-  const setStatus = (status) => {
+  const patchParams = (patch) => {
     const next = new URLSearchParams(params)
-    if (status) next.set('status', status)
-    else next.delete('status')
+    Object.entries(patch).forEach(([key, value]) => {
+      if (value) next.set(key, value)
+      else next.delete(key)
+    })
     setParams(next, { replace: true })
   }
+
+  const setKind = (kind) => patchParams({ kind: kind || '' })
+  const setStatus = (status) => patchParams({ status: status || '' })
+  const clearFilters = () => patchParams({ kind: '', status: '' })
 
   const openEcho = () => {
     setEchoError('')
@@ -207,27 +233,62 @@ export default function BookListPage() {
         <div className="page-toolbar">
           <h2>{t('books.list.shelf')}</h2>
         </div>
-        <div className="filter-bar">
-          <button type="button" className={`chip${!active ? ' is-active' : ''}`} onClick={() => setStatus('')}>
-            {t('app.all')}
-          </button>
-          {data.statuses.map((s) => (
-            <button
-              key={s.value}
-              type="button"
-              className={`chip${active === s.value ? ' is-active' : ''}`}
-              onClick={() => setStatus(s.value)}
-            >
-              {labelFromCode('books.status', s.value, s.label)}
-            </button>
-          ))}
+
+        <div className="shelf-filters">
+          <div className="shelf-filter-group shelf-filter-kind">
+            <div className="shelf-filter-label">{t('books.list.filterByKind')}</div>
+            <div className="filter-bar filter-bar-primary">
+              <button
+                type="button"
+                className={`chip chip-kind${!activeKind ? ' is-active' : ''}`}
+                onClick={() => setKind('')}
+              >
+                {t('app.all')}
+                <span className="chip-count">{data.total_count}</span>
+              </button>
+              {RESOURCE_KINDS.map((kind) => (
+                <button
+                  key={kind}
+                  type="button"
+                  className={`chip chip-kind${activeKind === kind ? ' is-active' : ''}`}
+                  onClick={() => setKind(kind)}
+                >
+                  {t(`books.resourceKind.${kind}`)}
+                  <span className="chip-count">{kindCounts[kind] || 0}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="shelf-filter-group shelf-filter-status">
+            <div className="shelf-filter-label">{t('books.list.filterByStatus')}</div>
+            <div className="filter-bar">
+              <button
+                type="button"
+                className={`chip${!activeStatus ? ' is-active' : ''}`}
+                onClick={() => setStatus('')}
+              >
+                {t('app.all')}
+              </button>
+              {data.statuses.map((s) => (
+                <button
+                  key={s.value}
+                  type="button"
+                  className={`chip${activeStatus === s.value ? ' is-active' : ''}`}
+                  onClick={() => setStatus(s.value)}
+                >
+                  {labelFromCode('books.status', s.value, s.label)}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {filtered.length === 0 ? (
           <div className="empty-state">
             <h3>{t('books.list.emptyTitle')}</h3>
             <p>{t('books.list.emptyBody')}</p>
-            <button type="button" className="btn btn-secondary" onClick={() => setStatus('')}>
+            <button type="button" className="btn btn-secondary" onClick={clearFilters}>
               {t('books.list.showAll')}
             </button>
           </div>
@@ -240,14 +301,12 @@ export default function BookListPage() {
                 </div>
                 <div className="book-meta">
                   <h3>{book.title}</h3>
-                  <p>{book.author}</p>
+                  {book.author ? <p>{book.author}</p> : null}
                   <div className="cluster">
+                    <span className="tag tag-kind">{t(`books.resourceKind.${shelfKind(book)}`)}</span>
                     <span className={`status status-${book.status}`}>
                       {labelFromCode('books.status', book.status, book.status_display)}
                     </span>
-                    {book.resource_kind && book.resource_kind !== 'physical' ? (
-                      <span className="tag">{t(`books.resourceKind.${book.resource_kind}`)}</span>
-                    ) : null}
                     <RatingBadge score={book.overall_score} />
                   </div>
                   <div className="book-progress-label">
