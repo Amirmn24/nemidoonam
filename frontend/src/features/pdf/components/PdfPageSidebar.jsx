@@ -2,11 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import PdfHighlightList from './PdfHighlightList'
 
-const THUMB_WIDTH = 112
+const THUMB_WIDTH = 104
 
-/**
- * یک بند انگشتی با رندر تنبل (IntersectionObserver).
- */
 function PdfThumbItem({ pdfDocument, pageNumber, active, onSelect }) {
   const { t } = useTranslation()
   const canvasRef = useRef(null)
@@ -83,7 +80,7 @@ function PdfThumbItem({ pdfDocument, pageNumber, active, onSelect }) {
 }
 
 /**
- * سایدبار ناوبری صفحه‌به‌صفحه با thumbnail.
+ * سایدبار باریک: صفحات یا هایلایت‌ها.
  */
 export default function PdfPageSidebar({
   open,
@@ -91,7 +88,6 @@ export default function PdfPageSidebar({
   pageCount,
   currentPage,
   onSelectPage,
-  onClose,
   highlights = [],
   onDeleteHighlight,
   onChangeHighlightColor,
@@ -127,9 +123,6 @@ export default function PdfPageSidebar({
             {highlightCount ? <span className="pdf-hl-count">{highlightCount}</span> : null}
           </button>
         </div>
-        <button type="button" className="pdf-tool-btn pdf-tool-btn-label" onClick={onClose}>
-          {t('app.close')}
-        </button>
       </div>
       {tab === 'highlights' ? (
         <div className="pdf-page-sidebar-list pdf-hl-sidebar">

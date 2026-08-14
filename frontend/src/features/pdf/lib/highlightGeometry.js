@@ -83,10 +83,22 @@ export function captureTextSelection(rootEl) {
   const pageNumber = Number(startPage.dataset.pageNumber)
   if (!Number.isFinite(pageNumber) || pageNumber < 1) return null
 
+  const clientRects = Array.from(range.getClientRects()).filter((r) => r.width > 1 && r.height > 1)
+  const bounds = clientRects.length
+    ? {
+        left: Math.min(...clientRects.map((r) => r.left)),
+        top: Math.min(...clientRects.map((r) => r.top)),
+        right: Math.max(...clientRects.map((r) => r.right)),
+        bottom: Math.max(...clientRects.map((r) => r.bottom)),
+      }
+    : boxEl.getBoundingClientRect()
+
   return {
+    kind: 'text',
     page_number: pageNumber,
     quote: sel.toString().replace(/\s+/g, ' ').trim(),
     rects: merged,
+    bounds,
   }
 }
 

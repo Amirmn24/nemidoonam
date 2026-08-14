@@ -5,19 +5,29 @@ import { EventBus, PDFLinkService, PDFViewer } from 'pdfjs-dist/web/pdf_viewer.m
 import 'pdfjs-dist/web/pdf_viewer.css'
 
 import { captureTextSelection, paintHighlightLayers } from '../lib/highlightGeometry'
-import { PDF_WORKER_SRC } from '../lib/pdfWorker'
+import {
+  extractPageImages,
+  hitPageImage,
+  imageHitKey,
+  paintImageHits,
+  rectToClientBounds,
+} from '../lib/pdfImages'
+import { PDF_CMAP_URL, PDF_STANDARD_FONT_URL, PDF_WORKER_SRC } from '../lib/pdfWorker'
 
 GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC
 
+const TEXT_LAYER_ENABLE = 1
+const ANNOTATION_DISABLE = 0
+
 /**
- * Smart Viewer با PDF.js — زوم و پرش صفحه از بیرون کنترل می‌شود.
+ * Smart Viewer با PDF.js — لایهٔ متن LTR برای انتخاب/کپی، مستقل از RTL اپ.
  */
 const PdfSmartViewer = forwardRef(function PdfSmartViewer(
   {
     sourceUrl,
     pdfScaleValue = 'page-width',
     highlights = [],
-    highlightMode = true,
+    activeImageKey = '',
     onDocumentLoad,
     onScaleChange,
     onPageChange,
@@ -31,13 +41,13 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
   const scalePropRef = useRef(pdfScaleValue)
   const callbacksRef = useRef({ onDocumentLoad, onScaleChange, onPageChange, onTextSelected })
   const highlightsRef = useRef(highlights)
-  const highlightModeRef = useRef(highlightMode)
+  const imageCacheRef = useRef(new Map())
+  const downRef = useRef(null)
   const [bootError, setBootError] = useState('')
   const [viewerReady, setViewerReady] = useState(false)
 
   scalePropRef.current = pdfScaleValue
   highlightsRef.current = highlights
-  highlightModeRef.current = highlightMode
   callbacksRef.current = { onDocumentLoad, onScaleChange, onPageChange, onTextSelected }
 
   useImperativeHandle(
@@ -80,12 +90,16 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
 
     let cancelled = false
     let resizeObserver = null
+    let resizeTimer = 0
+    let lastWidth = 0
     setBootError('')
     setViewerReady(false)
 
     container.innerHTML = ''
+    imageCacheRef.current = new Map()
     const viewerDiv = document.createElement('div')
     viewerDiv.className = 'pdfViewer'
+    viewerDiv.setAttribute('dir', 'ltr')
     container.appendChild(viewerDiv)
 
     const eventBus = new EventBus()
@@ -95,7 +109,8 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
       viewer: viewerDiv,
       eventBus,
       linkService,
-      textLayerMode: 2,
+      textLayerMode: TEXT_LAYER_ENABLE,
+      annotationMode: ANNOTATION_DISABLE,
       removePageBorders: true,
     })
     linkService.setViewer(viewer)
@@ -113,9 +128,9 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
 
     const onPagesInit = () => {
       if (cancelled) return
-      // بعد از layout واقعی — وگرنه page-width با عرض ۰ می‌میرد
       requestAnimationFrame(() => {
         if (cancelled) return
+        lastWidth = container.clientWidth
         applyScale()
         setViewerReady(true)
         callbacksRef.current.onPageChange?.(
@@ -142,12 +157,25 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(() => {
         if (cancelled || !viewer.pagesCount) return
-        applyScale()
+        const width = container.clientWidth
+        if (Math.abs(width - lastWidth) < 2) return
+        lastWidth = width
+        window.clearTimeout(resizeTimer)
+        resizeTimer = window.setTimeout(() => {
+          if (cancelled) return
+          applyScale()
+        }, 160)
       })
       resizeObserver.observe(container)
     }
 
-    const loadingTask = getDocument({ url: sourceUrl, withCredentials: false })
+    const loadingTask = getDocument({
+      url: sourceUrl,
+      withCredentials: false,
+      cMapUrl: PDF_CMAP_URL,
+      cMapPacked: true,
+      standardFontDataUrl: PDF_STANDARD_FONT_URL,
+    })
 
     loadingTask.promise
       .then((doc) => {
@@ -170,6 +198,7 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
 
     return () => {
       cancelled = true
+      window.clearTimeout(resizeTimer)
       eventBus.off('pagesinit', onPagesInit)
       eventBus.off('scalechanging', onScaleChanging)
       eventBus.off('pagechanging', onPageChanging)
@@ -179,7 +208,6 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
       } catch {
         /* ignore */
       }
-      // سند را اینجا destroy نکن — متعلق به صفحهٔ والد / سایدبار است
       viewerRef.current = null
       setViewerReady(false)
       container.innerHTML = ''
@@ -203,15 +231,46 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
     const viewer = viewerRef.current
     const container = containerRef.current
     if (!viewer || !viewerReady || !container) return undefined
-    const paint = () => paintHighlightLayers(container, highlightsRef.current)
-    viewer.eventBus.on('pagerendered', paint)
-    viewer.eventBus.on('textlayerrendered', paint)
-    paint()
-    return () => {
-      viewer.eventBus.off('pagerendered', paint)
-      viewer.eventBus.off('textlayerrendered', paint)
+
+    const paintPage = async (pageNumber) => {
+      const pageEl = container.querySelector(`.page[data-page-number="${pageNumber}"]`)
+      if (!pageEl) return
+      paintHighlightLayers(container, highlightsRef.current)
+      const doc = viewer.pdfDocument
+      if (!doc) return
+      let images = imageCacheRef.current.get(pageNumber)
+      if (!images) {
+        try {
+          const page = await doc.getPage(pageNumber)
+          images = await extractPageImages(page)
+          imageCacheRef.current.set(pageNumber, images)
+        } catch {
+          images = []
+        }
+      }
+      paintImageHits(pageEl, images, activeImageKey)
     }
-  }, [viewerReady])
+
+    const onPageRendered = (evt) => {
+      paintPage(evt.pageNumber)
+    }
+    const onTextLayer = (evt) => {
+      paintHighlightLayers(container, highlightsRef.current)
+      const pageEl = container.querySelector(`.page[data-page-number="${evt.pageNumber}"]`)
+      const images = imageCacheRef.current.get(evt.pageNumber) || []
+      if (pageEl) paintImageHits(pageEl, images, activeImageKey)
+    }
+
+    viewer.eventBus.on('pagerendered', onPageRendered)
+    viewer.eventBus.on('textlayerrendered', onTextLayer)
+    container.querySelectorAll('.page[data-page-number]').forEach((pageEl) => {
+      paintPage(Number(pageEl.dataset.pageNumber))
+    })
+    return () => {
+      viewer.eventBus.off('pagerendered', onPageRendered)
+      viewer.eventBus.off('textlayerrendered', onTextLayer)
+    }
+  }, [viewerReady, activeImageKey])
 
   useEffect(() => {
     if (!viewerReady) return
@@ -222,23 +281,60 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
     const container = containerRef.current
     if (!container || !viewerReady) return undefined
 
+    const onDown = (event) => {
+      const point = event.changedTouches?.[0] || event
+      downRef.current = { x: point.clientX, y: point.clientY }
+    }
+
     const onUp = (event) => {
-      if (!highlightModeRef.current) return
-      if (event.target?.closest?.('.pdf-hl-tip')) return
+      if (event.target?.closest?.('.pdf-hl-tip, .pdf-sel-copy')) return
       const touch = event.changedTouches?.[0]
       const point = {
         x: event.clientX ?? touch?.clientX ?? 0,
         y: event.clientY ?? touch?.clientY ?? 0,
       }
+      const down = downRef.current
+      const dragged =
+        down && Math.abs(point.x - down.x) + Math.abs(point.y - down.y) > 6
       window.setTimeout(() => {
-        const payload = captureTextSelection(container)
-        callbacksRef.current.onTextSelected?.(payload, point)
+        const text = captureTextSelection(container)
+        if (text) {
+          callbacksRef.current.onTextSelected?.(text)
+          return
+        }
+        if (dragged) {
+          callbacksRef.current.onTextSelected?.(null)
+          return
+        }
+        const pageEl = document.elementFromPoint(point.x, point.y)?.closest?.('.page')
+        const pageNumber = Number(pageEl?.dataset?.pageNumber)
+        const images = Number.isFinite(pageNumber)
+          ? imageCacheRef.current.get(pageNumber) || []
+          : []
+        const hit = pageEl ? hitPageImage(pageEl, images, point.x, point.y) : null
+        if (hit && pageEl) {
+          callbacksRef.current.onTextSelected?.({
+            kind: 'image',
+            page_number: pageNumber,
+            quote: '',
+            rects: [{ x: hit.x, y: hit.y, w: hit.w, h: hit.h }],
+            imageName: hit.name || '',
+            imageKey: imageHitKey(hit),
+            bounds: rectToClientBounds(pageEl, hit),
+          })
+          return
+        }
+        callbacksRef.current.onTextSelected?.(null)
       }, 10)
     }
 
+    container.addEventListener('mousedown', onDown)
+    container.addEventListener('touchstart', onDown, { passive: true })
     container.addEventListener('mouseup', onUp)
     container.addEventListener('touchend', onUp, { passive: true })
     return () => {
+      container.removeEventListener('mousedown', onDown)
+      container.removeEventListener('touchstart', onDown)
       container.removeEventListener('mouseup', onUp)
       container.removeEventListener('touchend', onUp)
     }
@@ -247,7 +343,7 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
   return (
     <div className="pdf-smart-viewer">
       {bootError ? <p className="form-errors pdf-viewer-status">{bootError}</p> : null}
-      <div ref={containerRef} className="pdf-viewer-container" />
+      <div ref={containerRef} className="pdf-viewer-container" dir="ltr" lang="en" />
     </div>
   )
 })

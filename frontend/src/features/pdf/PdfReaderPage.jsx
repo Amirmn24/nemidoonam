@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { booksApi } from '../../shared/api'
 import { useDocumentHighlights } from './hooks/useDocumentHighlights'
 import { useSecurePdfSource } from './hooks/useSecurePdfSource'
+import { copyPageImageBlob, writeClipboardPng, writeClipboardText } from './lib/pdfImages'
 import PdfHighlightTip from './components/PdfHighlightTip'
 import PdfPageSidebar from './components/PdfPageSidebar'
 import PdfReaderToolbar from './components/PdfReaderToolbar'
@@ -31,9 +32,9 @@ export default function PdfReaderPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pdfScaleValue, setPdfScaleValue] = useState('page-width')
   const [actualScale, setActualScale] = useState(1)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [highlightMode, setHighlightMode] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [hlDraft, setHlDraft] = useState(null)
+  const [copied, setCopied] = useState(false)
   const [hlError, setHlError] = useState('')
 
   const {
@@ -66,7 +67,6 @@ export default function PdfReaderPage() {
     }
   }, [id, t])
 
-  // فقط هنگام خروج از صفحه destroy — نه روی هر تغییر state (Strict Mode را می‌شکست)
   useEffect(() => {
     return () => {
       const doc = pdfDocumentRef.current
@@ -99,28 +99,22 @@ export default function PdfReaderPage() {
     viewerRef.current?.goToPage(n)
   }, [])
 
-  const onTextSelected = useCallback((payload, point) => {
-    if (!highlightMode) {
-      setHlDraft(null)
-      return
-    }
-    if (!payload) {
-      setHlDraft(null)
-      return
-    }
-    setHlDraft({
-      payload,
-      x: point?.x || 0,
-      y: point?.y || 0,
-    })
-  }, [highlightMode])
+  const onTextSelected = useCallback((payload) => {
+    setCopied(false)
+    setHlDraft(payload || null)
+  }, [])
 
   const saveDraft = useCallback(
     async (color) => {
-      if (!hlDraft?.payload) return
+      if (!hlDraft?.rects?.length || hlDraft.kind === 'image') return
       setHlError('')
       try {
-        await createHighlight({ ...hlDraft.payload, color })
+        await createHighlight({
+          page_number: hlDraft.page_number,
+          quote: hlDraft.quote || '',
+          rects: hlDraft.rects,
+          color,
+        })
         setHlDraft(null)
         window.getSelection()?.removeAllRanges()
       } catch (err) {
@@ -129,6 +123,33 @@ export default function PdfReaderPage() {
     },
     [hlDraft, createHighlight, t],
   )
+
+  const copyDraft = useCallback(async () => {
+    if (!hlDraft) return
+    setHlError('')
+    try {
+      if (hlDraft.kind === 'image') {
+        const page = await pdfDocumentRef.current?.getPage(hlDraft.page_number)
+        const pageEl = document.querySelector(
+          `.pdf-viewer-container .page[data-page-number="${hlDraft.page_number}"]`,
+        )
+        const rect = hlDraft.rects?.[0]
+        const blob = await copyPageImageBlob(page, pageEl, {
+          name: hlDraft.imageName || '',
+          x: rect?.x || 0,
+          y: rect?.y || 0,
+          w: rect?.w || 1,
+          h: rect?.h || 1,
+        })
+        await writeClipboardPng(blob)
+      } else {
+        await writeClipboardText(hlDraft.quote || '')
+      }
+      setCopied(true)
+    } catch {
+      setHlError(t('pdf.highlight.copyFailed'))
+    }
+  }, [hlDraft, t])
 
   const onDeleteHighlight = useCallback(
     async (highlightId) => {
@@ -153,10 +174,6 @@ export default function PdfReaderPage() {
     },
     [updateHighlightColor, t],
   )
-
-  useEffect(() => {
-    if (!highlightMode) setHlDraft(null)
-  }, [highlightMode])
 
   useEffect(() => {
     if (!hlDraft) return undefined
@@ -212,28 +229,17 @@ export default function PdfReaderPage() {
       <PdfReaderToolbar
         title={book.title}
         shelfId={id}
-        kindLabel={
-          book.resource_kind
-            ? t(`books.resourceKind.${book.resource_kind}`, {
-                defaultValue: book.resource_kind_display,
-              })
-            : null
-        }
         currentPage={currentPage}
         pageCount={pageCount}
         scaleLabel={scaleLabel}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen((v) => !v)}
-        highlightMode={highlightMode}
-        highlightCount={highlights.length}
-        onToggleHighlightMode={() => setHighlightMode((v) => !v)}
         onGoToPage={goToPage}
         onPrevPage={() => viewerRef.current?.prevPage()}
         onNextPage={() => viewerRef.current?.nextPage()}
         onZoomIn={() => setPdfScaleValue(bumpScale(actualScale, 0.15))}
         onZoomOut={() => setPdfScaleValue(bumpScale(actualScale, -0.15))}
         onFitWidth={() => setPdfScaleValue('page-width')}
-        onFitAuto={() => setPdfScaleValue('auto')}
       />
 
       <div className="pdf-reader-stage">
@@ -243,7 +249,6 @@ export default function PdfReaderPage() {
           pageCount={pageCount}
           currentPage={currentPage}
           onSelectPage={goToPage}
-          onClose={() => setSidebarOpen(false)}
           highlights={highlights}
           onDeleteHighlight={onDeleteHighlight}
           onChangeHighlightColor={onChangeHighlightColor}
@@ -266,7 +271,7 @@ export default function PdfReaderPage() {
               sourceUrl={sourceUrl}
               pdfScaleValue={pdfScaleValue}
               highlights={highlights}
-              highlightMode={highlightMode}
+              activeImageKey={hlDraft?.kind === 'image' ? hlDraft.imageKey : ''}
               onDocumentLoad={onDocumentLoad}
               onScaleChange={onScaleChange}
               onPageChange={onPageChange}
@@ -275,8 +280,13 @@ export default function PdfReaderPage() {
           ) : null}
           <PdfHighlightTip
             draft={hlDraft}
+            copied={copied}
             onPickColor={saveDraft}
-            onCancel={() => setHlDraft(null)}
+            onCopy={copyDraft}
+            onCancel={() => {
+              setHlDraft(null)
+              setCopied(false)
+            }}
           />
         </div>
       </div>
