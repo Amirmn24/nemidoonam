@@ -23,6 +23,10 @@ from apps.books.api import (
     ShelfViewSet,
     SuggestView,
 )
+from apps.books.highlights_api import (
+    ShelfDocumentHighlightDetailView,
+    ShelfDocumentHighlightListView,
+)
 from apps.challenges.api import ChallengeViewSet
 from apps.vocabulary.api import WordViewSet
 
@@ -64,6 +68,16 @@ urlpatterns = [
         'shelf/<int:pk>/document/content/',
         ShelfDocumentContentView.as_view(),
         name='api-shelf-document-content',
+    ),
+    path(
+        'shelf/<int:pk>/document/highlights/',
+        ShelfDocumentHighlightListView.as_view(),
+        name='api-shelf-document-highlights',
+    ),
+    path(
+        'shelf/<int:pk>/document/highlights/<int:highlight_id>/',
+        ShelfDocumentHighlightDetailView.as_view(),
+        name='api-shelf-document-highlight-detail',
     ),
     path('catalog/<int:pk>/add/', CatalogAddView.as_view(), name='api-catalog-add'),
     path('shelf/<int:book_pk>/entries/', entry_list, name='api-entries'),

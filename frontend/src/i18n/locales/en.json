@@ -725,7 +725,23 @@
     "loadingDocument": "Preparing PDF…",
     "loadFailed": "Could not load the PDF.",
     "secureHint": "The file is loaded only through your account and the secure API — no public link.",
-    "baseModeHint": "Smart reader base is live — highlights and interactive tools will land on this same layer soon.",
+    "baseModeHint": "Select text and pick a color — the location is saved to your account, not written into the PDF file.",
+    "highlight": {
+      "mode": "Highlight",
+      "modeHint": "Select text to save a highlight",
+      "pickColor": "Highlight color",
+      "list": "Highlights",
+      "empty": "No highlights yet. Select some text.",
+      "noQuote": "No text",
+      "delete": "Delete highlight",
+      "saveFailed": "Could not save the highlight.",
+      "color": {
+        "yellow": "Yellow",
+        "lime": "Green",
+        "sky": "Blue",
+        "rose": "Pink"
+      }
+    },
     "nav": {
       "label": "Page navigation",
       "sidebar": "Page list",

@@ -3,6 +3,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.utils import timezone
@@ -12,17 +13,20 @@ from rest_framework.test import APIClient
 from apps.books.models import (
     Book,
     BookStatus,
+    DocumentHighlight,
     Entry,
     EntryKind,
     EntryMediaType,
     ResourceKind,
     UserBook,
+    UserBookDocument,
 )
 from apps.books.services.echo import (
     echo_night_key,
     is_echo_window_open,
     publish_entry_with_consent,
 )
+from apps.books.services.highlights import normalize_rects
 
 
 User = get_user_model()
@@ -99,6 +103,132 @@ class DigitalShelfApiTests(TestCase):
         self.client.force_authenticate(user=other)
         denied = self.client.get(f'/api/v1/shelf/{shelf_id}/document/content/')
         self.assertEqual(denied.status_code, 404)
+
+
+class HighlightRectTests(TestCase):
+    def test_normalize_rects_clamps_and_drops_tiny(self):
+        rects = normalize_rects(
+            [
+                {'x': -0.01, 'y': 0.2, 'w': 0.3, 'h': 0.05},
+                {'x': 0.1, 'y': 0.2, 'w': 0.001, 'h': 0.05},
+            ]
+        )
+        self.assertEqual(len(rects), 1)
+        self.assertEqual(rects[0]['x'], 0.0)
+
+    def test_normalize_rects_rejects_empty(self):
+        with self.assertRaises(ValidationError):
+            normalize_rects([])
+
+
+@override_settings(DOCUMENTS_USE_S3=False, ROOT_URLCONF='config.urls')
+class DocumentHighlightApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email='hl@example.com',
+            password='x',
+            username='hl',
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def _create_booklet(self):
+        pdf_bytes = make_pdf_bytes(4)
+        intent = self.client.post(
+            '/api/v1/documents/upload-sessions/',
+            {
+                'filename': 'notes.pdf',
+                'content_type': 'application/pdf',
+                'size_bytes': len(pdf_bytes),
+            },
+            format='json',
+        )
+        self.assertEqual(intent.status_code, 201, intent.data)
+        token = intent.data['token']
+        upload = self.client.post(
+            f'/api/v1/documents/upload-sessions/{token}/binary/',
+            {'file': SimpleUploadedFile('notes.pdf', pdf_bytes, content_type='application/pdf')},
+            format='multipart',
+        )
+        self.assertEqual(upload.status_code, 200, upload.data)
+        res = self.client.post(
+            '/api/v1/shelf/',
+            {
+                'resource_kind': 'booklet',
+                'title': 'جزوه هایلایت',
+                'course': 'مدار ۱',
+                'upload_token': token,
+                'status': 'reading',
+            },
+            format='multipart',
+        )
+        self.assertEqual(res.status_code, 201, res.data)
+        return res.data['id']
+
+    def test_highlight_crud_does_not_rewrite_pdf(self):
+        shelf_id = self._create_booklet()
+        doc = UserBookDocument.objects.get(user_book_id=shelf_id)
+        key_before = doc.storage_key
+        size_before = doc.size_bytes
+
+        created = self.client.post(
+            f'/api/v1/shelf/{shelf_id}/document/highlights/',
+            {
+                'page_number': 1,
+                'color': 'lime',
+                'quote': 'یک جمله',
+                'rects': [{'x': 0.1, 'y': 0.2, 'w': 0.3, 'h': 0.04}],
+            },
+            format='json',
+        )
+        self.assertEqual(created.status_code, 201, created.data)
+        hid = created.data['id']
+        self.assertEqual(created.data['color'], 'lime')
+        self.assertEqual(created.data['page_number'], 1)
+
+        doc.refresh_from_db()
+        self.assertEqual(doc.storage_key, key_before)
+        self.assertEqual(doc.size_bytes, size_before)
+        self.assertEqual(DocumentHighlight.objects.filter(document=doc).count(), 1)
+
+        listed = self.client.get(f'/api/v1/shelf/{shelf_id}/document/highlights/')
+        self.assertEqual(listed.status_code, 200)
+        self.assertEqual(len(listed.data['results']), 1)
+
+        patched = self.client.patch(
+            f'/api/v1/shelf/{shelf_id}/document/highlights/{hid}/',
+            {'color': 'rose'},
+            format='json',
+        )
+        self.assertEqual(patched.status_code, 200)
+        self.assertEqual(patched.data['color'], 'rose')
+
+        deleted = self.client.delete(f'/api/v1/shelf/{shelf_id}/document/highlights/{hid}/')
+        self.assertEqual(deleted.status_code, 204)
+        self.assertEqual(DocumentHighlight.objects.filter(document=doc).count(), 0)
+
+        other = User.objects.create_user(email='hl2@example.com', password='x', username='hl2')
+        self.client.force_authenticate(user=other)
+        denied = self.client.get(f'/api/v1/shelf/{shelf_id}/document/highlights/')
+        self.assertEqual(denied.status_code, 404)
+
+    def test_physical_book_cannot_highlight(self):
+        book = Book.objects.create(
+            title='Physical',
+            author='A',
+            total_pages=10,
+            resource_kind=ResourceKind.PHYSICAL,
+        )
+        shelf = UserBook.objects.create(user=self.user, book=book, status=BookStatus.READING)
+        res = self.client.post(
+            f'/api/v1/shelf/{shelf.pk}/document/highlights/',
+            {
+                'page_number': 1,
+                'rects': [{'x': 0.1, 'y': 0.2, 'w': 0.3, 'h': 0.04}],
+            },
+            format='json',
+        )
+        self.assertEqual(res.status_code, 404)
 
 
 class EchoWindowTests(TestCase):

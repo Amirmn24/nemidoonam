@@ -5974,9 +5974,9 @@ body.vocab-modal-open {
 }
 
 .pdf-page-sidebar {
-  flex: 0 0 148px;
-  width: 148px;
-  max-width: 38vw;
+  flex: 0 0 176px;
+  width: 176px;
+  max-width: 42vw;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -5992,7 +5992,7 @@ body.vocab-modal-open {
   align-items: center;
   justify-content: space-between;
   gap: 0.35rem;
-  padding: 0.55rem 0.65rem;
+  padding: 0.45rem 0.5rem;
   border-bottom: 1px solid var(--border);
   color: var(--text-primary);
   font-size: 0.82rem;
@@ -6191,6 +6191,218 @@ body.vocab-modal-open {
   padding: 0.5rem 0.7rem;
   font-size: 0.85rem;
   max-width: 16rem;
+  box-shadow: var(--shadow-md);
+}
+
+.pdf-reader-page .pdfViewer .page .canvasWrapper {
+  position: relative;
+}
+
+.pdf-hl-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.pdf-hl-group {
+  position: absolute;
+  inset: 0;
+}
+
+.pdf-hl-rect {
+  position: absolute;
+  mix-blend-mode: multiply;
+  border-radius: 1px;
+}
+
+.pdf-hl-yellow {
+  background: rgba(250, 204, 21, 0.5);
+}
+
+.pdf-hl-lime {
+  background: rgba(132, 204, 22, 0.45);
+}
+
+.pdf-hl-sky {
+  background: rgba(56, 189, 248, 0.42);
+}
+
+.pdf-hl-rose {
+  background: rgba(244, 114, 182, 0.42);
+}
+
+.pdf-hl-tip {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.4rem;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+
+.pdf-hl-swatch {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 14%, transparent);
+  background: #f5d76e;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pdf-hl-swatch.is-yellow {
+  background: #f5d76e;
+}
+
+.pdf-hl-swatch.is-lime {
+  background: #9fd36a;
+}
+
+.pdf-hl-swatch.is-sky {
+  background: #7ec8e3;
+}
+
+.pdf-hl-swatch.is-rose {
+  background: #f0a3b8;
+}
+
+.pdf-hl-swatch.is-mini {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 4px;
+}
+
+.pdf-hl-swatch.is-selected {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 1px;
+}
+
+.pdf-hl-tip-cancel,
+.pdf-hl-delete {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.1rem 0.25rem;
+}
+
+.pdf-hl-count {
+  margin-inline-start: 0.2rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+
+.pdf-page-sidebar-tabs {
+  display: flex;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.pdf-page-sidebar-tabs .pdf-tool-btn-label {
+  padding: 0 0.35rem;
+  font-size: 0.72rem;
+}
+
+.pdf-hl-sidebar {
+  gap: 0.45rem;
+}
+
+.pdf-hl-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.pdf-hl-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-primary) 70%, transparent);
+  overflow: hidden;
+}
+
+.pdf-hl-item.is-current {
+  border-color: color-mix(in srgb, var(--secondary) 55%, var(--border));
+}
+
+.pdf-hl-item-jump {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  width: 100%;
+  text-align: start;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.4rem 0.45rem 0.25rem;
+}
+
+.pdf-hl-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pdf-hl-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 2px;
+  flex: none;
+}
+
+.pdf-hl-quote {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.pdf-hl-page {
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+}
+
+.pdf-hl-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.4rem 0.4rem;
+}
+
+.pdf-hl-empty {
+  margin: 0.8rem 0.4rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.pdf-hl-banner {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  margin: 0;
+  max-width: min(28rem, 90%);
+  padding: 0.35rem 0.75rem;
+  background: var(--bg-elevated);
+  border-radius: 8px;
   box-shadow: var(--shadow-md);
 }
 

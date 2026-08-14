@@ -4,6 +4,7 @@ import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist'
 import { EventBus, PDFLinkService, PDFViewer } from 'pdfjs-dist/web/pdf_viewer.mjs'
 import 'pdfjs-dist/web/pdf_viewer.css'
 
+import { captureTextSelection, paintHighlightLayers } from '../lib/highlightGeometry'
 import { PDF_WORKER_SRC } from '../lib/pdfWorker'
 
 GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC
@@ -15,9 +16,12 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
   {
     sourceUrl,
     pdfScaleValue = 'page-width',
+    highlights = [],
+    highlightMode = true,
     onDocumentLoad,
     onScaleChange,
     onPageChange,
+    onTextSelected,
   },
   ref,
 ) {
@@ -25,12 +29,16 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
   const containerRef = useRef(null)
   const viewerRef = useRef(null)
   const scalePropRef = useRef(pdfScaleValue)
-  const callbacksRef = useRef({ onDocumentLoad, onScaleChange, onPageChange })
+  const callbacksRef = useRef({ onDocumentLoad, onScaleChange, onPageChange, onTextSelected })
+  const highlightsRef = useRef(highlights)
+  const highlightModeRef = useRef(highlightMode)
   const [bootError, setBootError] = useState('')
   const [viewerReady, setViewerReady] = useState(false)
 
   scalePropRef.current = pdfScaleValue
-  callbacksRef.current = { onDocumentLoad, onScaleChange, onPageChange }
+  highlightsRef.current = highlights
+  highlightModeRef.current = highlightMode
+  callbacksRef.current = { onDocumentLoad, onScaleChange, onPageChange, onTextSelected }
 
   useImperativeHandle(
     ref,
@@ -190,6 +198,51 @@ const PdfSmartViewer = forwardRef(function PdfSmartViewer(
       console.warn('[pdf] scale apply failed', err)
     }
   }, [pdfScaleValue, viewerReady])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    const container = containerRef.current
+    if (!viewer || !viewerReady || !container) return undefined
+    const paint = () => paintHighlightLayers(container, highlightsRef.current)
+    viewer.eventBus.on('pagerendered', paint)
+    viewer.eventBus.on('textlayerrendered', paint)
+    paint()
+    return () => {
+      viewer.eventBus.off('pagerendered', paint)
+      viewer.eventBus.off('textlayerrendered', paint)
+    }
+  }, [viewerReady])
+
+  useEffect(() => {
+    if (!viewerReady) return
+    paintHighlightLayers(containerRef.current, highlights)
+  }, [highlights, viewerReady])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container || !viewerReady) return undefined
+
+    const onUp = (event) => {
+      if (!highlightModeRef.current) return
+      if (event.target?.closest?.('.pdf-hl-tip')) return
+      const touch = event.changedTouches?.[0]
+      const point = {
+        x: event.clientX ?? touch?.clientX ?? 0,
+        y: event.clientY ?? touch?.clientY ?? 0,
+      }
+      window.setTimeout(() => {
+        const payload = captureTextSelection(container)
+        callbacksRef.current.onTextSelected?.(payload, point)
+      }, 10)
+    }
+
+    container.addEventListener('mouseup', onUp)
+    container.addEventListener('touchend', onUp, { passive: true })
+    return () => {
+      container.removeEventListener('mouseup', onUp)
+      container.removeEventListener('touchend', onUp)
+    }
+  }, [viewerReady])
 
   return (
     <div className="pdf-smart-viewer">

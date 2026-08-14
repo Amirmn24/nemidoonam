@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import PdfHighlightList from './PdfHighlightList'
 
 const THUMB_WIDTH = 112
 
@@ -91,35 +92,72 @@ export default function PdfPageSidebar({
   currentPage,
   onSelectPage,
   onClose,
+  highlights = [],
+  onDeleteHighlight,
+  onChangeHighlightColor,
 }) {
   const { t } = useTranslation()
+  const [tab, setTab] = useState('pages')
   if (!open) return null
 
   const pages = pageCount > 0 ? Array.from({ length: pageCount }, (_, i) => i + 1) : []
+  const highlightCount = highlights.length
 
   return (
     <aside className="pdf-page-sidebar" aria-label={t('pdf.nav.sidebar')}>
       <div className="pdf-page-sidebar-head">
-        <strong>{t('pdf.nav.sidebar')}</strong>
+        <div className="pdf-page-sidebar-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'pages'}
+            className={`pdf-tool-btn pdf-tool-btn-label${tab === 'pages' ? ' is-active' : ''}`}
+            onClick={() => setTab('pages')}
+          >
+            {t('pdf.nav.pages')}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'highlights'}
+            className={`pdf-tool-btn pdf-tool-btn-label${tab === 'highlights' ? ' is-active' : ''}`}
+            onClick={() => setTab('highlights')}
+          >
+            {t('pdf.highlight.list')}
+            {highlightCount ? <span className="pdf-hl-count">{highlightCount}</span> : null}
+          </button>
+        </div>
         <button type="button" className="pdf-tool-btn pdf-tool-btn-label" onClick={onClose}>
           {t('app.close')}
         </button>
       </div>
-      <div className="pdf-page-sidebar-list">
-        {!pdfDocument || pages.length === 0 ? (
-          <p className="pdf-viewer-status">{t('pdf.loadingDocument')}</p>
-        ) : (
-          pages.map((n) => (
-            <PdfThumbItem
-              key={n}
-              pdfDocument={pdfDocument}
-              pageNumber={n}
-              active={n === currentPage}
-              onSelect={onSelectPage}
-            />
-          ))
-        )}
-      </div>
+      {tab === 'highlights' ? (
+        <div className="pdf-page-sidebar-list pdf-hl-sidebar">
+          <PdfHighlightList
+            highlights={highlights}
+            currentPage={currentPage}
+            onJump={onSelectPage}
+            onDelete={onDeleteHighlight}
+            onChangeColor={onChangeHighlightColor}
+          />
+        </div>
+      ) : (
+        <div className="pdf-page-sidebar-list">
+          {!pdfDocument || pages.length === 0 ? (
+            <p className="pdf-viewer-status">{t('pdf.loadingDocument')}</p>
+          ) : (
+            pages.map((n) => (
+              <PdfThumbItem
+                key={n}
+                pdfDocument={pdfDocument}
+                pageNumber={n}
+                active={n === currentPage}
+                onSelect={onSelectPage}
+              />
+            ))
+          )}
+        </div>
+      )}
     </aside>
   )
 }

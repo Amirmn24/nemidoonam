@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { booksApi } from '../../shared/api'
+import { useDocumentHighlights } from './hooks/useDocumentHighlights'
 import { useSecurePdfSource } from './hooks/useSecurePdfSource'
+import PdfHighlightTip from './components/PdfHighlightTip'
 import PdfPageSidebar from './components/PdfPageSidebar'
 import PdfReaderToolbar from './components/PdfReaderToolbar'
 import PdfSmartViewer from './components/PdfSmartViewer'
@@ -30,6 +32,17 @@ export default function PdfReaderPage() {
   const [pdfScaleValue, setPdfScaleValue] = useState('page-width')
   const [actualScale, setActualScale] = useState(1)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [highlightMode, setHighlightMode] = useState(true)
+  const [hlDraft, setHlDraft] = useState(null)
+  const [hlError, setHlError] = useState('')
+
+  const {
+    highlights,
+    error: highlightsLoadError,
+    createHighlight,
+    updateHighlightColor,
+    removeHighlight,
+  } = useDocumentHighlights(id)
 
   useEffect(() => {
     let cancelled = false
@@ -85,6 +98,74 @@ export default function PdfReaderPage() {
   const goToPage = useCallback((n) => {
     viewerRef.current?.goToPage(n)
   }, [])
+
+  const onTextSelected = useCallback((payload, point) => {
+    if (!highlightMode) {
+      setHlDraft(null)
+      return
+    }
+    if (!payload) {
+      setHlDraft(null)
+      return
+    }
+    setHlDraft({
+      payload,
+      x: point?.x || 0,
+      y: point?.y || 0,
+    })
+  }, [highlightMode])
+
+  const saveDraft = useCallback(
+    async (color) => {
+      if (!hlDraft?.payload) return
+      setHlError('')
+      try {
+        await createHighlight({ ...hlDraft.payload, color })
+        setHlDraft(null)
+        window.getSelection()?.removeAllRanges()
+      } catch (err) {
+        setHlError(err.message || t('pdf.highlight.saveFailed'))
+      }
+    },
+    [hlDraft, createHighlight, t],
+  )
+
+  const onDeleteHighlight = useCallback(
+    async (highlightId) => {
+      setHlError('')
+      try {
+        await removeHighlight(highlightId)
+      } catch (err) {
+        setHlError(err.message || t('pdf.highlight.saveFailed'))
+      }
+    },
+    [removeHighlight, t],
+  )
+
+  const onChangeHighlightColor = useCallback(
+    async (highlightId, color) => {
+      setHlError('')
+      try {
+        await updateHighlightColor(highlightId, color)
+      } catch (err) {
+        setHlError(err.message || t('pdf.highlight.saveFailed'))
+      }
+    },
+    [updateHighlightColor, t],
+  )
+
+  useEffect(() => {
+    if (!highlightMode) setHlDraft(null)
+  }, [highlightMode])
+
+  useEffect(() => {
+    if (!hlDraft) return undefined
+    const onKey = (event) => {
+      if (event.key === 'Escape') setHlDraft(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [hlDraft])
 
   const onDocumentLoad = useCallback((doc) => {
     const prev = pdfDocumentRef.current
@@ -143,6 +224,9 @@ export default function PdfReaderPage() {
         scaleLabel={scaleLabel}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen((v) => !v)}
+        highlightMode={highlightMode}
+        highlightCount={highlights.length}
+        onToggleHighlightMode={() => setHighlightMode((v) => !v)}
         onGoToPage={goToPage}
         onPrevPage={() => viewerRef.current?.prevPage()}
         onNextPage={() => viewerRef.current?.nextPage()}
@@ -160,6 +244,9 @@ export default function PdfReaderPage() {
           currentPage={currentPage}
           onSelectPage={goToPage}
           onClose={() => setSidebarOpen(false)}
+          highlights={highlights}
+          onDeleteHighlight={onDeleteHighlight}
+          onChangeHighlightColor={onChangeHighlightColor}
         />
 
         <div className="pdf-reader-canvas">
@@ -170,16 +257,27 @@ export default function PdfReaderPage() {
               <p className="form-hint">{t('pdf.secureHint')}</p>
             </div>
           ) : null}
+          {hlError || highlightsLoadError ? (
+            <p className="form-errors pdf-hl-banner">{hlError || highlightsLoadError}</p>
+          ) : null}
           {!pdfLoading && !pdfError && sourceUrl ? (
             <PdfSmartViewer
               ref={viewerRef}
               sourceUrl={sourceUrl}
               pdfScaleValue={pdfScaleValue}
+              highlights={highlights}
+              highlightMode={highlightMode}
               onDocumentLoad={onDocumentLoad}
               onScaleChange={onScaleChange}
               onPageChange={onPageChange}
+              onTextSelected={onTextSelected}
             />
           ) : null}
+          <PdfHighlightTip
+            draft={hlDraft}
+            onPickColor={saveDraft}
+            onCancel={() => setHlDraft(null)}
+          />
         </div>
       </div>
     </div>

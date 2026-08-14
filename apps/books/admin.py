@@ -3,6 +3,7 @@ from django.contrib import admin
 from apps.books.models import (
     Book,
     BookRating,
+    DocumentHighlight,
     EchoClaim,
     Entry,
     ReadingVibeLog,
@@ -92,11 +93,19 @@ class UserBookAdmin(admin.ModelAdmin):
     )
 
 
+class DocumentHighlightInline(admin.TabularInline):
+    model = DocumentHighlight
+    extra = 0
+    fields = ('page_number', 'color', 'quote', 'created_at')
+    readonly_fields = ('created_at',)
+
+
 @admin.register(UserBookDocument)
 class UserBookDocumentAdmin(admin.ModelAdmin):
     list_display = ('user_book', 'course', 'original_filename', 'size_bytes', 'updated_at')
     search_fields = ('user_book__book__title', 'course', 'original_filename', 'storage_key')
     autocomplete_fields = ('user_book',)
+    inlines = [DocumentHighlightInline]
     readonly_fields = (
         'storage_key',
         'original_filename',

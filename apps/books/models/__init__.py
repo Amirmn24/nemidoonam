@@ -9,6 +9,7 @@ from .choices import (
     SetupStepStatus,
 )
 from .document import DocumentUploadSession, UserBookDocument
+from .highlight import DocumentHighlight
 from .echo import EchoClaim
 from .entry import Entry
 from .rating import BookRating
@@ -19,6 +20,7 @@ __all__ = [
     'BookRating',
     'BookStatus',
     'DIGITAL_RESOURCE_KINDS',
+    'DocumentHighlight',
     'DocumentUploadSession',
     'EchoClaim',
     'Entry',

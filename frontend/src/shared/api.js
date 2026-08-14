@@ -250,6 +250,16 @@ export const booksApi = {
     }
     return res.blob()
   },
+  listHighlights: (shelfId) => api(`/shelf/${shelfId}/document/highlights/`),
+  createHighlight: (shelfId, body) =>
+    api(`/shelf/${shelfId}/document/highlights/`, { method: 'POST', body }),
+  updateHighlight: (shelfId, highlightId, body) =>
+    api(`/shelf/${shelfId}/document/highlights/${highlightId}/`, {
+      method: 'PATCH',
+      body,
+    }),
+  deleteHighlight: (shelfId, highlightId) =>
+    api(`/shelf/${shelfId}/document/highlights/${highlightId}/`, { method: 'DELETE' }),
   choices: () => api('/meta/choices/'),
 }
 

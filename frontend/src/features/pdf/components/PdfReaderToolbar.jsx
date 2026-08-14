@@ -14,7 +14,10 @@ export default function PdfReaderToolbar({
   pageCount,
   scaleLabel,
   sidebarOpen,
+  highlightMode,
+  highlightCount = 0,
   onToggleSidebar,
+  onToggleHighlightMode,
   onGoToPage,
   onPrevPage,
   onNextPage,
@@ -66,6 +69,16 @@ export default function PdfReaderToolbar({
           onPrev={onPrevPage}
           onNext={onNextPage}
         />
+        <button
+          type="button"
+          className={`pdf-tool-btn pdf-tool-btn-label${highlightMode ? ' is-active' : ''}`}
+          onClick={onToggleHighlightMode}
+          aria-pressed={highlightMode}
+          title={t('pdf.highlight.modeHint')}
+        >
+          {t('pdf.highlight.mode')}
+          {highlightCount ? <span className="pdf-hl-count">{highlightCount}</span> : null}
+        </button>
         <div className="pdf-reader-zoom-group" role="group" aria-label={t('pdf.toolbar.zoom')}>
           <button type="button" className="pdf-tool-btn" onClick={onZoomOut} title={t('pdf.toolbar.zoomOut')}>
             −
