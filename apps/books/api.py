@@ -74,6 +74,13 @@ from apps.books.services.social import (
     sanitize_public_text,
     serialize_peer_viewpoint,
 )
+from apps.books.services.testament import (
+    TESTAMENT_MAX_LEN,
+    create_testament,
+    get_testament_status,
+    reveal_peer_testament,
+    serialize_testament,
+)
 
 def _media_url(request, field):
     if not field:
@@ -446,6 +453,18 @@ class MidpointPredictionSerializer(serializers.Serializer):
         return attrs
 
 
+class TestamentWriteSerializer(serializers.Serializer):
+    text = serializers.CharField(max_length=TESTAMENT_MAX_LEN, allow_blank=False)
+
+    def validate_text(self, value):
+        from apps.books.services.testament import validate_testament_text
+
+        try:
+            return validate_testament_text(value)
+        except ValueError as exc:
+            raise serializers.ValidationError(str(exc)) from exc
+
+
 class RatingWriteSerializer(serializers.Serializer):
     writing = serializers.IntegerField(min_value=1, max_value=5)
     content = serializers.IntegerField(min_value=1, max_value=5)
@@ -516,6 +535,9 @@ class ShelfViewSet(ViewSet):
         if action == 'peer_final_viewpoint':
             self.throttle_scope = 'peer_viewpoint'
             return [ScopedRateThrottle()]
+        if action in {'testament', 'peer_testament'}:
+            self.throttle_scope = 'testament'
+            return [ScopedRateThrottle()]
         return super().get_throttles()
 
     def _get_shelf(self, request, pk):
@@ -562,6 +584,7 @@ class ShelfViewSet(ViewSet):
                 'ask_midpoint_prediction': should_ask_midpoint_prediction(user_book),
                 'view_mode': 'playlist' if is_finished else 'reading',
                 'social': get_social_status(user_book),
+                'testament': get_testament_status(user_book),
             }
         )
 
@@ -820,6 +843,7 @@ class ShelfViewSet(ViewSet):
                     ],
                     'view_mode': 'playlist',
                     'social': get_social_status(user_book),
+                    'testament': get_testament_status(user_book),
                     'already_finished': True,
                 }
             )
@@ -836,6 +860,7 @@ class ShelfViewSet(ViewSet):
                 ],
                 'view_mode': 'playlist',
                 'social': get_social_status(user_book),
+                'testament': get_testament_status(user_book),
                 'already_finished': False,
             }
         )
@@ -889,6 +914,78 @@ class ShelfViewSet(ViewSet):
                 'viewpoint': serialize_peer_viewpoint(peer, request),
                 'empty': False,
                 'social': social,
+            }
+        )
+
+    @action(detail=True, methods=['post'], url_path='testament')
+    def testament(self, request, pk=None):
+        """ثبت یک‌بارهٔ وصیت کوتاه برای کتاب فیزیکی."""
+        user_book = self._get_shelf(request, pk)
+        serializer = TestamentWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            created = create_testament(user_book, serializer.validated_data['text'])
+        except ValueError as exc:
+            return Response(
+                {'detail': str(exc), 'testament': get_testament_status(user_book)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(
+            {
+                'testament': serialize_testament(created, include_author=False),
+                'status': get_testament_status(user_book),
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=['post'], url_path='peer-testament')
+    def peer_testament(self, request, pk=None):
+        """
+        یک‌بار وصیت تصادفی دیگران را هنگام شروع خواندن نشان می‌دهد و فرصت را مصرف می‌کند.
+        """
+        user_book = self._get_shelf(request, pk)
+        peer, code = reveal_peer_testament(user_book)
+        status_payload = get_testament_status(user_book)
+
+        if code == 'forbidden_not_physical':
+            return Response(
+                {
+                    'detail': 'وصیت فقط برای کتاب فیزیکی است.',
+                    'testament': status_payload,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if code == 'forbidden_not_reading':
+            return Response(
+                {
+                    'detail': 'اول خواندن این کتاب را شروع کن.',
+                    'testament': status_payload,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if code == 'already_revealed':
+            return Response(
+                {
+                    'peer': serialize_testament(peer, include_author=True),
+                    'empty': peer is None,
+                    'already_revealed': True,
+                    'testament': status_payload,
+                }
+            )
+        if code == 'empty' or not peer:
+            return Response(
+                {
+                    'peer': None,
+                    'empty': True,
+                    'detail': 'هنوز وصیتی از دیگران برای این کتاب نیست.',
+                    'testament': status_payload,
+                }
+            )
+        return Response(
+            {
+                'peer': serialize_testament(peer, include_author=True),
+                'empty': False,
+                'testament': status_payload,
             }
         )
 

@@ -141,6 +141,20 @@ class UserBook(models.Model):
         default=False,
         help_text='یک‌بار دیدگاه پایانی تصادفی دیگران برای این کتاب نشان داده شده است.',
     )
+    peer_testament_revealed = models.BooleanField(
+        'وصیت دیگران دیده شده',
+        default=False,
+        help_text='یک‌بار وصیت تصادفی دیگران هنگام شروع خواندن این کتاب نشان داده شده است.',
+    )
+    revealed_peer_testament = models.ForeignKey(
+        'books.BookTestament',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+        verbose_name='وصیت نشان‌داده‌شده',
+        help_text='وصیت تصادفی دیگران که برای این قفسه ثابت شده است.',
+    )
     created_at = models.DateTimeField('تاریخ ایجاد', auto_now_add=True)
     updated_at = models.DateTimeField('آخرین به‌روزرسانی', auto_now=True)
 

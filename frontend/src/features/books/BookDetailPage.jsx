@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { booksApi, ApiError } from '../../shared/api'
@@ -11,8 +11,10 @@ import FinalViewpointModal from './components/FinalViewpointModal'
 import FinishedBookPlaylist from './components/FinishedBookPlaylist'
 import FirstFinalViewpointModal from './components/FirstFinalViewpointModal'
 import MidpointPredictionModal from './components/MidpointPredictionModal'
+import PeerTestamentModal from './components/PeerTestamentModal'
 import PeerViewpointModal from './components/PeerViewpointModal'
 import PublicConsentModal from './components/PublicConsentModal'
+import TestamentWriteModal from './components/TestamentWriteModal'
 
 const STATUS_VALUES = ['want_to_read', 'reading', 'paused', 'finished', 'abandoned']
 const KIND_FILTERS = ['viewpoint', 'feeling', 'book_text']
@@ -25,14 +27,17 @@ function ReadingDetail({
   kind,
   media,
   busy,
+  testament,
   onProgress,
   onAskFinish,
   onDelete,
   onDeleteEntry,
   onAskPublish,
+  onAskTestament,
   setFilter,
 }) {
   const { t } = useTranslation()
+  const showTestamentBtn = Boolean(testament?.eligible && (testament?.can_write || testament?.has_own))
 
   return (
     <>
@@ -63,6 +68,11 @@ function ReadingDetail({
             <Link to={`/books/${id}/entries/new`} className="btn btn-primary">
               {t('books.detail.newEntry')}
             </Link>
+            {showTestamentBtn ? (
+              <button type="button" className="btn btn-secondary" onClick={onAskTestament} disabled={busy}>
+                {t('books.testament.button')}
+              </button>
+            ) : null}
             <button type="button" className="btn btn-secondary" onClick={onAskFinish} disabled={busy}>
               {t('books.detail.finishTick')}
             </button>
@@ -300,6 +310,10 @@ export default function BookDetailPage() {
   const [peerError, setPeerError] = useState('')
   const [publishEntry, setPublishEntry] = useState(null)
   const [publishBusy, setPublishBusy] = useState(false)
+  const [showTestamentModal, setShowTestamentModal] = useState(false)
+  const [peerTestamentOpen, setPeerTestamentOpen] = useState(false)
+  const [peerTestament, setPeerTestament] = useState(null)
+  const revealPeerTestamentRef = useRef({ inFlight: false })
 
   const kind = params.get('kind') || ''
   const media = params.get('media') || ''
@@ -319,11 +333,62 @@ export default function BookDetailPage() {
     load()
   }, [id, kind, media])
 
+  useEffect(() => {
+    setPeerTestamentOpen(false)
+    setPeerTestament(null)
+    setShowTestamentModal(false)
+  }, [id])
+
   const setFilter = (key, value) => {
     const next = new URLSearchParams(params)
     if (value) next.set(key, value)
     else next.delete(key)
     setParams(next, { replace: true })
+  }
+
+  const onRevealPeerTestament = useCallback(async () => {
+    if (revealPeerTestamentRef.current.inFlight) return
+    revealPeerTestamentRef.current.inFlight = true
+    try {
+      const res = await booksApi.peerTestament(id)
+      if (res.testament) {
+        setData((prev) => (prev ? { ...prev, testament: res.testament } : prev))
+      }
+      // فقط اولین آشکارسازی را به‌صورت پاپ‌آپ نشان بده
+      if (res.peer && !res.already_revealed && !res.empty) {
+        setPeerTestament(res.peer)
+        setPeerTestamentOpen(true)
+      }
+    } catch {
+      // اختیاری؛ خطا را بی‌صدا رد می‌کنیم
+    } finally {
+      revealPeerTestamentRef.current.inFlight = false
+    }
+  }, [id])
+
+  useEffect(() => {
+    if (!data || String(data.book?.id) !== String(id)) return
+    if (data.view_mode === 'playlist' || data.book?.status === 'finished') return
+    if (!data.testament?.eligible || !data.testament?.can_reveal_peer) return
+    onRevealPeerTestament()
+  }, [data, id, onRevealPeerTestament])
+
+  const onSubmitTestament = async (text) => {
+    setBusy(true)
+    try {
+      const res = await booksApi.createTestament(id, { text })
+      showToast(t('books.testament.saved'), 'success')
+      setShowTestamentModal(false)
+      if (res.status) {
+        setData((prev) => (prev ? { ...prev, testament: res.status } : prev))
+      } else {
+        await load()
+      }
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : t('books.testament.failed'), 'error')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const onProgress = async (e) => {
@@ -492,6 +557,7 @@ export default function BookDetailPage() {
   const book = data.book
   const isFinished = book.status === 'finished' || data.view_mode === 'playlist'
   const social = data.social || {}
+  const testament = data.testament || {}
   const publishKindLabel = publishEntry
     ? labelFromCode('books.kind', publishEntry.kind, publishEntry.kind_display)
     : ''
@@ -518,11 +584,13 @@ export default function BookDetailPage() {
           kind={kind}
           media={media}
           busy={busy}
+          testament={testament}
           onProgress={onProgress}
           onAskFinish={() => setShowFinishConfirm(true)}
           onDelete={onDelete}
           onDeleteEntry={onDeleteEntry}
           onAskPublish={setPublishEntry}
+          onAskTestament={() => setShowTestamentModal(true)}
           setFilter={setFilter}
         />
       )}
@@ -565,6 +633,20 @@ export default function BookDetailPage() {
         error={peerError}
         onRefresh={fetchPeerViewpoint}
         onClose={() => setPeerOpen(false)}
+      />
+
+      <TestamentWriteModal
+        open={showTestamentModal && !isFinished}
+        busy={busy}
+        testament={testament}
+        onSubmit={onSubmitTestament}
+        onClose={() => setShowTestamentModal(false)}
+      />
+
+      <PeerTestamentModal
+        open={peerTestamentOpen && !isFinished}
+        peer={peerTestament}
+        onClose={() => setPeerTestamentOpen(false)}
       />
 
       <PublicConsentModal

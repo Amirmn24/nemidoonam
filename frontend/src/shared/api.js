@@ -167,6 +167,10 @@ export const booksApi = {
   finish: (id) => api(`/shelf/${id}/finish/`, { method: 'POST' }),
   peerFinalViewpoint: (id) =>
     api(`/shelf/${id}/peer-final-viewpoint/`, { method: 'POST' }),
+  createTestament: (id, body) =>
+    api(`/shelf/${id}/testament/`, { method: 'POST', body }),
+  peerTestament: (id) =>
+    api(`/shelf/${id}/peer-testament/`, { method: 'POST' }),
   setupStatus: (id) => api(`/shelf/${id}/setup-status/`),
   midpointPrediction: (id, body) =>
     api(`/shelf/${id}/midpoint-prediction/`, { method: 'POST', body }),

@@ -236,6 +236,27 @@
       "entryDeleted": "Note deleted.",
       "openPdf": "Open in reader"
     },
+    "testament": {
+      "button": "Will",
+      "peerEyebrow": "A reader's will",
+      "peerTitle": "A will for this book",
+      "peerLabel": "Someone else's will about this book",
+      "authorFallback": "Another reader",
+      "ownEyebrow": "Your will",
+      "ownTitle": "Your will for this book",
+      "onceHint": "You can leave a will only once.",
+      "writeEyebrow": "For the next reader",
+      "writeTitle": "Leave a short will",
+      "writeHint": "At most 2–3 lines. Future readers who start this book may see it.",
+      "placeholder": "If you open this book…",
+      "submit": "Save will",
+      "required": "Write your will.",
+      "tooManyLines": "At most {{count}} lines allowed.",
+      "linesMeta": "{{current}} of {{max}} lines",
+      "charsMeta": "{{remaining}} characters left",
+      "saved": "Will saved.",
+      "failed": "Could not save will."
+    },
     "entry": {
       "newTitle": "New note",
       "editTitle": "Edit note",

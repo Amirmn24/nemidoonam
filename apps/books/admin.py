@@ -3,6 +3,7 @@ from django.contrib import admin
 from apps.books.models import (
     Book,
     BookRating,
+    BookTestament,
     DocumentHighlight,
     EchoClaim,
     Entry,
@@ -88,6 +89,9 @@ class UserBookAdmin(admin.ModelAdmin):
         'current_page',
         'notes',
         'midpoint_prompt_done',
+        'peer_viewpoint_revealed',
+        'peer_testament_revealed',
+        'revealed_peer_testament',
         'created_at',
         'updated_at',
     )
@@ -174,3 +178,21 @@ class EchoClaimAdmin(admin.ModelAdmin):
     search_fields = ('user__email', 'user__username', 'token')
     autocomplete_fields = ('user', 'entry')
     readonly_fields = ('token', 'created_at', 'updated_at')
+
+
+@admin.register(BookTestament)
+class BookTestamentAdmin(admin.ModelAdmin):
+    list_display = ('user_book', 'text_preview', 'created_at')
+    search_fields = (
+        'text',
+        'user_book__book__title',
+        'user_book__user__username',
+        'user_book__user__email',
+    )
+    autocomplete_fields = ('user_book',)
+    readonly_fields = ('created_at', 'updated_at')
+
+    @admin.display(description='متن')
+    def text_preview(self, obj):
+        text = obj.text or ''
+        return text if len(text) <= 48 else f'{text[:48]}…'

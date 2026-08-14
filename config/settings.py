@@ -133,6 +133,7 @@ REST_FRAMEWORK = {
         'user': '2000/day',
         'finish_book': '30/hour',
         'peer_viewpoint': '40/hour',
+        'testament': '40/hour',
         'entry_write': '120/hour',
         'echo': '30/hour',
         'document_upload': '40/hour',

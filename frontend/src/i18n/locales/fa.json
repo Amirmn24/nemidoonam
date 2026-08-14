@@ -236,6 +236,27 @@
       "entryDeleted": "یادداشت حذف شد.",
       "openPdf": "باز کردن در خواننده"
     },
+    "testament": {
+      "button": "وصیت",
+      "peerEyebrow": "وصیت یک خواننده",
+      "peerTitle": "وصیتی برای این کتاب",
+      "peerLabel": "وصیت دیگران درباره این کتاب",
+      "authorFallback": "خواننده‌ای دیگر",
+      "ownEyebrow": "وصیت تو",
+      "ownTitle": "وصیتت برای این کتاب",
+      "onceHint": "فقط یک‌بار می‌توانی وصیت ثبت کنی.",
+      "writeEyebrow": "برای خواننده بعدی",
+      "writeTitle": "وصیت کوتاه بنویس",
+      "writeHint": "حداکثر ۲–۳ خط. این متن برای کسی که بعداً همین کتاب را شروع کند نشان داده می‌شود.",
+      "placeholder": "اگر این کتاب را باز کردی…",
+      "submit": "ثبت وصیت",
+      "required": "متن وصیت را بنویس.",
+      "tooManyLines": "حداکثر {{count}} خط مجاز است.",
+      "linesMeta": "{{current}} از {{max}} خط",
+      "charsMeta": "{{remaining}} نویسه باقی",
+      "saved": "وصیت ثبت شد.",
+      "failed": "ثبت وصیت ناموفق بود."
+    },
     "entry": {
       "newTitle": "یادداشت جدید",
       "editTitle": "ویرایش یادداشت",

@@ -357,3 +357,88 @@ class EchoApiTests(TestCase):
     def test_echo_blocked_outside_window(self, _mock):
         res = self.client.post('/api/v1/books/echo/')
         self.assertEqual(res.status_code, 403)
+
+
+@override_settings(ROOT_URLCONF='config.urls')
+class TestamentApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.writer = User.objects.create_user(
+            email='will-writer@example.com',
+            password='x',
+            username='willwriter',
+        )
+        self.reader = User.objects.create_user(
+            email='will-reader@example.com',
+            password='x',
+            username='willreader',
+        )
+        self.book = Book.objects.create(
+            title='Testament Book',
+            author='Author',
+            total_pages=120,
+            resource_kind=ResourceKind.PHYSICAL,
+        )
+        self.writer_shelf = UserBook.objects.create(
+            user=self.writer,
+            book=self.book,
+            status=BookStatus.READING,
+        )
+        self.reader_shelf = UserBook.objects.create(
+            user=self.reader,
+            book=self.book,
+            status=BookStatus.READING,
+        )
+
+    def test_create_once_and_reveal_to_peer(self):
+        self.client.force_authenticate(user=self.writer)
+        res = self.client.post(
+            f'/api/v1/shelf/{self.writer_shelf.pk}/testament/',
+            {'text': 'این کتاب را آرام بخوان.\nصفحه به صفحه.'},
+            format='json',
+        )
+        self.assertEqual(res.status_code, 201)
+        again = self.client.post(
+            f'/api/v1/shelf/{self.writer_shelf.pk}/testament/',
+            {'text': 'دوباره'},
+            format='json',
+        )
+        self.assertEqual(again.status_code, 400)
+
+        self.client.force_authenticate(user=self.reader)
+        reveal = self.client.post(f'/api/v1/shelf/{self.reader_shelf.pk}/peer-testament/')
+        self.assertEqual(reveal.status_code, 200)
+        self.assertFalse(reveal.data.get('empty'))
+        self.assertIn('آرام بخوان', reveal.data['peer']['text'])
+        self.assertNotIn('email', str(reveal.data['peer']).lower())
+
+        again_reveal = self.client.post(f'/api/v1/shelf/{self.reader_shelf.pk}/peer-testament/')
+        self.assertEqual(again_reveal.status_code, 200)
+        self.assertTrue(again_reveal.data.get('already_revealed'))
+
+    def test_rejects_too_many_lines_and_digital(self):
+        self.client.force_authenticate(user=self.writer)
+        res = self.client.post(
+            f'/api/v1/shelf/{self.writer_shelf.pk}/testament/',
+            {'text': 'خط یک\nخط دو\nخط سه\nخط چهار'},
+            format='json',
+        )
+        self.assertEqual(res.status_code, 400)
+
+        digital = Book.objects.create(
+            title='EBook',
+            author='',
+            total_pages=10,
+            resource_kind=ResourceKind.EBOOK,
+        )
+        dig_shelf = UserBook.objects.create(
+            user=self.writer,
+            book=digital,
+            status=BookStatus.READING,
+        )
+        blocked = self.client.post(
+            f'/api/v1/shelf/{dig_shelf.pk}/testament/',
+            {'text': 'نباید'},
+            format='json',
+        )
+        self.assertEqual(blocked.status_code, 400)

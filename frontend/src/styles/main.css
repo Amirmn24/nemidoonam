@@ -5225,6 +5225,70 @@ body.vocab-modal-open {
   color: var(--ink-soft);
 }
 
+.testament-sheet .book-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.testament-hint {
+  margin: 0 0 0.85rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  max-width: 38rem;
+}
+
+.testament-own-text {
+  margin: 0 0 0.55rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+  font-size: 1.02rem;
+}
+
+.testament-textarea {
+  resize: none;
+  min-height: 5.2rem;
+  line-height: 1.65;
+}
+
+.testament-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.45rem 0 0.65rem;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.peer-testament-card {
+  margin: 0 0 1.1rem;
+  padding: 0;
+}
+
+.peer-testament-card blockquote {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.peer-testament-card p {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.75;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.peer-testament-card figcaption {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
 .echo-status-line {
   margin: 0.65rem 0 0;
   color: var(--ink-soft);
