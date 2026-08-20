@@ -24,7 +24,8 @@ export default function TestamentWriteModal({
 
   const maxLen = testament?.max_length || 160
   const maxLines = testament?.max_lines || 3
-  const canWrite = Boolean(testament?.can_write)
+  const hasOwn = Boolean(testament?.has_own && testament?.own)
+  const canWrite = hasOwn ? false : Boolean(testament?.can_write ?? true)
   const own = testament?.own
 
   useEffect(() => {

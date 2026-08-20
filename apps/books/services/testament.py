@@ -18,6 +18,7 @@ PEER_POOL_LIMIT = 250
 # وضعیت‌هایی که خواننده می‌تواند وصیت بنویسد
 _WRITABLE_STATUSES = frozenset(
     {
+        BookStatus.WANT_TO_READ,
         BookStatus.READING,
         BookStatus.PAUSED,
         BookStatus.FINISHED,
@@ -118,7 +119,7 @@ def create_testament(user_book: UserBook, text: str) -> BookTestament:
     if not is_physical_shelf(user_book):
         raise ValueError('وصیت فقط برای کتاب فیزیکی است.')
     if user_book.status not in _WRITABLE_STATUSES:
-        raise ValueError('برای ثبت وصیت باید کتاب را شروع کرده باشی.')
+        raise ValueError('برای ثبت وصیت این وضعیت کتاب مجاز نیست.')
     if get_own_testament(user_book) is not None:
         raise ValueError('برای این کتاب قبلاً وصیت ثبت کرده‌ای.')
 

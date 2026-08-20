@@ -37,7 +37,10 @@ function ReadingDetail({
   setFilter,
 }) {
   const { t } = useTranslation()
-  const showTestamentBtn = Boolean(testament?.eligible && (testament?.can_write || testament?.has_own))
+  const isPhysical = book.resource_kind === 'physical' || (!book.resource_kind && !book.is_digital)
+  const showTestamentBtn = Boolean(
+    (testament?.eligible ?? isPhysical) && book.status !== 'abandoned',
+  )
 
   return (
     <>
@@ -207,14 +210,18 @@ function FinishedDetail({
   book,
   data,
   social,
+  testament,
   busy,
   onSaveRating,
   onDelete,
   onRevealPeer,
   onAskFinalViewpoint,
+  onAskTestament,
 }) {
   const { t } = useTranslation()
   const hasFinal = Boolean(social?.has_final_viewpoint)
+  const isPhysical = book.resource_kind === 'physical' || (!book.resource_kind && !book.is_digital)
+  const showTestamentBtn = Boolean(testament?.eligible ?? isPhysical)
 
   return (
     <>
@@ -233,6 +240,11 @@ function FinishedDetail({
           <p className="meta-pill">{book.author}</p>
           <p className="finished-lead">{t('books.detail.finishedLead')}</p>
           <div className="cluster">
+            {showTestamentBtn ? (
+              <button type="button" className="btn btn-secondary" onClick={onAskTestament} disabled={busy}>
+                {t('books.testament.button')}
+              </button>
+            ) : null}
             <Link to={`/books/${id}/edit`} className="btn btn-ghost">
               {t('books.detail.editMeta')}
             </Link>
@@ -570,11 +582,13 @@ export default function BookDetailPage() {
           book={book}
           data={data}
           social={social}
+          testament={testament}
           busy={busy}
           onSaveRating={onSaveRating}
           onDelete={onDelete}
           onRevealPeer={onRevealPeer}
           onAskFinalViewpoint={() => setShowFinalModal(true)}
+          onAskTestament={() => setShowTestamentModal(true)}
         />
       ) : (
         <ReadingDetail
@@ -636,7 +650,7 @@ export default function BookDetailPage() {
       />
 
       <TestamentWriteModal
-        open={showTestamentModal && !isFinished}
+        open={showTestamentModal}
         busy={busy}
         testament={testament}
         onSubmit={onSubmitTestament}
