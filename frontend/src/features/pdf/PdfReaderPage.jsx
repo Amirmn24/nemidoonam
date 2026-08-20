@@ -4,16 +4,28 @@ import { useTranslation } from 'react-i18next'
 import { booksApi } from '../../shared/api'
 import { useDocumentHighlights } from './hooks/useDocumentHighlights'
 import { useSecurePdfSource } from './hooks/useSecurePdfSource'
+import { DEFAULT_HIGHLIGHT_COLOR, normalizeHighlightColor } from './lib/highlightGeometry'
 import { copyPageImageBlob, writeClipboardPng, writeClipboardText } from './lib/pdfImages'
 import PdfHighlightTip from './components/PdfHighlightTip'
+import PdfNoteTip from './components/PdfNoteTip'
 import PdfPageSidebar from './components/PdfPageSidebar'
 import PdfReaderToolbar from './components/PdfReaderToolbar'
 import PdfSmartViewer from './components/PdfSmartViewer'
+
+const COLOR_STORAGE_KEY = 'vyrvona.pdf.highlightColor'
 
 function bumpScale(actualScale, delta) {
   const base = Number.isFinite(actualScale) && actualScale > 0 ? actualScale : 1
   const next = Math.round((base + delta) * 10) / 10
   return String(Math.min(3, Math.max(0.5, next)))
+}
+
+function readStoredColor() {
+  try {
+    return normalizeHighlightColor(localStorage.getItem(COLOR_STORAGE_KEY) || DEFAULT_HIGHLIGHT_COLOR)
+  } catch {
+    return DEFAULT_HIGHLIGHT_COLOR
+  }
 }
 
 /**
@@ -24,6 +36,8 @@ export default function PdfReaderPage() {
   const { id } = useParams()
   const viewerRef = useRef(null)
   const pdfDocumentRef = useRef(null)
+  const highlightModeRef = useRef(false)
+  const highlightColorRef = useRef(DEFAULT_HIGHLIGHT_COLOR)
   const [book, setBook] = useState(null)
   const [metaError, setMetaError] = useState('')
   const [metaLoading, setMetaLoading] = useState(true)
@@ -33,15 +47,22 @@ export default function PdfReaderPage() {
   const [pdfScaleValue, setPdfScaleValue] = useState('page-width')
   const [actualScale, setActualScale] = useState(1)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [highlightMode, setHighlightMode] = useState(false)
+  const [highlightColor, setHighlightColor] = useState(readStoredColor)
   const [hlDraft, setHlDraft] = useState(null)
+  const [noteTarget, setNoteTarget] = useState(null)
   const [copied, setCopied] = useState(false)
   const [hlError, setHlError] = useState('')
+
+  highlightModeRef.current = highlightMode
+  highlightColorRef.current = highlightColor
 
   const {
     highlights,
     error: highlightsLoadError,
     createHighlight,
     updateHighlightColor,
+    updateHighlightNote,
     removeHighlight,
   } = useDocumentHighlights(id)
 
@@ -99,29 +120,51 @@ export default function PdfReaderPage() {
     viewerRef.current?.goToPage(n)
   }, [])
 
-  const onTextSelected = useCallback((payload) => {
-    setCopied(false)
-    setHlDraft(payload || null)
+  const setColor = useCallback((value) => {
+    const next = normalizeHighlightColor(value)
+    setHighlightColor(next)
+    try {
+      localStorage.setItem(COLOR_STORAGE_KEY, next)
+    } catch {
+      /* ignore */
+    }
   }, [])
 
-  const saveDraft = useCallback(
-    async (color) => {
-      if (!hlDraft?.rects?.length || hlDraft.kind === 'image') return
-      setHlError('')
-      try {
-        await createHighlight({
-          page_number: hlDraft.page_number,
-          quote: hlDraft.quote || '',
-          rects: hlDraft.rects,
-          color,
-        })
+  const onTextSelected = useCallback(
+    async (payload) => {
+      setCopied(false)
+      if (!payload) {
         setHlDraft(null)
-        window.getSelection()?.removeAllRanges()
-      } catch (err) {
-        setHlError(err.message || t('pdf.highlight.saveFailed'))
+        return
       }
+
+      // ابزار مداد روشن: انتخاب متن → هایلایت فوری با رنگ فعلی
+      if (payload.kind === 'text' && highlightModeRef.current) {
+        setHlDraft(null)
+        setHlError('')
+        try {
+          const created = await createHighlight({
+            page_number: payload.page_number,
+            quote: payload.quote || '',
+            rects: payload.rects,
+            color: highlightColorRef.current,
+          })
+          window.getSelection()?.removeAllRanges()
+          setNoteTarget({
+            id: created.id,
+            note: created.note || '',
+            bounds: payload.bounds,
+          })
+        } catch (err) {
+          setHlError(err.message || t('pdf.highlight.saveFailed'))
+        }
+        return
+      }
+
+      setNoteTarget(null)
+      setHlDraft(payload)
     },
-    [hlDraft, createHighlight, t],
+    [createHighlight, t],
   )
 
   const copyDraft = useCallback(async () => {
@@ -156,6 +199,7 @@ export default function PdfReaderPage() {
       setHlError('')
       try {
         await removeHighlight(highlightId)
+        setNoteTarget((prev) => (prev?.id === highlightId ? null : prev))
       } catch (err) {
         setHlError(err.message || t('pdf.highlight.saveFailed'))
       }
@@ -175,14 +219,42 @@ export default function PdfReaderPage() {
     [updateHighlightColor, t],
   )
 
+  const onChangeHighlightNote = useCallback(
+    async (highlightId, note) => {
+      setHlError('')
+      try {
+        await updateHighlightNote(highlightId, note)
+      } catch (err) {
+        setHlError(err.message || t('pdf.highlight.saveFailed'))
+      }
+    },
+    [updateHighlightNote, t],
+  )
+
+  const saveNoteTip = useCallback(
+    async (note) => {
+      if (!noteTarget?.id) return
+      try {
+        await updateHighlightNote(noteTarget.id, note)
+        setNoteTarget(null)
+      } catch (err) {
+        setHlError(err.message || t('pdf.highlight.saveFailed'))
+      }
+    },
+    [noteTarget, updateHighlightNote, t],
+  )
+
   useEffect(() => {
-    if (!hlDraft) return undefined
+    if (!hlDraft && !noteTarget) return undefined
     const onKey = (event) => {
-      if (event.key === 'Escape') setHlDraft(null)
+      if (event.key === 'Escape') {
+        setHlDraft(null)
+        setNoteTarget(null)
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [hlDraft])
+  }, [hlDraft, noteTarget])
 
   const onDocumentLoad = useCallback((doc) => {
     const prev = pdfDocumentRef.current
@@ -225,7 +297,7 @@ export default function PdfReaderPage() {
   }
 
   return (
-    <div className={`pdf-reader-page${sidebarOpen ? ' has-sidebar' : ''}`}>
+    <div className={`pdf-reader-page${sidebarOpen ? ' has-sidebar' : ''}${highlightMode ? ' is-hl-mode' : ''}`}>
       <PdfReaderToolbar
         title={book.title}
         shelfId={id}
@@ -233,7 +305,11 @@ export default function PdfReaderPage() {
         pageCount={pageCount}
         scaleLabel={scaleLabel}
         sidebarOpen={sidebarOpen}
+        highlightMode={highlightMode}
+        highlightColor={highlightColor}
         onToggleSidebar={() => setSidebarOpen((v) => !v)}
+        onToggleHighlightMode={() => setHighlightMode((v) => !v)}
+        onHighlightColorChange={setColor}
         onGoToPage={goToPage}
         onPrevPage={() => viewerRef.current?.prevPage()}
         onNextPage={() => viewerRef.current?.nextPage()}
@@ -252,6 +328,7 @@ export default function PdfReaderPage() {
           highlights={highlights}
           onDeleteHighlight={onDeleteHighlight}
           onChangeHighlightColor={onChangeHighlightColor}
+          onChangeHighlightNote={onChangeHighlightNote}
         />
 
         <div className="pdf-reader-canvas">
@@ -278,15 +355,11 @@ export default function PdfReaderPage() {
               onTextSelected={onTextSelected}
             />
           ) : null}
-          <PdfHighlightTip
-            draft={hlDraft}
-            copied={copied}
-            onPickColor={saveDraft}
-            onCopy={copyDraft}
-            onCancel={() => {
-              setHlDraft(null)
-              setCopied(false)
-            }}
+          <PdfHighlightTip draft={hlDraft} copied={copied} onCopy={copyDraft} />
+          <PdfNoteTip
+            target={noteTarget}
+            onSave={saveNoteTip}
+            onSkip={() => setNoteTarget(null)}
           />
         </div>
       </div>

@@ -2,13 +2,30 @@
 
 from __future__ import annotations
 
+import re
+
 from django.core.exceptions import ValidationError
 
 from apps.books.models.document import UserBookDocument
-from apps.books.models.highlight import HIGHLIGHT_COLOR_VALUES, DocumentHighlight
+from apps.books.models.highlight import (
+    DEFAULT_HIGHLIGHT_COLOR,
+    LEGACY_COLOR_HEX,
+    DocumentHighlight,
+)
 
 MAX_RECTS = 48
 MAX_QUOTE_LEN = 4000
+MAX_NOTE_LEN = 500
+_HEX_RE = re.compile(r'^#([0-9a-fA-F]{6})$')
+
+
+def normalize_color(raw) -> str:
+    value = (raw or '').strip()
+    if value in LEGACY_COLOR_HEX:
+        return LEGACY_COLOR_HEX[value]
+    if not _HEX_RE.match(value):
+        raise ValidationError({'color': 'رنگ باید به صورت #RRGGBB باشد.'})
+    return value.lower()
 
 
 def _as_unit(value, field: str) -> float:
@@ -55,6 +72,7 @@ def serialize_highlight(hl: DocumentHighlight) -> dict:
         'page_number': hl.page_number,
         'color': hl.color,
         'quote': hl.quote or '',
+        'note': hl.note or '',
         'rects': hl.rects or [],
         'created_at': hl.created_at,
         'updated_at': hl.updated_at,
@@ -70,20 +88,20 @@ def create_highlight(
     *,
     page_number: int,
     rects,
-    color: str = 'yellow',
+    color: str = DEFAULT_HIGHLIGHT_COLOR,
     quote: str = '',
+    note: str = '',
 ) -> DocumentHighlight:
     if page_number < 1:
         raise ValidationError({'page_number': 'شماره صفحه نامعتبر است.'})
-    color = (color or 'yellow').strip()
-    if color not in HIGHLIGHT_COLOR_VALUES:
-        raise ValidationError({'color': 'رنگ نامعتبر است.'})
     quote = (quote or '').strip()[:MAX_QUOTE_LEN]
+    note = (note or '').strip()[:MAX_NOTE_LEN]
     return DocumentHighlight.objects.create(
         document=document,
         page_number=page_number,
-        color=color,
+        color=normalize_color(color or DEFAULT_HIGHLIGHT_COLOR),
         quote=quote,
+        note=note,
         rects=normalize_rects(rects),
     )
 
@@ -92,13 +110,17 @@ def update_highlight(
     highlight: DocumentHighlight,
     *,
     color: str | None = None,
+    note: str | None = None,
 ) -> DocumentHighlight:
+    fields = ['updated_at']
     if color is not None:
-        color = color.strip()
-        if color not in HIGHLIGHT_COLOR_VALUES:
-            raise ValidationError({'color': 'رنگ نامعتبر است.'})
-        highlight.color = color
-        highlight.save(update_fields=['color', 'updated_at'])
+        highlight.color = normalize_color(color)
+        fields.append('color')
+    if note is not None:
+        highlight.note = (note or '').strip()[:MAX_NOTE_LEN]
+        fields.append('note')
+    if len(fields) > 1:
+        highlight.save(update_fields=fields)
     return highlight
 
 

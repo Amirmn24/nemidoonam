@@ -91,6 +91,7 @@ export default function PdfPageSidebar({
   highlights = [],
   onDeleteHighlight,
   onChangeHighlightColor,
+  onChangeHighlightNote,
 }) {
   const { t } = useTranslation()
   const [tab, setTab] = useState('pages')
@@ -132,6 +133,7 @@ export default function PdfPageSidebar({
             onJump={onSelectPage}
             onDelete={onDeleteHighlight}
             onChangeColor={onChangeHighlightColor}
+            onChangeNote={onChangeHighlightNote}
           />
         </div>
       ) : (

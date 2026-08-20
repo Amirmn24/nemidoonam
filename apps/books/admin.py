@@ -100,7 +100,7 @@ class UserBookAdmin(admin.ModelAdmin):
 class DocumentHighlightInline(admin.TabularInline):
     model = DocumentHighlight
     extra = 0
-    fields = ('page_number', 'color', 'quote', 'created_at')
+    fields = ('page_number', 'color', 'note', 'quote', 'created_at')
     readonly_fields = ('created_at',)
 
 

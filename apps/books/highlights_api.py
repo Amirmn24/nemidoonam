@@ -4,12 +4,13 @@ from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.books.models.highlight import HIGHLIGHT_COLORS
+from apps.books.models.highlight import DEFAULT_HIGHLIGHT_COLOR
 from apps.books.services.books import get_shelf_queryset
 from apps.books.services.highlights import (
     create_highlight,
     delete_highlight,
     list_highlights,
+    normalize_color,
     serialize_highlight,
     update_highlight,
 )
@@ -17,20 +18,26 @@ from apps.books.services.highlights import (
 
 class HighlightWriteSerializer(serializers.Serializer):
     page_number = serializers.IntegerField(min_value=1)
-    color = serializers.ChoiceField(
-        choices=[value for value, _label in HIGHLIGHT_COLORS],
-        required=False,
-        default='yellow',
-    )
+    color = serializers.CharField(required=False, default=DEFAULT_HIGHLIGHT_COLOR, max_length=16)
     quote = serializers.CharField(required=False, allow_blank=True, default='', max_length=4000)
+    note = serializers.CharField(required=False, allow_blank=True, default='', max_length=500)
     rects = serializers.ListField(child=serializers.DictField(), allow_empty=False)
+
+    def validate_color(self, value):
+        return normalize_color(value)
 
 
 class HighlightPatchSerializer(serializers.Serializer):
-    color = serializers.ChoiceField(
-        choices=[value for value, _label in HIGHLIGHT_COLORS],
-        required=True,
-    )
+    color = serializers.CharField(required=False, max_length=16)
+    note = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+    def validate(self, attrs):
+        if 'color' not in attrs and 'note' not in attrs:
+            raise serializers.ValidationError('حداقل یکی از color یا note لازم است.')
+        return attrs
+
+    def validate_color(self, value):
+        return normalize_color(value)
 
 
 def _document_for_shelf(request, pk):
@@ -70,8 +77,9 @@ class ShelfDocumentHighlightListView(APIView):
                 doc,
                 page_number=data['page_number'],
                 rects=data['rects'],
-                color=data.get('color') or 'yellow',
+                color=data.get('color') or DEFAULT_HIGHLIGHT_COLOR,
                 quote=data.get('quote') or '',
+                note=data.get('note') or '',
             )
         except DjangoValidationError as exc:
             message = exc.messages[0] if hasattr(exc, 'messages') else str(exc)
@@ -94,7 +102,11 @@ class ShelfDocumentHighlightDetailView(APIView):
         serializer = HighlightPatchSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            hl = update_highlight(hl, color=serializer.validated_data['color'])
+            hl = update_highlight(
+                hl,
+                color=serializer.validated_data.get('color'),
+                note=serializer.validated_data.get('note'),
+            )
         except DjangoValidationError as exc:
             message = exc.messages[0] if hasattr(exc, 'messages') else str(exc)
             return Response({'detail': message}, status=status.HTTP_400_BAD_REQUEST)

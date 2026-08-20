@@ -5,14 +5,15 @@ from django.db import models
 
 from .document import UserBookDocument
 
-HIGHLIGHT_COLORS = (
-    ('yellow', 'زرد'),
-    ('lime', 'سبز'),
-    ('sky', 'آبی'),
-    ('rose', 'صورتی'),
-)
+# نگاشت رنگ‌های قدیمی نام‌دار → hex (برای مایگریشن/سازگاری)
+LEGACY_COLOR_HEX = {
+    'yellow': '#facc15',
+    'lime': '#84cc16',
+    'sky': '#38bdf8',
+    'rose': '#f472b6',
+}
 
-HIGHLIGHT_COLOR_VALUES = {value for value, _label in HIGHLIGHT_COLORS}
+DEFAULT_HIGHLIGHT_COLOR = '#facc15'
 
 
 class DocumentHighlight(models.Model):
@@ -35,12 +36,19 @@ class DocumentHighlight(models.Model):
     )
     color = models.CharField(
         'رنگ',
-        max_length=16,
-        choices=HIGHLIGHT_COLORS,
-        default='yellow',
+        max_length=7,
+        default=DEFAULT_HIGHLIGHT_COLOR,
+        help_text='رنگ hex مثل #facc15',
         db_index=True,
     )
     quote = models.TextField('متن انتخاب‌شده', blank=True, default='')
+    note = models.CharField(
+        'یادداشت',
+        max_length=500,
+        blank=True,
+        default='',
+        help_text='یادداشت کوتاه برای پیدا کردن در فهرست',
+    )
     rects = models.JSONField(
         'مستطیل‌ها',
         default=list,

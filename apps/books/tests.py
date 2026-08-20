@@ -175,15 +175,17 @@ class DocumentHighlightApiTests(TestCase):
             f'/api/v1/shelf/{shelf_id}/document/highlights/',
             {
                 'page_number': 1,
-                'color': 'lime',
+                'color': '#84cc16',
                 'quote': 'یک جمله',
+                'note': 'نکته مهم',
                 'rects': [{'x': 0.1, 'y': 0.2, 'w': 0.3, 'h': 0.04}],
             },
             format='json',
         )
         self.assertEqual(created.status_code, 201, created.data)
         hid = created.data['id']
-        self.assertEqual(created.data['color'], 'lime')
+        self.assertEqual(created.data['color'], '#84cc16')
+        self.assertEqual(created.data['note'], 'نکته مهم')
         self.assertEqual(created.data['page_number'], 1)
 
         doc.refresh_from_db()
@@ -197,15 +199,29 @@ class DocumentHighlightApiTests(TestCase):
 
         patched = self.client.patch(
             f'/api/v1/shelf/{shelf_id}/document/highlights/{hid}/',
-            {'color': 'rose'},
+            {'color': '#f472b6', 'note': 'ویرایش‌شده'},
             format='json',
         )
         self.assertEqual(patched.status_code, 200)
-        self.assertEqual(patched.data['color'], 'rose')
+        self.assertEqual(patched.data['color'], '#f472b6')
+        self.assertEqual(patched.data['note'], 'ویرایش‌شده')
+
+        # سازگاری با نام رنگ قدیمی
+        legacy = self.client.post(
+            f'/api/v1/shelf/{shelf_id}/document/highlights/',
+            {
+                'page_number': 2,
+                'color': 'yellow',
+                'rects': [{'x': 0.1, 'y': 0.2, 'w': 0.2, 'h': 0.03}],
+            },
+            format='json',
+        )
+        self.assertEqual(legacy.status_code, 201, legacy.data)
+        self.assertEqual(legacy.data['color'], '#facc15')
 
         deleted = self.client.delete(f'/api/v1/shelf/{shelf_id}/document/highlights/{hid}/')
         self.assertEqual(deleted.status_code, 204)
-        self.assertEqual(DocumentHighlight.objects.filter(document=doc).count(), 0)
+        self.assertEqual(DocumentHighlight.objects.filter(document=doc).count(), 1)
 
         other = User.objects.create_user(email='hl2@example.com', password='x', username='hl2')
         self.client.force_authenticate(user=other)

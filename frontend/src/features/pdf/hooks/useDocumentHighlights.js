@@ -45,13 +45,23 @@ export function useDocumentHighlights(shelfId) {
     [shelfId],
   )
 
-  const updateHighlightColor = useCallback(
-    async (highlightId, color) => {
-      const updated = await booksApi.updateHighlight(shelfId, highlightId, { color })
+  const updateHighlight = useCallback(
+    async (highlightId, body) => {
+      const updated = await booksApi.updateHighlight(shelfId, highlightId, body)
       setHighlights((prev) => prev.map((h) => (h.id === highlightId ? updated : h)))
       return updated
     },
     [shelfId],
+  )
+
+  const updateHighlightColor = useCallback(
+    (highlightId, color) => updateHighlight(highlightId, { color }),
+    [updateHighlight],
+  )
+
+  const updateHighlightNote = useCallback(
+    (highlightId, note) => updateHighlight(highlightId, { note }),
+    [updateHighlight],
   )
 
   const removeHighlight = useCallback(
@@ -67,7 +77,9 @@ export function useDocumentHighlights(shelfId) {
     loading,
     error,
     createHighlight,
+    updateHighlight,
     updateHighlightColor,
+    updateHighlightNote,
     removeHighlight,
   }
 }
