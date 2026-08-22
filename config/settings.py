@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.books.apps.BooksConfig',
     'apps.challenges',
+    'apps.squads',
     'apps.vocabulary',
     'emails.apps.EmailsConfig',
 ]
