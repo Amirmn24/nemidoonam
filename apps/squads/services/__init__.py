@@ -1,3 +1,10 @@
+from .highlights import (
+    HighlightPermissionError,
+    HighlightValidationError,
+    add_highlight,
+    delete_highlight,
+    get_resource_highlights,
+)
 from .resources import (
     ResourcePermissionError,
     ResourceValidationError,
@@ -24,4 +31,9 @@ __all__ = [
     'delete_resource',
     'ResourcePermissionError',
     'ResourceValidationError',
+    'add_highlight',
+    'get_resource_highlights',
+    'delete_highlight',
+    'HighlightPermissionError',
+    'HighlightValidationError',
 ]

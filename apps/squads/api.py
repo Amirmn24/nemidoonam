@@ -8,17 +8,24 @@ from apps.books.models import Book
 from apps.squads.models import (
     SquadMembership,
     SquadResource,
+    SquadResourceHighlight,
     SquadResourceKind,
     SquadRole,
     StudySquad,
+    get_user_highlight_color,
 )
 from apps.squads.services import (
+    HighlightPermissionError,
+    HighlightValidationError,
     ResourcePermissionError,
     ResourceValidationError,
     SquadServiceError,
+    add_highlight,
     add_resource,
     create_squad,
+    delete_highlight,
     delete_resource,
+    get_resource_highlights,
     get_squad_resources,
     get_user_squads,
     join_squad_by_code,
@@ -190,6 +197,51 @@ class ResourceWriteSerializer(serializers.Serializer):
         return data
 
 
+def serialize_highlight(highlight: SquadResourceHighlight, request):
+    """سریالایز هایلایت گروهی."""
+    return {
+        'id': highlight.pk,
+        'resource_id': highlight.resource_id,
+        'owner': {
+            'id': highlight.owner.pk,
+            'username': highlight.owner.username,
+        },
+        'page_number': highlight.page_number,
+        'color': highlight.color,
+        'quote': highlight.quote,
+        'note': highlight.note,
+        'rects': highlight.rects,
+        'created_at': highlight.created_at,
+        'updated_at': highlight.updated_at,
+    }
+
+
+class HighlightWriteSerializer(serializers.Serializer):
+    """سریالایزر افزودن هایلایت."""
+    page_number = serializers.IntegerField(min_value=1)
+    rects = serializers.JSONField()
+    quote = serializers.CharField(required=False, allow_blank=True, default='')
+    note = serializers.CharField(max_length=500, required=False, allow_blank=True, default='')
+
+    def validate_page_number(self, value):
+        if value < 1:
+            raise serializers.ValidationError('شماره صفحه باید حداقل ۱ باشه.')
+        return value
+
+    def validate_rects(self, value):
+        if not isinstance(value, list) or len(value) == 0:
+            raise serializers.ValidationError('مختصات مستطیل‌ها را وارد کن.')
+        for rect in value:
+            if not isinstance(rect, dict):
+                raise serializers.ValidationError('هر مستطیل باید یک شی باشه.')
+            required_keys = {'x', 'y', 'w', 'h'}
+            if not required_keys.issubset(rect.keys()):
+                raise serializers.ValidationError(
+                    f'هر مستطیل باید کلیدهای {required_keys} رو داشته باشه.'
+                )
+        return value
+
+
 class SquadViewSet(ViewSet):
     def _get_squad(self, request, pk):
         """گرفتن گروهی که کاربر عضوشه."""
@@ -342,6 +394,112 @@ class SquadViewSet(ViewSet):
         try:
             delete_resource(resource, request.user)
         except ResourcePermissionError as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get'], url_path='resources/(?P<resource_id>[^/.]+)/highlights')
+    def resource_highlights(self, request, pk=None, resource_id=None):
+        """لیست هایلایت‌های یک منبع."""
+        squad = self._get_squad(request, pk)
+        
+        try:
+            resource = SquadResource.objects.get(pk=resource_id, squad=squad)
+        except SquadResource.DoesNotExist:
+            return Response(
+                {'detail': 'منبع پیدا نشد.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        
+        try:
+            highlights = get_resource_highlights(resource)
+        except HighlightValidationError as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        items = [serialize_highlight(hl, request) for hl in highlights]
+        
+        user_colors = {}
+        for hl in highlights:
+            if hl.owner_id not in user_colors:
+                user_colors[hl.owner_id] = {
+                    'user_id': hl.owner_id,
+                    'username': hl.owner.username,
+                    'color': hl.color,
+                }
+        
+        return Response({
+            'results': items,
+            'total_count': len(items),
+            'user_colors': list(user_colors.values()),
+        })
+
+    @action(detail=True, methods=['post'], url_path='resources/(?P<resource_id>[^/.]+)/highlights/add')
+    def add_resource_highlight(self, request, pk=None, resource_id=None):
+        """افزودن هایلایت جدید روی منبع."""
+        squad = self._get_squad(request, pk)
+        
+        try:
+            resource = SquadResource.objects.get(pk=resource_id, squad=squad)
+        except SquadResource.DoesNotExist:
+            return Response(
+                {'detail': 'منبع پیدا نشد.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        
+        serializer = HighlightWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        
+        try:
+            highlight = add_highlight(
+                resource=resource,
+                user=request.user,
+                page_number=data['page_number'],
+                rects=data['rects'],
+                quote=data.get('quote', ''),
+                note=data.get('note', ''),
+            )
+        except (HighlightPermissionError, HighlightValidationError) as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        return Response(
+            serialize_highlight(highlight, request),
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=['delete'], url_path='resources/(?P<resource_id>[^/.]+)/highlights/(?P<highlight_id>[^/.]+)')
+    def delete_resource_highlight(self, request, pk=None, resource_id=None, highlight_id=None):
+        """حذف یک هایلایت."""
+        squad = self._get_squad(request, pk)
+        
+        try:
+            resource = SquadResource.objects.get(pk=resource_id, squad=squad)
+        except SquadResource.DoesNotExist:
+            return Response(
+                {'detail': 'منبع پیدا نشد.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        
+        try:
+            highlight = SquadResourceHighlight.objects.get(pk=highlight_id, resource=resource)
+        except SquadResourceHighlight.DoesNotExist:
+            return Response(
+                {'detail': 'هایلایت پیدا نشد.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        
+        try:
+            delete_highlight(highlight, request.user)
+        except HighlightPermissionError as e:
             return Response(
                 {'detail': str(e)},
                 status=status.HTTP_403_FORBIDDEN,

@@ -1,6 +1,11 @@
 from django.contrib import admin
 
-from apps.squads.models import SquadMembership, SquadResource, StudySquad
+from apps.squads.models import (
+    SquadMembership,
+    SquadResource,
+    SquadResourceHighlight,
+    StudySquad,
+)
 
 
 class SquadMembershipInline(admin.TabularInline):
@@ -46,12 +51,21 @@ class SquadMembershipAdmin(admin.ModelAdmin):
     readonly_fields = ('joined_at',)
 
 
+class SquadResourceHighlightInline(admin.TabularInline):
+    model = SquadResourceHighlight
+    extra = 0
+    autocomplete_fields = ('owner',)
+    fields = ('owner', 'page_number', 'note', 'created_at')
+    readonly_fields = ('created_at',)
+
+
 @admin.register(SquadResource)
 class SquadResourceAdmin(admin.ModelAdmin):
     list_display = ('title', 'squad', 'kind', 'added_by', 'created_at')
     list_filter = ('kind', 'created_at')
     search_fields = ('title', 'squad__name', 'added_by__username')
     autocomplete_fields = ('squad', 'added_by', 'book')
+    inlines = [SquadResourceHighlightInline]
     readonly_fields = ('created_at',)
     fieldsets = (
         ('اطلاعات پایه', {
@@ -73,4 +87,23 @@ class SquadResourceAdmin(admin.ModelAdmin):
             'fields': ('book',),
             'classes': ('collapse',),
         }),
+    )
+
+
+@admin.register(SquadResourceHighlight)
+class SquadResourceHighlightAdmin(admin.ModelAdmin):
+    list_display = ('resource', 'owner', 'page_number', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('resource__title', 'owner__username', 'note')
+    autocomplete_fields = ('resource', 'owner')
+    readonly_fields = ('created_at', 'updated_at')
+    fields = (
+        'resource',
+        'owner',
+        'page_number',
+        'rects',
+        'quote',
+        'note',
+        'created_at',
+        'updated_at',
     )
